@@ -1,0 +1,1173 @@
+{
+  "skill": "laravel",
+  "questions": [
+    {
+      "id": "laravel-001",
+      "order": 1,
+      "question": "Explain the Laravel request lifecycle.",
+      "shortAnswer": "A request enters through `public/index.php`, the application is bootstrapped and service providers are registered and booted, the request passes through middleware to the router, the matched controller returns a response, and the response travels back out through the middleware.",
+      "interviewAnswer": "Every request enters through public/index.php, which loads the Composer autoloader and creates the application instance from bootstrap/app.php. The HTTP kernel then bootstraps the framework: it loads configuration and registers and boots all service providers. The request goes through the global middleware, the router matches a route, the route middleware runs, and the controller or closure is executed. Its return value is turned into a response that passes back through the middleware and is sent to the browser. Finally, terminable middleware runs.",
+      "answer": "1. **Entry point**: the web server sends every request to `public/index.php`.\n2. **Autoload and app**: Composer's autoloader is loaded and the application (the service container) is created from `bootstrap/app.php`.\n3. **Kernel bootstrap**: environment and configuration are loaded, error handling is set up, then every service provider's `register()` runs, followed by every `boot()`.\n4. **Global middleware**: for example trimming strings, handling CORS and maintenance mode.\n5. **Routing**: the router matches the URL and method, then runs route and group middleware such as `auth` and `throttle`.\n6. **Controller**: dependencies are injected by the container, validation runs, and the action returns a view, JSON, a model or a response object.\n7. **Response**: travels back through the middleware stack and is sent.\n8. **Terminate**: terminable middleware and queued-after-response work run.\n\nSince Laravel 11 middleware, routing and exception handling are configured in `bootstrap/app.php`; older versions use `app/Http/Kernel.php`.\n\nKnowing this order answers follow-ups like \"where do I bind an interface?\" (a provider) and \"why is the authenticated user not available in a provider's register method?\" (the request has not been handled yet).",
+      "topic": "Laravel Basics",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "lifecycle",
+        "architecture",
+        "service-providers"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "related": [
+        "laravel-024",
+        "laravel-005",
+        "laravel-023"
+      ]
+    },
+    {
+      "id": "laravel-002",
+      "order": 2,
+      "question": "What is MVC and how does Laravel implement it?",
+      "shortAnswer": "MVC separates an application into Models (data and business rules), Views (presentation) and Controllers (handle the request and coordinate the two). In Laravel these are Eloquent models, Blade templates and controller classes.",
+      "interviewAnswer": "MVC stands for Model, View, Controller. The model represents data and business rules, which in Laravel is usually an Eloquent model. The view is the presentation layer, which is a Blade template or a JSON resource for an API. The controller receives the request, calls the model or a service, and returns a response. The router maps a URL to a controller action. The benefit is separation of concerns: I can change the UI without touching the data logic.",
+      "answer": "Flow for `GET /posts/5`:\n\n1. `routes/web.php` maps the URL to `PostController@show`.\n2. The **controller** asks the **model** for the data.\n3. The controller passes the data to a **view** and returns the rendered HTML.\n\nGood practice:\n\n- Keep controllers thin: validate, delegate, respond. Move business logic into models, actions or service classes.\n- Views should not query the database.\n- Validation belongs in Form Requests and authorization in policies, not inline in controller methods.\n\nFor an API, the \"view\" is an API Resource that shapes the JSON.",
+      "topic": "MVC",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "mvc",
+        "architecture"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": [
+        {
+          "language": "php",
+          "content": "// routes/web.php\nRoute::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');\n\n// app/Http/Controllers/PostController.php\nclass PostController extends Controller\n{\n    public function show(Post $post)\n    {\n        return view('posts.show', [\n            'post' => $post->load('author', 'comments'),\n        ]);\n    }\n}"
+        },
+        {
+          "language": "html",
+          "content": "<x-layout :title=\"$post->title\">\n    <h1>{{ $post->title }}</h1>\n    <p>By {{ $post->author->name }}</p>\n    <div>{{ $post->body }}</div>\n</x-layout>",
+          "title": "resources/views/posts/show.blade.php"
+        }
+      ],
+      "related": [
+        "laravel-001",
+        "laravel-038"
+      ]
+    },
+    {
+      "id": "laravel-003",
+      "order": 3,
+      "question": "How does routing work in Laravel? Explain named routes, groups and route parameters.",
+      "shortAnswer": "Routes map an HTTP method and URI to a closure or controller action. Named routes give a stable name for generating URLs, groups share attributes such as middleware and prefixes, and parameters capture URI segments.",
+      "interviewAnswer": "Routes are defined in routes/web.php for session-based pages and routes/api.php for stateless API endpoints. Each route maps an HTTP verb and URI to a controller action. I name routes so that URLs are generated with the route helper and do not break when a path changes. Groups let me apply a prefix, a name prefix, middleware or a controller to many routes at once. Parameters in curly braces are passed to the action and can be constrained or bound to models.",
+      "answer": "- Verbs: `Route::get`, `post`, `put`, `patch`, `delete`, plus `Route::match()` and `Route::any()`.\n- **Parameters**: `{id}` is required, `{id?}` is optional. Constrain with `->whereNumber('id')` or `->where('slug', '[a-z-]+')`.\n- **Named routes**: `->name('orders.show')`, then `route('orders.show', $order)` or `to_route('orders.index')`.\n- **Groups**: `Route::middleware('auth')->prefix('admin')->name('admin.')->group(...)`.\n- **Resource routes**: `Route::resource('posts', PostController::class)` creates the seven CRUD routes; `apiResource` omits `create` and `edit`.\n- **Fallback**: `Route::fallback()` handles unmatched URLs.\n- `php artisan route:list` shows everything; `route:cache` speeds up registration in production.\n\nRoutes in `api.php` get the `/api` prefix and the `api` middleware group (stateless, rate limited). Since Laravel 11 that file is created with `php artisan install:api`.",
+      "topic": "Routing",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "routing",
+        "named-routes",
+        "route-groups"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "use App\\Http\\Controllers\\OrderController;\n\nRoute::get('/orders/{order}', [OrderController::class, 'show'])\n    ->whereNumber('order')\n    ->name('orders.show');\n\nRoute::middleware(['auth', 'verified'])\n    ->prefix('admin')\n    ->name('admin.')\n    ->group(function () {\n        Route::resource('products', ProductController::class);\n        Route::get('/reports/{year?}', [ReportController::class, 'index'])->name('reports');\n    });\n\n// Generating URLs\n$url = route('orders.show', ['order' => 15]);   // /orders/15\nreturn to_route('admin.products.index');"
+      },
+      "related": [
+        "laravel-004",
+        "laravel-007",
+        "laravel-005"
+      ]
+    },
+    {
+      "id": "laravel-004",
+      "order": 4,
+      "question": "What is route model binding?",
+      "shortAnswer": "Route model binding automatically converts a route parameter such as `{post}` into the matching Eloquent model, and returns a 404 if it does not exist.",
+      "interviewAnswer": "Route model binding lets Laravel inject a model instance into my controller instead of an ID. If the route has a parameter called post and the action type-hints a Post model with the same variable name, Laravel runs the query and returns a 404 when nothing is found. By default it looks up by primary key, but I can bind by another column like a slug. It removes repetitive findOrFail calls from controllers.",
+      "answer": "- **Implicit binding**: the parameter name must match the variable name, and the variable must be type-hinted with the model.\n- **Custom key**: `{post:slug}` in the route, or override `getRouteKeyName()` on the model to change it everywhere.\n- **Scoped binding**: `/users/{user}/posts/{post:slug}` makes Laravel load the post through the user's relationship, so a post belonging to someone else gives a 404. Use `->scopeBindings()` when the child uses the default key.\n- **Soft deleted models**: add `->withTrashed()` to the route.\n- **Explicit binding**: `Route::model('user', User::class)` or `Route::bind()` with custom logic, placed in a service provider's `boot()` method.\n- **Enums**: a backed enum type-hint is resolved the same way and gives a 404 for an invalid value.\n\nIt works together with policies: `$this->authorize('update', $post)` receives the already loaded model.",
+      "topic": "Routing",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "routing",
+        "route-model-binding",
+        "eloquent"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// routes/web.php\nRoute::get('/posts/{post:slug}', [PostController::class, 'show']);\nRoute::get('/users/{user}/orders/{order}', [OrderController::class, 'show'])->scopeBindings();\n\n// Controller: no findOrFail needed\npublic function show(Post $post)\n{\n    return view('posts.show', compact('post'));\n}\n\n// Model: use slug everywhere\npublic function getRouteKeyName(): string\n{\n    return 'slug';\n}"
+      },
+      "related": [
+        "laravel-003",
+        "laravel-020"
+      ]
+    },
+    {
+      "id": "laravel-005",
+      "order": 5,
+      "question": "What is middleware in Laravel?",
+      "shortAnswer": "Middleware is a layer that every request passes through before reaching the controller, and that the response passes through on the way out. It is used for cross-cutting concerns such as authentication, rate limiting, CORS and logging.",
+      "interviewAnswer": "Middleware sits between the incoming request and my controller. Each middleware class has a handle method that receives the request and a next closure. It can inspect or modify the request, stop it early by returning a response such as a redirect to login, or pass it on and then modify the response on the way back. Typical uses are authentication, CSRF verification, throttling and setting the locale. Middleware can be global, assigned to a group like web or api, or attached to individual routes.",
+      "answer": "- **Before middleware** does its work, then calls `$next($request)`.\n- **After middleware** calls `$next($request)` first, then works on the response.\n- **Terminable middleware** has a `terminate()` method that runs after the response is sent.\n\nTypes of registration:\n\n- **Global**: runs on every request.\n- **Group**: `web` (sessions, cookies, CSRF) and `api` (stateless, throttled).\n- **Route**: by alias, such as `auth`, `guest`, `verified`, `throttle:60,1`, `can:update,post`, `signed`.\n\nMiddleware runs in the order it is listed, and you can define priority for those that depend on each other.\n\nMiddleware versus other tools: use middleware for request-level checks that are the same for many routes. Use a **policy** for \"may this user act on this model\", and a **Form Request** for validating a specific payload.",
+      "topic": "Middleware",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "middleware",
+        "http",
+        "authentication"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "Route::middleware(['auth', 'throttle:60,1'])->group(function () {\n    Route::get('/dashboard', DashboardController::class);\n});\n\n// Built-in aliases with parameters\nRoute::put('/posts/{post}', [PostController::class, 'update'])->middleware('can:update,post');\nRoute::get('/admin', AdminController::class)->middleware(['auth', 'role:admin']);"
+      },
+      "related": [
+        "laravel-006",
+        "laravel-001",
+        "laravel-020"
+      ]
+    },
+    {
+      "id": "laravel-006",
+      "order": 6,
+      "question": "How do you create custom middleware, pass parameters to it and add it to a group?",
+      "shortAnswer": "Generate it with `php artisan make:middleware`, write the check in `handle()`, register an alias, and attach it to routes. Parameters are passed after a colon: `role:admin,editor`.",
+      "interviewAnswer": "I generate the class with artisan make:middleware. In the handle method I write the check and either return a response or call next with the request. Extra arguments on handle receive parameters, which are passed in the route definition after a colon. Then I register an alias, in bootstrap/app.php from Laravel 11 or in the HTTP Kernel in older versions, and can also append it to the web or api group there.",
+      "answer": "Steps:\n\n1. `php artisan make:middleware EnsureUserHasRole`\n2. Implement `handle(Request $request, Closure $next, string ...$roles)`.\n3. Register an alias and optionally add it to a group.\n4. Use it on a route: `->middleware('role:admin,editor')`.\n\nDetails that come up:\n\n- Return `abort(403)`, a redirect, or a JSON response to stop the request.\n- For API routes return JSON, not a redirect. Check `$request->expectsJson()`.\n- To exclude a route from a middleware in a group use `->withoutMiddleware()`.\n- Dependencies in the middleware constructor are resolved by the container.\n- **Middleware groups** bundle several middleware under one name so they can be applied together.",
+      "topic": "Middleware",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "middleware",
+        "custom-middleware",
+        "roles"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": [
+        {
+          "language": "php",
+          "content": "namespace App\\Http\\Middleware;\n\nuse Closure;\nuse Illuminate\\Http\\Request;\nuse Symfony\\Component\\HttpFoundation\\Response;\n\nclass EnsureUserHasRole\n{\n    public function handle(Request $request, Closure $next, string ...$roles): Response\n    {\n        if (! $request->user() || ! in_array($request->user()->role, $roles, true)) {\n            abort(403, 'You do not have access to this area.');\n        }\n\n        return $next($request);\n    }\n}",
+          "title": "app/Http/Middleware/EnsureUserHasRole.php"
+        },
+        {
+          "language": "php",
+          "content": "->withMiddleware(function (Middleware $middleware) {\n    $middleware->alias([\n        'role' => \\App\\Http\\Middleware\\EnsureUserHasRole::class,\n    ]);\n\n    $middleware->web(append: [\n        \\App\\Http\\Middleware\\SetLocale::class,\n    ]);\n})",
+          "title": "bootstrap/app.php (Laravel 11+)"
+        },
+        {
+          "language": "php",
+          "content": "Route::get('/reports', ReportController::class)->middleware(['auth', 'role:admin,manager']);",
+          "title": "routes/web.php"
+        }
+      ],
+      "related": [
+        "laravel-005",
+        "laravel-020"
+      ]
+    },
+    {
+      "id": "laravel-007",
+      "order": 7,
+      "question": "What are resource controllers and single-action controllers?",
+      "shortAnswer": "A resource controller has the seven conventional CRUD methods and is wired up with one `Route::resource()` line. A single-action controller has only an `__invoke()` method for one specific task.",
+      "interviewAnswer": "A resource controller follows REST conventions with seven methods: index, create, store, show, edit, update and destroy. One Route::resource call registers all the routes with consistent names. For an API I use apiResource, which leaves out the create and edit form routes. When an action does not fit CRUD, such as exporting a report, I use a single-action controller with an __invoke method so that controllers stay small.",
+      "answer": "| Verb | URI | Action | Route name |\n|---|---|---|---|\n| GET | `/posts` | index | posts.index |\n| GET | `/posts/create` | create | posts.create |\n| POST | `/posts` | store | posts.store |\n| GET | `/posts/{post}` | show | posts.show |\n| GET | `/posts/{post}/edit` | edit | posts.edit |\n| PUT/PATCH | `/posts/{post}` | update | posts.update |\n| DELETE | `/posts/{post}` | destroy | posts.destroy |\n\n- Generate with `php artisan make:controller PostController --resource --model=Post` (add `--requests` to create Form Requests).\n- Limit routes with `->only([...])` or `->except([...])`.\n- Nested resources: `Route::resource('posts.comments', CommentController::class)->shallow()`.\n- HTML forms send only GET and POST, so use `@method('PUT')` for the others.\n- A fat controller is a sign that logic should move to a service, action class or model.",
+      "topic": "Resource Controllers",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "controllers",
+        "resource-controllers",
+        "rest"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "Route::resource('posts', PostController::class);\nRoute::apiResource('products', Api\\ProductController::class)->only(['index', 'show']);\nRoute::post('/orders/{order}/refund', RefundOrderController::class)->name('orders.refund');\n\n// Single-action controller\nclass RefundOrderController extends Controller\n{\n    public function __invoke(Order $order, RefundService $refunds)\n    {\n        $this->authorize('refund', $order);\n        $refunds->refund($order);\n\n        return back()->with('status', 'Order refunded.');\n    }\n}"
+      },
+      "related": [
+        "laravel-003",
+        "api-001"
+      ]
+    },
+    {
+      "id": "laravel-008",
+      "order": 8,
+      "question": "How do you validate a request in Laravel?",
+      "shortAnswer": "Call `$request->validate()` with rules in the controller, or move the rules into a Form Request class. On failure Laravel redirects back with errors for web requests and returns a 422 JSON response for API requests.",
+      "interviewAnswer": "For simple cases I call validate on the request with an array of rules. If validation fails Laravel automatically redirects back with the errors and old input, or returns a 422 JSON response when the client expects JSON. For anything larger I create a Form Request class, which keeps the rules, authorization and custom messages out of the controller. I always work with the validated data that comes back, never with all request input.",
+      "answer": "Three ways:\n\n1. `$request->validate([...])` in the controller.\n2. A **Form Request** class, type-hinted on the action.\n3. `Validator::make($data, $rules)` when you need manual control, for example outside HTTP.\n\nRules worth knowing: `required`, `nullable`, `sometimes`, `string`, `integer`, `boolean`, `email`, `min`, `max`, `between`, `in`, `confirmed`, `date`, `after`, `exists:table,column`, `unique:table,column`, `array`, `file`, `mimes`, `image`.\n\nDetails that are asked:\n\n- `Rule::unique('users')->ignore($user->id)` when updating.\n- `bail` stops at the first failure for that field.\n- `nullable` allows `null`; `sometimes` validates only if the field is present.\n- Array input: `'items.*.qty' => 'required|integer|min:1'`.\n- Custom rules: `php artisan make:rule` or a closure.\n- In Blade: `@error('email') ... @enderror` and `old('email')`.",
+      "topic": "Validation",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "validation",
+        "requests"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "public function store(Request $request)\n{\n    $data = $request->validate([\n        'name'     => ['required', 'string', 'max:255'],\n        'email'    => ['required', 'email', 'unique:users,email'],\n        'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],\n        'role'     => ['required', Rule::in(['admin', 'editor', 'viewer'])],\n        'tags'     => ['nullable', 'array', 'max:5'],\n        'tags.*'   => ['string', 'distinct'],\n    ]);\n\n    $user = User::create($data);   // only validated fields\n\n    return to_route('users.show', $user);\n}"
+      },
+      "related": [
+        "laravel-009",
+        "api-009",
+        "laravel-017"
+      ]
+    },
+    {
+      "id": "laravel-009",
+      "order": 9,
+      "question": "What is a Form Request and why use one?",
+      "shortAnswer": "A Form Request is a dedicated class that holds the validation rules and authorization check for one request. Type-hinting it on a controller action runs both before the method body executes.",
+      "interviewAnswer": "A Form Request is a custom request class with an authorize method and a rules method. When I type-hint it in a controller action, Laravel validates and authorizes the request before my code runs, so the controller only sees valid data. It keeps controllers thin, lets me reuse rules, and gives one place for custom messages and for preparing input. I read the clean data with the validated method.",
+      "answer": "Create with `php artisan make:request StoreOrderRequest`.\n\n- `authorize()`: return `true`/`false`, typically a policy check. A `false` gives a 403.\n- `rules()`: the validation rules. You can inject dependencies and use route parameters with `$this->route('order')`.\n- `messages()` and `attributes()`: custom wording.\n- `prepareForValidation()`: normalise input first, for example trimming or generating a slug.\n- `after()` or `withValidator()`: cross-field checks.\n- `passedValidation()`: adjust data after it passes.\n\nIn the controller use `$request->validated()` or `$request->safe()->only([...])`. Avoid `$request->all()`, because it includes fields you did not validate.\n\nThe same class is often shared between store and update with small differences, or split into `StoreXRequest` and `UpdateXRequest`.",
+      "topic": "Form Requests",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "validation",
+        "form-requests"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class UpdatePostRequest extends FormRequest\n{\n    public function authorize(): bool\n    {\n        return $this->user()->can('update', $this->route('post'));\n    }\n\n    public function rules(): array\n    {\n        return [\n            'title' => ['required', 'string', 'max:150'],\n            'slug'  => ['required', 'alpha_dash', Rule::unique('posts')->ignore($this->route('post'))],\n            'body'  => ['required', 'string'],\n        ];\n    }\n\n    protected function prepareForValidation(): void\n    {\n        $this->merge(['slug' => Str::slug($this->slug ?? $this->title)]);\n    }\n}\n\n// Controller\npublic function update(UpdatePostRequest $request, Post $post)\n{\n    $post->update($request->validated());\n    return to_route('posts.show', $post);\n}"
+      },
+      "related": [
+        "laravel-008",
+        "laravel-020"
+      ]
+    },
+    {
+      "id": "laravel-010",
+      "order": 10,
+      "question": "What is Blade? Explain {{ }} versus {!! !!}, layouts and components.",
+      "shortAnswer": "Blade is Laravel's templating engine. `{{ }}` echoes with HTML escaping, `{!! !!}` echoes raw HTML, and components and layouts let templates share structure.",
+      "interviewAnswer": "Blade is Laravel's template engine; templates compile to plain PHP and are cached. Double curly braces escape the output with htmlspecialchars, which protects against cross-site scripting. The curly-brace-exclamation syntax prints raw HTML, so I only use it for content I trust or have sanitised. For structure I use components with slots, or the older extends and section layout inheritance, and directives like @if, @foreach and @auth for control flow.",
+      "answer": "- **Echo**: `{{ $name }}` escaped; `{!! $html !!}` raw; `@{{ }}` leaves the braces for a JavaScript framework.\n- **Control**: `@if`, `@unless`, `@isset`, `@foreach`, `@forelse ... @empty`, with the `$loop` variable (`$loop->first`, `$loop->iteration`).\n- **Auth**: `@auth`, `@guest`, `@can('update', $post)`.\n- **Forms**: `@csrf`, `@method('PUT')`, `@error('field')`.\n- **Layouts**: components (`<x-layout>` with `{{ $slot }}`) or `@extends` / `@section` / `@yield`.\n- **Components**: class-based or anonymous files in `resources/views/components`, with props and named slots.\n- **Includes**: `@include('partials.nav')`, `@each`.\n- **Assets and scripts**: `@vite([...])`, `@push('scripts')` / `@stack('scripts')`.\n\nCompiled views live in `storage/framework/views`; `php artisan view:cache` precompiles them for production.",
+      "topic": "Blade",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "blade",
+        "templates",
+        "xss"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "html",
+        "content": "{{-- resources/views/components/alert.blade.php --}}\n@props(['type' => 'info'])\n<div {{ $attributes->merge(['class' => \"alert alert-{$type}\"]) }}>\n    {{ $slot }}\n</div>\n\n{{-- resources/views/posts/index.blade.php --}}\n<x-layout title=\"Posts\">\n    @forelse ($posts as $post)\n        <article>\n            <h2>{{ $post->title }}</h2>\n            {!! $post->body_html !!}\n            @can('update', $post)\n                <a href=\"{{ route('posts.edit', $post) }}\">Edit</a>\n            @endcan\n        </article>\n    @empty\n        <x-alert type=\"warning\">No posts yet.</x-alert>\n    @endforelse\n\n    {{ $posts->links() }}\n</x-layout>"
+      },
+      "related": [
+        "laravel-002",
+        "laravel-034"
+      ]
+    },
+    {
+      "id": "laravel-011",
+      "order": 11,
+      "question": "What is Eloquent ORM?",
+      "shortAnswer": "Eloquent is Laravel's object-relational mapper. Each database table has a model class, each row is an object, and relationships, queries and saving are expressed in PHP instead of SQL.",
+      "interviewAnswer": "Eloquent is Laravel's ORM and follows the Active Record pattern: a model class maps to a table and each instance represents a row that knows how to save itself. By convention a User model uses the users table with an id primary key and timestamps. It gives me a fluent query syntax, relationships, accessors and casts, scopes, events and soft deletes. Under the hood it builds on the query builder and uses PDO with bound parameters, so it is protected against SQL injection.",
+      "answer": "**Conventions** (all overridable): table is the plural snake_case of the class name (`$table`), primary key is `id` (`$primaryKey`), `created_at` and `updated_at` are maintained (`$timestamps`).\n\n**Common operations**:\n\n- Read: `find`, `findOrFail`, `first`, `firstOrFail`, `where(...)->get()`, `paginate`, `pluck`, `exists`, `count`.\n- Write: `create`, `update`, `save`, `delete`, `firstOrCreate`, `updateOrCreate`, `upsert`.\n- `get()` returns a Collection of models; `first()` returns one model or `null`.\n\n**Features**: relationships, eager loading, casts (`'options' => 'array'`, enums, dates), accessors and mutators, local and global scopes, model events and observers, soft deletes, factories.\n\n**Trade-off**: models are heavier than raw rows. For large reports or bulk updates, the query builder or raw SQL is faster.",
+      "topic": "Eloquent",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "orm",
+        "active-record"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class Post extends Model\n{\n    protected $fillable = ['title', 'body', 'published_at'];\n\n    protected function casts(): array\n    {\n        return ['published_at' => 'datetime', 'meta' => 'array'];\n    }\n\n    public function author(): BelongsTo\n    {\n        return $this->belongsTo(User::class, 'user_id');\n    }\n}\n\n$posts = Post::with('author')\n    ->whereNotNull('published_at')\n    ->latest('published_at')\n    ->paginate(15);\n\n$post = Post::findOrFail(1);\n$post->update(['title' => 'New title']);"
+      },
+      "related": [
+        "laravel-012",
+        "laravel-013",
+        "laravel-017"
+      ]
+    },
+    {
+      "id": "laravel-012",
+      "order": 12,
+      "question": "What is the difference between Eloquent and the Query Builder?",
+      "shortAnswer": "The Query Builder (`DB::table()`) builds SQL fluently and returns plain objects. Eloquent sits on top of it and returns model instances with relationships, casts and events, at the cost of more memory and time.",
+      "interviewAnswer": "The query builder is a fluent interface for writing SQL and returns simple stdClass rows, so it is fast and light. Eloquent is built on top of it and hydrates results into model objects, which gives relationships, casts, scopes and events but uses more memory. I use Eloquent for normal application code and switch to the query builder or raw SQL for heavy reports, aggregates over many rows and bulk updates. Both use parameter binding.",
+      "answer": "| | Query Builder | Eloquent |\n|---|---|---|\n| Start | `DB::table('orders')` | `Order::query()` |\n| Result | Collection of `stdClass` | Collection of models |\n| Relationships, casts, events | No | Yes |\n| Speed and memory | Lighter | Heavier |\n| Best for | Reports, bulk writes, complex joins | Day-to-day domain logic |\n\nPoints to make:\n\n- Every Eloquent query is a query builder underneath, so the same `where`, `join`, `groupBy` methods work on both.\n- A mass update such as `Order::where(...)->update([...])` runs one SQL statement and does **not** fire model events or update each model in memory.\n- Raw fragments (`selectRaw`, `whereRaw`, `DB::raw`) must use bindings: `whereRaw('price > ?', [$min])`.\n- `toSql()` or `dd()` on a builder shows the generated SQL.",
+      "topic": "Query Builder",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "query-builder",
+        "performance"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Query Builder: one aggregate query, plain rows\n$sales = DB::table('orders')\n    ->join('customers', 'customers.id', '=', 'orders.customer_id')\n    ->selectRaw('customers.city, COUNT(*) AS orders, SUM(orders.total) AS revenue')\n    ->where('orders.status', 'paid')\n    ->groupBy('customers.city')\n    ->orderByDesc('revenue')\n    ->get();\n\n// Eloquent: models with behaviour\n$orders = Order::with('customer')\n    ->where('status', 'paid')\n    ->latest()\n    ->take(10)\n    ->get();\n\n$orders->first()->customer->name;"
+      },
+      "related": [
+        "laravel-011",
+        "laravel-035"
+      ]
+    },
+    {
+      "id": "laravel-013",
+      "order": 13,
+      "question": "What relationship types does Eloquent support?",
+      "shortAnswer": "One to one (`hasOne` / `belongsTo`), one to many (`hasMany` / `belongsTo`), many to many (`belongsToMany` with a pivot table), has-many-through, and polymorphic relationships (`morphTo`, `morphMany`, `morphToMany`).",
+      "interviewAnswer": "Eloquent has one-to-one with hasOne and belongsTo, one-to-many with hasMany and belongsTo, and many-to-many with belongsToMany, which needs a pivot table. There are also hasOneThrough and hasManyThrough to reach a distant table through an intermediate one, and polymorphic relations where one model, such as a comment or image, can belong to several types of parent. The rule I remember is that belongsTo goes on the model whose table holds the foreign key.",
+      "answer": "| Relationship | Example | Foreign key lives on |\n|---|---|---|\n| `hasOne` / `belongsTo` | User has one Profile | `profiles.user_id` |\n| `hasMany` / `belongsTo` | Post has many Comments | `comments.post_id` |\n| `belongsToMany` | User has many Roles | pivot `role_user` |\n| `hasManyThrough` | Country has many Posts through Users | `users.country_id`, `posts.user_id` |\n| `morphMany` / `morphTo` | Post and Video have Comments | `commentable_id`, `commentable_type` |\n| `morphToMany` | Post and Video have Tags | pivot `taggables` |\n\nWorking with them:\n\n- `$post->comments` (property) runs the query and returns a Collection; `$post->comments()` (method) returns a query builder you can add to.\n- Many to many: `attach`, `detach`, `sync`, `syncWithoutDetaching`, `toggle`; extra pivot columns with `->withPivot('expires_at')->withTimestamps()`.\n- Create through the relation: `$post->comments()->create([...])` sets the foreign key.\n- Query by relation: `has`, `whereHas`, `doesntHave`, `withCount`.\n- Pivot table name is the two singular model names in alphabetical order: `role_user`.",
+      "topic": "Relationships",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "relationships",
+        "pivot",
+        "polymorphic"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class User extends Model\n{\n    public function profile(): HasOne      { return $this->hasOne(Profile::class); }\n    public function posts(): HasMany       { return $this->hasMany(Post::class); }\n    public function roles(): BelongsToMany { return $this->belongsToMany(Role::class)->withTimestamps(); }\n}\n\nclass Comment extends Model\n{\n    public function commentable(): MorphTo { return $this->morphTo(); }\n}\n\n$user->roles()->sync([1, 3]);\n$user->posts()->create(['title' => 'Hello']);\n\n$active = User::whereHas('posts', fn ($q) => $q->where('published', true))\n    ->withCount('posts')\n    ->get();"
+      },
+      "related": [
+        "laravel-015",
+        "laravel-014",
+        "mysql-011"
+      ]
+    },
+    {
+      "id": "laravel-014",
+      "order": 14,
+      "question": "You are getting an N+1 query problem. What is it and how do you fix it?",
+      "shortAnswer": "N+1 means one query loads a list and then one more query runs for each item to load a relationship. Fix it by eager loading the relationship with `with()`, which loads all related rows in one extra query.",
+      "interviewAnswer": "The N+1 problem happens when I load a list of models with one query and then access a relationship inside a loop, so Eloquent lazily runs one extra query per row. A hundred posts with their authors becomes a hundred and one queries. The fix is eager loading with the with method, which fetches all the related records in a single additional query using a WHERE IN. I detect it with Laravel Debugbar or Telescope, and I enable preventLazyLoading in development so it throws instead of passing silently.",
+      "answer": "**Symptom**: the page gets slower as the list grows, and the query log shows the same `select ... where id = ?` repeated.\n\n**Fixes**:\n\n- `Post::with('author')->get()`: eager load when querying.\n- Nested and multiple: `with(['author.profile', 'comments'])`.\n- Only the columns you need: `with('author:id,name')` (always include the key).\n- Already have the models: `$posts->load('author')` or `loadMissing()`.\n- Only need a count: `withCount('comments')` gives `comments_count` without loading the rows.\n- Only need an aggregate: `withSum('items', 'price')`, `withExists('likes')`.\n\n**Prevention**: `Model::preventLazyLoading(! app()->isProduction());` in `AppServiceProvider::boot()` throws an exception whenever a relationship is lazy loaded.\n\n**Watch for hidden cases**: accessors or API Resources that touch a relationship, and Blade partials rendered in a loop. In resources use `whenLoaded()` so the relation is included only if it was eager loaded.",
+      "example": "An orders page listing 50 orders showed the customer name and item count. The query log had 101 queries. Changing the controller to `Order::with('customer')->withCount('items')->paginate(50)` brought it to 3 queries and cut the response time from about 900 ms to under 100 ms.",
+      "topic": "Eloquent",
+      "difficulty": "Intermediate",
+      "type": "Scenario",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "n-plus-one",
+        "eager-loading",
+        "performance"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Problem: 1 query for posts + 1 query per post for the author\n$posts = Post::all();\nforeach ($posts as $post) {\n    echo $post->author->name;\n}\n\n// Fix: 2 queries in total\n$posts = Post::with('author:id,name')->withCount('comments')->get();\nforeach ($posts as $post) {\n    echo $post->author->name . \" ({$post->comments_count})\";\n}\n\n// Catch it during development (AppServiceProvider::boot)\nModel::preventLazyLoading(! app()->isProduction());"
+      },
+      "related": [
+        "laravel-015",
+        "laravel-035",
+        "laravel-013"
+      ]
+    },
+    {
+      "id": "laravel-015",
+      "order": 15,
+      "question": "What is the difference between eager loading and lazy loading?",
+      "shortAnswer": "Lazy loading fetches a relationship only when you first access it. Eager loading fetches the relationships for all models up front with `with()`, avoiding a query per model.",
+      "interviewAnswer": "Lazy loading is the default: the relationship query runs the first time I access the property. That is fine for a single model but causes N+1 queries in a loop. Eager loading tells Eloquent to load the relationship for the whole result set in advance, using with on the query or load on an existing collection. Lazy eager loading with load is useful when I decide after the query that I need the relation.",
+      "answer": "- **Lazy**: `$order->customer` triggers `select * from customers where id = ?` the first time, then caches the result on the model.\n- **Eager**: `Order::with('customer')->get()` runs `select * from customers where id in (...)` once for all orders.\n- **Lazy eager**: `$orders->load('customer')` after the fact; `loadMissing()` skips relations already loaded.\n- **Constrained**: `with(['comments' => fn ($q) => $q->where('approved', true)->latest()])`.\n- **Default**: `protected $with = ['author'];` on a model always eager loads; use sparingly and opt out with `without()`.\n- **Check**: `$model->relationLoaded('customer')`.\n\nEager loading is not always better. Loading a large relationship you never display wastes memory, so load what the view needs and use `withCount` when you only need numbers.",
+      "topic": "Relationships",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "eager-loading",
+        "lazy-loading"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Lazy: runs when accessed\n$order = Order::find(1);\n$order->customer;                 // query happens here\n\n// Eager: decided up front\n$orders = Order::with(['customer', 'items.product'])->get();\n\n// Lazy eager: decided later\n$orders = Order::latest()->take(20)->get();\nif ($request->boolean('include_items')) {\n    $orders->load('items');\n}"
+      },
+      "related": [
+        "laravel-014",
+        "laravel-013"
+      ]
+    },
+    {
+      "id": "laravel-016",
+      "order": 16,
+      "question": "What are migrations, seeders and factories?",
+      "shortAnswer": "Migrations are version-controlled files that change the database schema. Seeders insert data. Factories define how to generate fake model instances for seeding and tests.",
+      "interviewAnswer": "Migrations are version control for the database schema. Each one has an up method that makes a change and a down method that reverses it, so every developer and server can reach the same structure by running artisan migrate. Seeders populate tables with initial or demo data. Factories describe how to build fake models with Faker, and I use them in seeders and tests to create realistic data, including related records.",
+      "answer": "**Migrations**\n\n- `php artisan make:migration add_status_to_orders_table`\n- `migrate`, `migrate:rollback`, `migrate:status`, `migrate:fresh --seed` (drops everything; never in production).\n- Never edit a migration that has already run on a shared environment; write a new one.\n- Foreign keys: `$table->foreignId('user_id')->constrained()->cascadeOnDelete();`\n- Indexes: `->index()`, `->unique()`, composite `$table->index(['status', 'created_at'])`.\n- In production, plan for zero downtime: add nullable columns first, backfill, then tighten.\n\n**Seeders**: `php artisan db:seed`, with `DatabaseSeeder` calling others. Use `updateOrCreate` for reference data so they can run more than once.\n\n**Factories**: `User::factory()->count(10)->create()`, states such as `->unverified()`, relationships with `->has(Post::factory()->count(3))` and `->for($user)`. `make()` builds without saving.",
+      "topic": "Migrations",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "migrations",
+        "seeders",
+        "factories",
+        "database"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": [
+        {
+          "language": "php",
+          "content": "return new class extends Migration\n{\n    public function up(): void\n    {\n        Schema::create('orders', function (Blueprint $table) {\n            $table->id();\n            $table->foreignId('user_id')->constrained()->cascadeOnDelete();\n            $table->string('status', 20)->default('pending')->index();\n            $table->unsignedInteger('total');\n            $table->timestamps();\n            $table->softDeletes();\n        });\n    }\n\n    public function down(): void\n    {\n        Schema::dropIfExists('orders');\n    }\n};",
+          "title": "Migration"
+        },
+        {
+          "language": "php",
+          "content": "class OrderFactory extends Factory\n{\n    public function definition(): array\n    {\n        return [\n            'user_id' => User::factory(),\n            'status'  => fake()->randomElement(['pending', 'paid']),\n            'total'   => fake()->numberBetween(500, 50000),\n        ];\n    }\n\n    public function paid(): static\n    {\n        return $this->state(['status' => 'paid']);\n    }\n}\n\nUser::factory()->has(Order::factory()->paid()->count(3))->create();",
+          "title": "Factory and usage"
+        }
+      ],
+      "related": [
+        "mysql-011",
+        "mysql-008"
+      ]
+    },
+    {
+      "id": "laravel-017",
+      "order": 17,
+      "question": "What is mass assignment, and what do $fillable and $guarded do?",
+      "shortAnswer": "Mass assignment is setting many attributes at once from an array, as in `Model::create($data)`. `$fillable` is an allow-list of attributes that may be set this way; `$guarded` is a block-list.",
+      "interviewAnswer": "Mass assignment is passing an array of attributes to create, update or fill. The risk is that a user adds an extra field to the request, like is_admin, and it gets saved. Eloquent protects against this: only attributes listed in the fillable property can be mass assigned, or alternatively everything except those in guarded. I prefer fillable, and I also pass only validated data to the model, so there are two layers of protection.",
+      "answer": "- `$fillable = ['name', 'email'];`: only these can be mass assigned.\n- `$guarded = ['is_admin'];`: everything except these can be. `$guarded = []` disables the protection.\n- Use one or the other, not both.\n- Attributes that are not fillable are **silently ignored** by default. `Model::preventSilentlyDiscardingAttributes()` makes that an exception in development.\n- `forceFill()` and `forceCreate()` bypass the protection for trusted, internal code.\n- Setting a property directly (`$user->is_admin = true; $user->save();`) is not mass assignment and always works.\n\nThe classic vulnerable line is `User::create($request->all())`. The safe version is `User::create($request->validated())` together with a correct `$fillable`.",
+      "topic": "Eloquent",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "mass-assignment",
+        "security"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class User extends Authenticatable\n{\n    protected $fillable = ['name', 'email', 'password'];\n}\n\n// Request body: { \"name\": \"Eve\", \"email\": \"e@x.com\", \"is_admin\": true }\n\nUser::create($request->all());        // is_admin ignored thanks to $fillable, but still bad practice\nUser::create($request->validated());  // only fields that passed validation\n\n// Deliberate, trusted change\n$user->forceFill(['is_admin' => true])->save();"
+      },
+      "related": [
+        "laravel-008",
+        "laravel-034"
+      ]
+    },
+    {
+      "id": "laravel-018",
+      "order": 18,
+      "question": "What are query scopes, accessors, mutators and casts?",
+      "shortAnswer": "Scopes are reusable query constraints on a model. Accessors transform an attribute when it is read, mutators when it is written, and casts convert attributes to types such as array, datetime or an enum.",
+      "interviewAnswer": "A local scope is a named, reusable where clause defined on the model, so I can write Post::published() instead of repeating conditions. A global scope applies to every query for that model; soft deletes work that way. Accessors and mutators change a value when it is read from or written to the model, for example formatting a name or hashing a password. Casts convert database values into PHP types automatically, like JSON to array, a string to an enum, or a timestamp to a Carbon date.",
+      "answer": "**Local scope**: a method prefixed with `scope` (or marked with the `#[Scope]` attribute in recent versions), called without the prefix and chainable: `Post::published()->byAuthor($id)->get()`.\n\n**Global scope**: applied automatically; remove with `withoutGlobalScope()`. Useful for multi-tenancy, risky when forgotten.\n\n**Accessors and mutators** (Laravel 9+): one method returning `Attribute::make(get: ..., set: ...)`. Add a computed attribute to JSON with `$appends`.\n\n**Casts**: `'is_active' => 'boolean'`, `'options' => 'array'`, `'published_at' => 'datetime'`, `'price' => 'decimal:2'`, `'status' => OrderStatus::class`, `'secret' => 'encrypted'`, `'password' => 'hashed'`.\n\nKeep presentation logic that depends on the request (locale, currency of the viewer) out of accessors and in resources or views.",
+      "topic": "Eloquent",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "scopes",
+        "accessors",
+        "casts"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "php",
+        "content": "class Post extends Model\n{\n    protected function casts(): array\n    {\n        return [\n            'published_at' => 'datetime',\n            'status'       => PostStatus::class,\n            'meta'         => 'array',\n        ];\n    }\n\n    public function scopePublished(Builder $query): void\n    {\n        $query->whereNotNull('published_at')->where('published_at', '<=', now());\n    }\n\n    protected function title(): Attribute\n    {\n        return Attribute::make(\n            get: fn (string $value) => ucfirst($value),\n            set: fn (string $value) => trim($value),\n        );\n    }\n}\n\n$posts = Post::published()->latest('published_at')->get();"
+      },
+      "related": [
+        "laravel-011"
+      ]
+    },
+    {
+      "id": "laravel-019",
+      "order": 19,
+      "question": "How does authentication work in Laravel? What are guards and providers?",
+      "shortAnswer": "Guards define how users are authenticated for each request (session cookie or token). Providers define how users are retrieved from storage (usually Eloquent). Starter kits and packages like Breeze, Fortify and Sanctum build the login flow on top.",
+      "interviewAnswer": "Laravel's authentication is built on guards and providers, configured in config/auth.php. A guard decides how a user is authenticated on each request: the web guard uses sessions and cookies, and an API guard uses tokens. A provider decides how the user is loaded, normally through an Eloquent model. For the login screens I use a starter kit like Breeze, and for APIs and single-page apps I use Sanctum. Passwords are hashed with bcrypt or Argon2, and the auth middleware protects routes.",
+      "answer": "**Flow for session login**: validate credentials, `Auth::attempt()` checks the hash, `session()->regenerate()` prevents fixation, and the user ID is stored in the session. On later requests the `auth` middleware loads the user.\n\n**Useful API**: `Auth::user()`, `Auth::id()`, `Auth::check()`, `$request->user()`, `Auth::guard('admin')->user()`, `Auth::logout()`.\n\n**Building blocks**\n\n- `auth` middleware for protected routes; `guest` for login pages; `verified` for email verification.\n- Password hashing: `Hash::make()` and `Hash::check()`; never store or compare plain text.\n- Throttle login attempts with `RateLimiter` or the `throttle` middleware.\n- Remember me, password reset and email verification are included in the starter kits.\n- Multiple user types: prefer one `users` table with roles; separate guards only when the user models are really different.\n\n**Packages**: Breeze (simple scaffolding), Fortify (headless backend), Sanctum (SPA and token auth), Passport (full OAuth2), Socialite (social login).",
+      "topic": "Authentication",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "authentication",
+        "guards",
+        "security"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "public function login(Request $request)\n{\n    $credentials = $request->validate([\n        'email'    => ['required', 'email'],\n        'password' => ['required'],\n    ]);\n\n    if (! Auth::attempt($credentials, $request->boolean('remember'))) {\n        throw ValidationException::withMessages([\n            'email' => 'These credentials do not match our records.',\n        ]);\n    }\n\n    $request->session()->regenerate();\n\n    return redirect()->intended('dashboard');\n}\n\npublic function logout(Request $request)\n{\n    Auth::logout();\n    $request->session()->invalidate();\n    $request->session()->regenerateToken();\n\n    return redirect('/');\n}"
+      },
+      "related": [
+        "laravel-020",
+        "laravel-021",
+        "api-007",
+        "php-017"
+      ]
+    },
+    {
+      "id": "laravel-020",
+      "order": 20,
+      "question": "What is the difference between gates and policies?",
+      "shortAnswer": "Both answer \"may this user do this?\". A gate is a closure for a general ability not tied to a model. A policy is a class that groups the authorization rules for one model.",
+      "interviewAnswer": "Gates and policies are Laravel's two authorization tools. A gate is a simple closure defined in a service provider, good for actions that are not about a specific model, like viewing an admin dashboard. A policy is a class tied to a model, with methods such as view, update and delete, so all the rules for posts live in PostPolicy. I check them with the can method, the authorize helper, the can middleware or the @can Blade directive. Authentication tells me who the user is; authorization tells me what they may do.",
+      "answer": "**Gate**\n\n- Define: `Gate::define('view-reports', fn (User $user) => $user->is_admin);`\n- Check: `Gate::allows('view-reports')`, `$user->can('view-reports')`.\n\n**Policy**\n\n- Create: `php artisan make:policy PostPolicy --model=Post`. Laravel discovers it by naming convention.\n- Methods: `viewAny`, `view`, `create`, `update`, `delete`, `restore`, `forceDelete`.\n- Check: `$this->authorize('update', $post)`, `$user->can('update', $post)`, `Gate::authorize('update', $post)`, `->middleware('can:update,post')`, `@can('update', $post)`.\n- For actions without an instance pass the class: `$user->can('create', Post::class)`.\n\n**Extras**\n\n- `before()` on a policy, or `Gate::before()`, lets a super admin through.\n- Return `Response::deny('Reason')` for a custom message, or `denyAsNotFound()` to hide existence with a 404.\n- A failed check throws `AuthorizationException`, which becomes a 403.\n\n**Middleware vs policy**: middleware guards a route by role or state; a policy decides per record, for example \"only the author may edit this post\".",
+      "topic": "Authorization",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "authorization",
+        "gates",
+        "policies",
+        "security"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class PostPolicy\n{\n    public function before(User $user): ?bool\n    {\n        return $user->is_admin ? true : null;   // null = fall through to the method\n    }\n\n    public function update(User $user, Post $post): bool\n    {\n        return $user->id === $post->user_id;\n    }\n}\n\n// Controller\npublic function update(UpdatePostRequest $request, Post $post)\n{\n    Gate::authorize('update', $post);\n    $post->update($request->validated());\n    return back();\n}\n\n// Gate for a general ability (AppServiceProvider::boot)\nGate::define('view-reports', fn (User $user) => $user->role === 'manager');"
+      },
+      "related": [
+        "laravel-019",
+        "laravel-005",
+        "api-006"
+      ]
+    },
+    {
+      "id": "laravel-021",
+      "order": 21,
+      "question": "What is Laravel Sanctum, and how does it differ from Passport?",
+      "shortAnswer": "Sanctum is a lightweight authentication package for SPAs, mobile apps and simple token-based APIs. Passport is a full OAuth2 server. Use Sanctum unless you need OAuth2 flows for third-party clients.",
+      "interviewAnswer": "Sanctum offers two things. For a single-page app on the same top-level domain it uses Laravel's normal session cookies with CSRF protection, so no token is stored in the browser. For mobile apps and third-party clients it issues personal access tokens that are sent as a Bearer header, stored hashed in the database, and can carry abilities. Passport implements full OAuth2 with authorization codes and refresh tokens, which I would only choose when external applications need to act on behalf of my users.",
+      "answer": "**API tokens**\n\n1. Add the `HasApiTokens` trait to the `User` model.\n2. On login, `$user->createToken('mobile', ['orders:read'])->plainTextToken`. The plain token is shown once; only a SHA-256 hash is stored.\n3. The client sends `Authorization: Bearer <token>`.\n4. Protect routes with `auth:sanctum`; check abilities with `$request->user()->tokenCan('orders:read')` or the ability middleware.\n5. Revoke with `$request->user()->currentAccessToken()->delete()`.\n6. Set an expiry in `config/sanctum.php` or per token.\n\n**SPA authentication**: the SPA first calls `/sanctum/csrf-cookie`, then logs in with credentials; subsequent requests are authenticated by the session cookie. Requires correct `SANCTUM_STATEFUL_DOMAINS`, CORS with credentials, and the same top-level domain.\n\n| | Sanctum | Passport |\n|---|---|---|\n| Protocol | Simple tokens or cookies | OAuth2 |\n| Refresh tokens, scopes, client credentials | Abilities only | Yes |\n| Typical use | First-party SPA, mobile app | Third-party integrations |",
+      "topic": "Sanctum",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "sanctum",
+        "api",
+        "authentication",
+        "tokens"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// routes/api.php\nRoute::post('/login', function (Request $request) {\n    $request->validate(['email' => 'required|email', 'password' => 'required', 'device' => 'required']);\n\n    $user = User::where('email', $request->email)->first();\n\n    if (! $user || ! Hash::check($request->password, $user->password)) {\n        throw ValidationException::withMessages(['email' => 'The credentials are incorrect.']);\n    }\n\n    return ['token' => $user->createToken($request->device, ['orders:read'])->plainTextToken];\n});\n\nRoute::middleware('auth:sanctum')->group(function () {\n    Route::get('/user', fn (Request $request) => $request->user());\n    Route::post('/logout', fn (Request $request) => $request->user()->currentAccessToken()->delete());\n});"
+      },
+      "related": [
+        "api-007",
+        "laravel-019",
+        "laravel-034",
+        "api-008"
+      ]
+    },
+    {
+      "id": "laravel-022",
+      "order": 22,
+      "question": "What are API Resources?",
+      "shortAnswer": "API Resources are classes that transform models into JSON. They give you control over which fields are exposed and keep the response format consistent.",
+      "interviewAnswer": "An API Resource is a transformation layer between my Eloquent models and the JSON I return. Instead of returning a model directly, which would expose every column, I define a resource class with a toArray method listing exactly the fields and their format. Collections of resources handle lists and pagination metadata. I use whenLoaded for relationships so the resource does not trigger lazy loading. This keeps the API contract stable even when the database changes.",
+      "answer": "- Create: `php artisan make:resource OrderResource`.\n- Single: `return new OrderResource($order);` or `$order->toResource()` in recent versions.\n- List: `return OrderResource::collection(Order::paginate());` adds `links` and `meta` for pagination.\n- Output is wrapped in a `data` key by default; change with `JsonResource::withoutWrapping()`.\n- Conditional fields: `$this->when($request->user()->isAdmin(), ...)`, `$this->whenLoaded('items')`, `$this->whenCounted('items')`, `$this->whenNotNull(...)`.\n- Extra metadata: `->additional(['meta' => [...]])`.\n- Set status and headers: `->response()->setStatusCode(201)`.\n\nWhy not return models directly: hidden attributes are easy to forget, dates and money need formatting, and renaming a column would silently change the API.",
+      "topic": "APIs",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "api",
+        "api-resources",
+        "json"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class OrderResource extends JsonResource\n{\n    public function toArray(Request $request): array\n    {\n        return [\n            'id'         => $this->id,\n            'status'     => $this->status->value,\n            'total'      => number_format($this->total / 100, 2, '.', ''),\n            'placed_at'  => $this->created_at->toIso8601String(),\n            'customer'   => new CustomerResource($this->whenLoaded('customer')),\n            'items'      => OrderItemResource::collection($this->whenLoaded('items')),\n            'items_count' => $this->whenCounted('items'),\n        ];\n    }\n}\n\n// Controller\npublic function index()\n{\n    return OrderResource::collection(\n        Order::with('customer')->withCount('items')->latest()->paginate(20)\n    );\n}\n\npublic function store(StoreOrderRequest $request)\n{\n    $order = Order::create($request->validated());\n    return (new OrderResource($order))->response()->setStatusCode(201);\n}"
+      },
+      "related": [
+        "api-001",
+        "laravel-014",
+        "api-012"
+      ]
+    },
+    {
+      "id": "laravel-023",
+      "order": 23,
+      "question": "What is the service container?",
+      "shortAnswer": "The service container is Laravel's dependency injection container. It knows how to build classes and their dependencies, and injects them automatically wherever a class is type-hinted.",
+      "interviewAnswer": "The service container is the core of Laravel: a tool for managing class dependencies and performing dependency injection. When a controller, job or middleware type-hints a class in its constructor, the container builds that object and its own dependencies automatically using reflection. For interfaces I tell the container which implementation to use by binding it in a service provider. I can register a binding as a singleton so the same instance is shared, and I can swap bindings in tests.",
+      "answer": "**Auto-resolution**: a concrete class with resolvable dependencies needs no configuration.\n\n**Bindings** (in a provider's `register()` method):\n\n- `$this->app->bind(Interface::class, Implementation::class)`: a new instance each time.\n- `$this->app->singleton(...)`: one shared instance for the application's lifetime.\n- `$this->app->scoped(...)`: one instance per request or job, important with Octane and queues.\n- `$this->app->instance(...)`: register an existing object.\n- A closure when construction needs configuration values.\n\n**Contextual binding**: give different implementations to different consumers with `when()->needs()->give()`.\n\n**Resolving manually**: `app(Service::class)`, `resolve()`, `app()->make()`. Prefer constructor injection; manual resolving is the service locator pattern and hides dependencies.\n\n**Where injection works**: controller constructors and methods, middleware, jobs' `handle()`, event listeners, console commands, Form Requests.\n\n**Testing**: `$this->app->instance(PaymentGateway::class, $fake)` or `$this->mock(...)` replaces the real implementation.",
+      "topic": "Service Container",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "service-container",
+        "dependency-injection",
+        "ioc"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// app/Providers/AppServiceProvider.php\npublic function register(): void\n{\n    $this->app->bind(PaymentGateway::class, RazorpayGateway::class);\n\n    $this->app->singleton(SmsClient::class, function ($app) {\n        return new SmsClient(config('services.sms.key'));\n    });\n}\n\n// Anywhere: the container injects the bound implementation\nclass CheckoutController extends Controller\n{\n    public function __construct(private PaymentGateway $gateway) {}\n\n    public function store(StoreOrderRequest $request, SmsClient $sms)\n    {\n        $paymentId = $this->gateway->charge($request->integer('amount'));\n        // ...\n    }\n}"
+      },
+      "related": [
+        "laravel-024",
+        "laravel-026",
+        "php-026",
+        "laravel-025"
+      ]
+    },
+    {
+      "id": "laravel-024",
+      "order": 24,
+      "question": "What are service providers?",
+      "shortAnswer": "Service providers are the classes where a Laravel application is bootstrapped. They register bindings in the container and configure things like event listeners, routes, gates and view composers.",
+      "interviewAnswer": "Service providers are the central place where Laravel bootstraps itself and my application. Each provider has two methods. register runs first for every provider and should only bind things into the service container. boot runs after all providers are registered, so there I can safely use other services: define gates, register observers, add macros or configure rate limiters. The framework's own features, like the database and queue, are loaded by providers too, and packages use them to plug in.",
+      "answer": "- **`register()`**: only container bindings. Do not use other services here, because they may not be registered yet.\n- **`boot()`**: everything else. It can type-hint dependencies.\n- Providers are listed in `bootstrap/providers.php` (Laravel 11+) or the `providers` array in `config/app.php` (earlier versions). Package providers are auto-discovered through `composer.json`.\n- **Deferred providers** implement `DeferrableProvider` and load only when one of their bindings is requested, which saves time on requests that do not need them.\n- Create with `php artisan make:provider`.\n\nTypical `boot()` content in `AppServiceProvider`: `Model::preventLazyLoading()`, `Gate::define()`, `RateLimiter::for()`, `View::composer()`, `Model::observe()`, `URL::forceScheme('https')`.",
+      "topic": "Service Providers",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "service-providers",
+        "bootstrapping",
+        "architecture"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class BillingServiceProvider extends ServiceProvider\n{\n    public function register(): void\n    {\n        $this->app->singleton(InvoiceNumberGenerator::class, fn () =>\n            new InvoiceNumberGenerator(config('billing.prefix'))\n        );\n    }\n\n    public function boot(): void\n    {\n        Order::observe(OrderObserver::class);\n\n        Gate::define('issue-refund', fn (User $user) => $user->role === 'finance');\n\n        RateLimiter::for('api', fn (Request $request) =>\n            Limit::perMinute(60)->by($request->user()?->id ?: $request->ip())\n        );\n    }\n}"
+      },
+      "related": [
+        "laravel-023",
+        "laravel-001"
+      ]
+    },
+    {
+      "id": "laravel-025",
+      "order": 25,
+      "question": "What are facades and how do they work?",
+      "shortAnswer": "A facade is a class that provides a static-looking interface to an object in the service container. `Cache::get()` is forwarded to the real cache instance resolved from the container.",
+      "interviewAnswer": "Facades give a short, static-style syntax for services in the container. They are not really static: each facade class defines an accessor name, and when I call a method on it, PHP's __callStatic magic method resolves the real object from the container and calls the method on that instance. Because of that they can be swapped with fakes in tests, like Mail::fake or Queue::fake. The downside is that they hide a class's dependencies, so in larger classes I often prefer constructor injection.",
+      "answer": "How `Cache::get('key')` works:\n\n1. `Cache` extends `Illuminate\\Support\\Facades\\Facade` and defines `getFacadeAccessor()` returning `'cache'`.\n2. There is no static `get` method, so `__callStatic()` runs.\n3. It resolves `app('cache')` from the container and calls `->get('key')` on it.\n\n**Facades vs alternatives**\n\n- **Dependency injection** makes dependencies explicit in the constructor; better for classes with many collaborators.\n- **Helper functions** such as `cache()`, `view()`, `auth()` and `config()` resolve the same services.\n- **Real-time facades**: prefix an import with `Facades\\` to use any class as a facade.\n\n**Testing**: `Mail::fake()`, `Queue::fake()`, `Event::fake()`, `Storage::fake()`, `Http::fake()`, `Notification::fake()`, or `Cache::shouldReceive('get')->andReturn(...)`.\n\nA facade is different from a truly static method, which cannot be replaced at runtime.",
+      "topic": "Facades",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "facades",
+        "service-container",
+        "testing"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Simplified from the framework\nclass Cache extends Facade\n{\n    protected static function getFacadeAccessor(): string\n    {\n        return 'cache';\n    }\n}\n\n// These three are equivalent\nCache::put('rate', 83.2, now()->addHour());\ncache()->put('rate', 83.2, now()->addHour());\napp('cache')->put('rate', 83.2, now()->addHour());\n\n// In a test\nMail::fake();\n$this->post('/orders', $payload);\nMail::assertQueued(OrderConfirmed::class);"
+      },
+      "related": [
+        "laravel-023",
+        "php-015",
+        "laravel-026"
+      ]
+    },
+    {
+      "id": "laravel-026",
+      "order": 26,
+      "question": "How does dependency injection work in Laravel?",
+      "shortAnswer": "You type-hint a class or interface in a constructor or method, and the service container builds it and passes it in. Interfaces are mapped to implementations with bindings in a service provider.",
+      "interviewAnswer": "Dependency injection is a design technique where an object's dependencies are provided from outside instead of the object creating them itself. In Laravel, the service container automatically resolves many dependencies through constructor injection: I type-hint what I need and the container builds it, including nested dependencies. For controller actions there is also method injection, which is how the Request and Form Requests arrive. When I type-hint an interface, I bind it to a concrete class in a service provider.",
+      "answer": "- **Constructor injection**: for dependencies the whole class needs. Combine with constructor property promotion.\n- **Method injection**: controller actions, a job's `handle()` and a provider's `boot()` can type-hint services needed by that one method. Route parameters are passed alongside.\n- **Interfaces (contracts)**: `Illuminate\\Contracts\\*` are the framework's own interfaces. Depending on them, or on your own interfaces, keeps code decoupled.\n- **Primitive values** cannot be auto-resolved; supply them in a binding closure or with contextual binding.\n\nBenefits to mention: testability (swap in a fake), flexibility (change the implementation in one place) and explicit dependencies (the constructor shows what a class needs).\n\nWhen not to inject: value objects and models are created with `new` or through factories, not resolved from the container.",
+      "topic": "Dependency Injection",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "dependency-injection",
+        "service-container",
+        "testing"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface ExchangeRates\n{\n    public function rate(string $from, string $to): float;\n}\n\nclass PriceConverter\n{\n    public function __construct(private ExchangeRates $rates) {}\n\n    public function convert(int $amount, string $from, string $to): int\n    {\n        return (int) round($amount * $this->rates->rate($from, $to));\n    }\n}\n\n// AppServiceProvider::register()\n$this->app->bind(ExchangeRates::class, CachedExchangeRates::class);\n\n// Feature test: replace the real API\n$this->app->instance(ExchangeRates::class, new class implements ExchangeRates {\n    public function rate(string $from, string $to): float { return 2.0; }\n});"
+      },
+      "related": [
+        "php-026",
+        "laravel-023",
+        "oop-013"
+      ]
+    },
+    {
+      "id": "laravel-027",
+      "order": 27,
+      "question": "What are events, listeners and observers?",
+      "shortAnswer": "An event announces that something happened; listeners react to it. This decouples the main action from its side effects. Observers are classes that listen to a model's lifecycle events such as created and updated.",
+      "interviewAnswer": "Events and listeners implement the observer pattern. When something happens, like an order being placed, I dispatch an event, and one or more listeners handle side effects such as sending an email or updating stock. The code that places the order does not need to know about them. Listeners can be queued by implementing ShouldQueue so they do not slow down the request. Model observers group listeners for Eloquent events like creating, updated and deleted in one class.",
+      "answer": "- Create: `php artisan make:event OrderPlaced` and `make:listener SendOrderConfirmation --event=OrderPlaced`.\n- Dispatch: `OrderPlaced::dispatch($order)` or `event(new OrderPlaced($order))`.\n- Listeners in `app/Listeners` are discovered automatically by the type-hint on `handle()` (Laravel 11+); earlier versions map them in `EventServiceProvider`.\n- **Queued listeners**: implement `ShouldQueue`. Use `ShouldDispatchAfterCommit` or `afterCommit` so they do not run before the database transaction commits.\n- **Model events**: `retrieved`, `creating`, `created`, `updating`, `updated`, `saving`, `saved`, `deleting`, `deleted`, `restored`. The `-ing` events can cancel the operation by returning `false`.\n- **Observers**: `php artisan make:observer OrderObserver --model=Order`, registered with `Order::observe()` or the `#[ObservedBy]` attribute.\n\nCaveats: mass updates and deletes through the query builder do not fire model events, and too many hidden listeners make the flow hard to follow. For a single required step, calling a service directly is clearer.",
+      "topic": "Events",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "events",
+        "listeners",
+        "observers",
+        "decoupling"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class OrderPlaced\n{\n    use Dispatchable, SerializesModels;\n\n    public function __construct(public Order $order) {}\n}\n\nclass SendOrderConfirmation implements ShouldQueue\n{\n    public function handle(OrderPlaced $event): void\n    {\n        Mail::to($event->order->customer)->send(new OrderConfirmed($event->order));\n    }\n}\n\n// In the service that places the order\nDB::transaction(function () use ($data) {\n    $order = Order::create($data);\n    OrderPlaced::dispatch($order);\n});\n\n// Observer\nclass OrderObserver\n{\n    public function creating(Order $order): void\n    {\n        $order->reference ??= Str::upper(Str::random(10));\n    }\n}"
+      },
+      "related": [
+        "laravel-028",
+        "laravel-029",
+        "oop-018"
+      ]
+    },
+    {
+      "id": "laravel-028",
+      "order": 28,
+      "question": "What are queues and jobs? When would you use them?",
+      "shortAnswer": "Queues let you push slow work into the background as jobs, so the HTTP response returns quickly. A worker process picks jobs up and runs them, with retries on failure.",
+      "interviewAnswer": "A queue lets me defer time-consuming work, like sending emails, generating PDFs, calling external APIs or importing files, so the user gets a response immediately. I wrap the work in a job class that implements ShouldQueue and dispatch it. The job is stored in a backend such as the database, Redis or SQS, and a worker started with queue:work processes it. I configure retries, backoff and timeouts, and failed jobs land in the failed_jobs table where I can inspect and retry them.",
+      "answer": "**Basics**\n\n- Create: `php artisan make:job ProcessInvoice`. Dispatch: `ProcessInvoice::dispatch($invoice)`.\n- Options: `->onQueue('emails')`, `->delay(now()->addMinutes(5))`, `->afterCommit()`.\n- Run workers: `php artisan queue:work --queue=high,default --tries=3`. In production keep them alive with Supervisor or use Horizon for Redis.\n- After a deploy run `php artisan queue:restart`, because workers keep the old code in memory.\n\n**Reliability**\n\n- `$tries`, `$backoff`, `$timeout`, `retryUntil()`, and a `failed()` method for clean-up.\n- `php artisan queue:failed`, `queue:retry all`.\n- Make jobs **idempotent**: a job may run more than once.\n- `ShouldBeUnique` prevents duplicates; `WithoutOverlapping` and `RateLimited` are job middleware.\n- Pass models, not big arrays: `SerializesModels` stores only the ID and reloads the model when the job runs.\n\n**Composition**: `Bus::chain([...])` for sequential steps and `Bus::batch([...])` for parallel jobs with progress and a completion callback.\n\n`QUEUE_CONNECTION=sync` runs jobs immediately, which is useful locally but hides timing bugs.",
+      "topic": "Queues",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "queues",
+        "jobs",
+        "performance",
+        "background"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class GenerateInvoicePdf implements ShouldQueue\n{\n    use Queueable;\n\n    public int $tries = 3;\n    public int $timeout = 120;\n    public array $backoff = [10, 60, 300];\n\n    public function __construct(public Order $order) {}\n\n    public function handle(PdfRenderer $pdf): void\n    {\n        $path = $pdf->render('invoices.show', ['order' => $this->order]);\n        $this->order->update(['invoice_path' => $path]);\n    }\n\n    public function failed(Throwable $e): void\n    {\n        Log::error('Invoice generation failed', ['order' => $this->order->id, 'error' => $e->getMessage()]);\n    }\n}\n\nGenerateInvoicePdf::dispatch($order)->onQueue('documents')->afterCommit();"
+      },
+      "related": [
+        "laravel-027",
+        "laravel-036",
+        "laravel-035"
+      ]
+    },
+    {
+      "id": "laravel-029",
+      "order": 29,
+      "question": "What is the difference between Mail and Notifications?",
+      "shortAnswer": "A Mailable sends one email. A Notification is a short message that can be delivered over several channels at once: mail, database, broadcast, SMS, Slack.",
+      "interviewAnswer": "Mailables are classes that represent a single email, with a view, subject and attachments. Notifications are for short, informational messages to a user that may go out on more than one channel: the same notification can send an email, store a record in the database for an in-app bell icon, and push an SMS. The user model uses the Notifiable trait. Both can be queued by implementing ShouldQueue so sending does not block the request.",
+      "answer": "**Mail**\n\n- `php artisan make:mail OrderShipped --markdown=mail.orders.shipped`\n- `Mail::to($user)->send(new OrderShipped($order));` or `->queue(...)`, `->later(...)`.\n- Configure the driver in `.env` (`MAIL_MAILER=smtp`, `ses`, `mailgun`, `log`). Use Mailpit or the `log` driver locally.\n\n**Notifications**\n\n- `php artisan make:notification InvoicePaid`\n- `via()` returns the channels: `['mail', 'database']`. Each channel has a method: `toMail()`, `toArray()` / `toDatabase()`, `toBroadcast()`.\n- Send with `$user->notify(new InvoicePaid($invoice))` or `Notification::send($users, ...)`.\n- Database notifications: `$user->unreadNotifications`, `->markAsRead()`.\n- On-demand: `Notification::route('mail', 'ops@example.com')->notify(...)`.\n\n**Choosing**: a rich, one-off email such as a newsletter or invoice is a Mailable. An alert the user may also see in-app, or that respects per-user channel preferences, is a Notification.\n\nTesting: `Mail::fake()` and `Notification::fake()` with `assertSent` / `assertSentTo`.",
+      "topic": "Notifications",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "notifications",
+        "mail",
+        "queues"
+      ],
+      "code": {
+        "language": "php",
+        "content": "class InvoicePaid extends Notification implements ShouldQueue\n{\n    use Queueable;\n\n    public function __construct(public Invoice $invoice) {}\n\n    public function via(object $notifiable): array\n    {\n        return $notifiable->prefers_sms ? ['vonage', 'database'] : ['mail', 'database'];\n    }\n\n    public function toMail(object $notifiable): MailMessage\n    {\n        return (new MailMessage)\n            ->subject(\"Invoice {$this->invoice->number} paid\")\n            ->line('We have received your payment.')\n            ->action('View invoice', route('invoices.show', $this->invoice));\n    }\n\n    public function toArray(object $notifiable): array\n    {\n        return ['invoice_id' => $this->invoice->id, 'amount' => $this->invoice->total];\n    }\n}\n\n$user->notify(new InvoicePaid($invoice));"
+      },
+      "related": [
+        "laravel-028",
+        "laravel-027"
+      ]
+    },
+    {
+      "id": "laravel-030",
+      "order": 30,
+      "question": "How does caching work in Laravel? What would you cache?",
+      "shortAnswer": "Laravel has one cache API over several stores (Redis, Memcached, database, file). You cache results that are expensive to compute and change rarely, with an expiry time, and clear them when the data changes.",
+      "interviewAnswer": "Laravel provides a unified cache API with drivers for Redis, Memcached, the database and files. The method I use most is remember: it returns the cached value if present, otherwise runs a closure, stores the result for a given time and returns it. I cache expensive queries, aggregated dashboard numbers, settings and responses from external APIs. The hard part is invalidation, so I pick sensible expiry times and forget the key when the underlying data changes, usually in a model observer.",
+      "answer": "**Data cache**\n\n- `Cache::remember($key, $ttl, fn () => ...)`, `rememberForever`, `get`, `put`, `add`, `forget`, `increment`, `pull`.\n- `Cache::flexible()` (recent versions) serves a stale value while refreshing in the background.\n- Build keys from everything that changes the result: `\"products:category:{$id}:page:{$page}\"`.\n- **Atomic locks**: `Cache::lock('report', 10)->block(5, fn () => ...)` prevents two processes doing the same work and stops a cache stampede.\n- Tags (`Cache::tags(['products'])->flush()`) are available on Redis and Memcached.\n\n**Framework caches for production**: `config:cache`, `route:cache`, `view:cache`, `event:cache`, or all at once with `php artisan optimize`. After `config:cache`, `env()` returns `null` outside config files, so read values with `config()`.\n\n**Also**: OPcache for compiled PHP, HTTP caching headers and a CDN for assets.\n\nDo not cache per-user sensitive data under a shared key, and do not cache something that is already a fast indexed lookup.",
+      "topic": "Caching",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "caching",
+        "redis",
+        "performance"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "public function topProducts(int $categoryId)\n{\n    return Cache::remember(\"products:top:{$categoryId}\", now()->addMinutes(30), function () use ($categoryId) {\n        return Product::where('category_id', $categoryId)\n            ->withCount('orders')\n            ->orderByDesc('orders_count')\n            ->take(10)\n            ->get();\n    });\n}\n\n// Invalidate when data changes\nclass ProductObserver\n{\n    public function saved(Product $product): void\n    {\n        Cache::forget(\"products:top:{$product->category_id}\");\n    }\n}\n\n// Prevent duplicate work\nCache::lock('nightly-report', 600)->get(fn () => $this->buildReport());"
+      },
+      "related": [
+        "laravel-035",
+        "laravel-039"
+      ]
+    },
+    {
+      "id": "laravel-031",
+      "order": 31,
+      "question": "How does file storage work in Laravel?",
+      "shortAnswer": "The `Storage` facade gives one API over \"disks\": local folders, a public folder linked into the web root, or cloud storage such as S3. You can switch disks without changing code.",
+      "interviewAnswer": "Laravel's filesystem is an abstraction over Flysystem. I configure disks in config/filesystems.php: local for private files, public for files served through the storage symlink, and s3 for cloud storage. Uploaded files are validated and then stored with the store method, which generates a unique name. Because the API is the same for every disk, moving from local to S3 is a configuration change. For private files I return a download response or a temporary signed URL instead of a public link.",
+      "answer": "- **Disks**: `local` → `storage/app/private`, `public` → `storage/app/public`, `s3`. Choose with `Storage::disk('s3')`.\n- `php artisan storage:link` creates `public/storage` → `storage/app/public`.\n- **Uploads**: `$request->file('avatar')->store('avatars', 'public')` returns the path; `storeAs()` sets the name.\n- **Reading and writing**: `Storage::put`, `get`, `exists`, `delete`, `copy`, `move`, `files`.\n- **URLs**: `Storage::url($path)` for public files; `Storage::temporaryUrl($path, now()->addMinutes(5))` for private S3 objects.\n- **Downloads**: `return Storage::download($path, 'invoice.pdf');`\n- **Large files**: use streams (`putFile`, `readStream`) so the file is not held in memory.\n\nValidate before storing (`file`, `mimes`, `max`), store the path in the database (not the full URL), and delete the file when the record is deleted.\n\nTesting: `Storage::fake('public')` and `UploadedFile::fake()->image('a.jpg')`.",
+      "topic": "Storage",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "storage",
+        "files",
+        "uploads",
+        "s3"
+      ],
+      "code": [
+        {
+          "language": "php",
+          "content": "public function update(Request $request)\n{\n    $request->validate([\n        'avatar' => ['required', 'image', 'mimes:jpg,png,webp', 'max:2048'],\n    ]);\n\n    $user = $request->user();\n\n    if ($user->avatar_path) {\n        Storage::disk('public')->delete($user->avatar_path);\n    }\n\n    $path = $request->file('avatar')->store('avatars', 'public');\n    $user->update(['avatar_path' => $path]);\n\n    return back()->with('status', 'Photo updated.');\n}\n\n// Private file on S3: a link that expires\nreturn redirect(Storage::disk('s3')->temporaryUrl($invoice->path, now()->addMinutes(5)));"
+        },
+        {
+          "language": "html",
+          "content": "<img src=\"{{ Storage::disk('public')->url($user->avatar_path) }}\" alt=\"{{ $user->name }}\">",
+          "title": "Blade"
+        }
+      ],
+      "related": [
+        "php-024",
+        "laravel-008"
+      ]
+    },
+    {
+      "id": "laravel-032",
+      "order": 32,
+      "question": "How do you use database transactions in Laravel?",
+      "shortAnswer": "Wrap related writes in `DB::transaction()`. If any statement throws, everything is rolled back; otherwise it is committed. Use `lockForUpdate()` when concurrent requests may change the same rows.",
+      "interviewAnswer": "A transaction makes a group of queries succeed or fail together. In Laravel I pass a closure to DB::transaction; if an exception is thrown inside it, the transaction is rolled back automatically, otherwise it commits. I use it whenever one business action touches several tables, like creating an order, its items and reducing stock. For concurrent updates to the same row I add a pessimistic lock with lockForUpdate, and I dispatch jobs and emails after commit so they never act on data that was rolled back.",
+      "answer": "- `DB::transaction(fn () => ..., attempts: 3)` retries automatically on a deadlock.\n- Manual control: `DB::beginTransaction()`, `DB::commit()`, `DB::rollBack()` inside try/catch.\n- Nested transactions use savepoints.\n- **Locks**: `->lockForUpdate()` blocks other transactions from reading-for-update or writing the selected rows until commit; `->sharedLock()` allows reads but not writes.\n- **Atomic changes without reading first**: `Product::whereKey($id)->where('stock', '>=', $qty)->decrement('stock', $qty)` and check the affected row count.\n- **After commit**: `dispatch(...)->afterCommit()`, `DB::afterCommit(fn () => ...)`, or `ShouldDispatchAfterCommit` on events.\n\nKeep transactions short. Do not call external APIs or send email inside one: a slow call holds locks, and an API call cannot be rolled back.\n\nTransactions need InnoDB tables in MySQL. Schema changes (DDL) cause an implicit commit in MySQL.",
+      "topic": "Eloquent",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "database",
+        "transactions",
+        "locking",
+        "concurrency"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "public function place(User $user, array $items): Order\n{\n    return DB::transaction(function () use ($user, $items) {\n        $order = $user->orders()->create(['status' => 'pending', 'total' => 0]);\n        $total = 0;\n\n        foreach ($items as $item) {\n            $product = Product::whereKey($item['product_id'])->lockForUpdate()->firstOrFail();\n\n            if ($product->stock < $item['qty']) {\n                throw new OutOfStock($product);   // rolls everything back\n            }\n\n            $product->decrement('stock', $item['qty']);\n            $order->items()->create(['product_id' => $product->id, 'qty' => $item['qty'], 'price' => $product->price]);\n            $total += $product->price * $item['qty'];\n        }\n\n        $order->update(['total' => $total]);\n        OrderPlaced::dispatch($order);   // listeners should run after commit\n\n        return $order;\n    }, attempts: 3);\n}"
+      },
+      "related": [
+        "mysql-014",
+        "mysql-015",
+        "laravel-027"
+      ]
+    },
+    {
+      "id": "laravel-033",
+      "order": 33,
+      "question": "What is the repository pattern, and should you use it in Laravel?",
+      "shortAnswer": "A repository is a class that hides data access behind an interface, so business code asks for \"active customers\" without knowing about Eloquent. It adds testability and a swap point, but in Laravel it often duplicates what Eloquent already gives.",
+      "interviewAnswer": "The repository pattern puts a layer between business logic and data access. The service depends on an interface like OrderRepository, and an Eloquent implementation is bound in the container. It centralises queries and makes it possible to swap the data source or mock it in tests. My honest view is that Eloquent is already an abstraction over the database, so wrapping every model in a repository adds boilerplate. I use repositories or query classes where queries are complex or reused, or when data comes from an external API.",
+      "answer": "**Benefits**\n\n- Complex queries have one home and one name.\n- Business code depends on an interface (dependency inversion).\n- Tests can use an in-memory fake.\n- Caching can be added with a decorator without touching callers.\n\n**Costs in Laravel**\n\n- Eloquent models are Active Record: they leak through the interface as return types, so the abstraction is rarely complete.\n- Thin repositories that only forward `find`, `all` and `create` add files without value.\n- Swapping the database engine almost never happens.\n\n**Pragmatic alternatives**: local scopes and custom query builders for reusable conditions, **action** or **service** classes for business operations, and dedicated query objects for reports.\n\nA good interview answer shows you know the pattern, can implement it, and can argue when it earns its place.",
+      "topic": "Repository Pattern",
+      "difficulty": "Advanced",
+      "type": "Architecture",
+      "tags": [
+        "laravel",
+        "repository-pattern",
+        "design-patterns",
+        "architecture"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface OrderRepository\n{\n    public function findForUser(int $userId, int $orderId): ?Order;\n    public function unpaidOlderThan(CarbonInterface $date): Collection;\n}\n\nfinal class EloquentOrderRepository implements OrderRepository\n{\n    public function findForUser(int $userId, int $orderId): ?Order\n    {\n        return Order::where('user_id', $userId)->with('items')->find($orderId);\n    }\n\n    public function unpaidOlderThan(CarbonInterface $date): Collection\n    {\n        return Order::where('status', 'pending')->where('created_at', '<', $date)->get();\n    }\n}\n\n// AppServiceProvider::register()\n$this->app->bind(OrderRepository::class, EloquentOrderRepository::class);\n\n// Consumer\nclass CancelStaleOrders\n{\n    public function __construct(private OrderRepository $orders) {}\n\n    public function __invoke(): int\n    {\n        return $this->orders->unpaidOlderThan(now()->subDays(2))->each->cancel()->count();\n    }\n}"
+      },
+      "related": [
+        "laravel-038",
+        "laravel-026",
+        "oop-014"
+      ]
+    },
+    {
+      "id": "laravel-034",
+      "order": 34,
+      "question": "How would you secure a Laravel API?",
+      "shortAnswer": "Authenticate every request (Sanctum tokens), authorize every action (policies), validate all input, rate limit, use HTTPS, expose only intended fields, and keep secrets and debug output out of production.",
+      "interviewAnswer": "I think in layers. Transport: HTTPS everywhere. Authentication: Sanctum tokens with expiry and limited abilities. Authorization: policies on every endpoint so users can only reach their own records. Input: Form Request validation and never passing raw request data to models. Output: API Resources so internal fields are not leaked. Abuse: rate limiting, especially on login. Configuration: APP_DEBUG off, secrets in the environment, restrictive CORS and dependencies kept up to date. Eloquent's bindings cover SQL injection as long as raw queries use bindings too.",
+      "answer": "**Authentication and sessions**\n\n- `auth:sanctum` on all private routes; short-lived tokens with the minimum abilities; revoke on logout and password change.\n- Hash passwords with `Hash::make()`; throttle login and password reset.\n\n**Authorization**\n\n- A policy check in every action. The most common real-world API flaw is IDOR: `GET /orders/124` returning someone else's order. Scope queries to the user: `$request->user()->orders()->findOrFail($id)`.\n\n**Input and output**\n\n- Form Requests; `$request->validated()`; correct `$fillable`.\n- Bindings in any raw SQL; whitelist sortable and filterable columns.\n- API Resources; `$hidden` on models for password and tokens.\n- Validate uploads and store them off the web root.\n\n**Abuse and transport**\n\n- `RateLimiter::for('api', ...)` with stricter limits on auth endpoints.\n- HTTPS with HSTS; CORS limited to known origins.\n- CSRF protection applies to cookie-based (SPA) authentication; token-only APIs do not need it.\n\n**Operations**\n\n- `APP_DEBUG=false`, generic error messages, no stack traces in responses.\n- Secrets in `.env`, never committed. `composer audit` in CI.\n- Log authentication failures and sensitive actions, without logging secrets.",
+      "topic": "Laravel Security",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "laravel",
+        "security",
+        "api",
+        "sanctum",
+        "authorization",
+        "rate-limiting"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// routes/api.php\nRoute::middleware(['auth:sanctum', 'throttle:api'])->group(function () {\n    Route::apiResource('orders', OrderController::class);\n});\n\nRoute::post('/login', LoginController::class)->middleware('throttle:5,1');\n\n// Controller: scope to the user AND authorize\npublic function show(Request $request, Order $order)\n{\n    Gate::authorize('view', $order);\n\n    return new OrderResource($order->load('items'));\n}\n\npublic function index(Request $request)\n{\n    $sort = in_array($request->query('sort'), ['created_at', 'total'], true)\n        ? $request->query('sort')\n        : 'created_at';\n\n    return OrderResource::collection(\n        $request->user()->orders()->orderByDesc($sort)->paginate(20)\n    );\n}"
+      },
+      "related": [
+        "api-010",
+        "php-018",
+        "laravel-020",
+        "laravel-021",
+        "laravel-017"
+      ]
+    },
+    {
+      "id": "laravel-035",
+      "order": 35,
+      "question": "Your Laravel API is slow. How would you investigate it?",
+      "shortAnswer": "Measure first: find the slow endpoint and see where the time goes (queries, PHP code, external calls). Then fix the biggest cause, which is usually N+1 queries, missing indexes, loading too much data, or synchronous work that belongs in a queue.",
+      "interviewAnswer": "I would not guess; I would measure. First I identify which endpoints are slow from logs or an APM tool. Then I profile one request with Telescope or Debugbar to see the number and duration of queries, and whether time is spent in the database, in PHP, or waiting on an external service. The usual causes are N+1 queries, missing indexes, selecting far more rows or columns than needed, no pagination, and slow tasks like email or third-party calls running inside the request. I fix the largest one, measure again, and only then consider caching.",
+      "answer": "**1. Find where the time goes**\n\n- Telescope, Debugbar, Clockwork or Pulse locally; an APM tool or the slow query log in production.\n- `DB::listen()` or `DB::enableQueryLog()` to count queries for one request.\n- Compare total time with query time: if queries are fast, the problem is PHP work or an external call.\n\n**2. Database**\n\n- N+1: add `with()`, `withCount()`.\n- Run `EXPLAIN` on slow queries; add indexes for `WHERE`, `JOIN` and `ORDER BY` columns.\n- Select only needed columns; paginate; avoid `->get()` followed by filtering in PHP.\n- Use `chunkById()` or `cursor()` for large sets; aggregates in SQL, not in collections.\n\n**3. Application**\n\n- Move email, PDFs, webhooks and third-party API calls to queues.\n- Cache expensive, rarely changing results.\n- Remove heavy work from accessors and resources that runs per row.\n- Add timeouts to HTTP clients so one slow dependency cannot stall everything.\n\n**4. Infrastructure**\n\n- `php artisan optimize`, OPcache enabled, `composer install --no-dev -o`.\n- Redis for cache, session and queue instead of file or database drivers.\n- Response compression, a CDN for assets, and enough PHP-FPM workers.\n\n**5. Verify**: measure again and add a regression test or a query-count assertion.",
+      "topic": "Performance",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "laravel",
+        "performance",
+        "debugging",
+        "n-plus-one",
+        "optimization"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Quick look at what one request does (local only)\nDB::listen(function (QueryExecuted $query) {\n    if ($query->time > 100) {\n        Log::warning('Slow query', ['sql' => $query->sql, 'ms' => $query->time, 'bindings' => $query->bindings]);\n    }\n});\n\n// Before: N+1, all columns, no pagination, counting in PHP\n$users = User::all();\nforeach ($users as $user) { $user->orders->count(); }\n\n// After\n$users = User::query()\n    ->select(['id', 'name', 'email'])\n    ->withCount('orders')\n    ->orderBy('name')\n    ->paginate(25);"
+      },
+      "related": [
+        "laravel-014",
+        "mysql-020",
+        "laravel-030",
+        "laravel-028",
+        "mysql-019"
+      ]
+    },
+    {
+      "id": "laravel-036",
+      "order": 36,
+      "question": "How would you handle a large CSV import, for example 500,000 rows?",
+      "shortAnswer": "Do not process it in the request. Store the upload, dispatch a queued job, read the file as a stream, validate and insert in batches, and report progress and row errors to the user.",
+      "interviewAnswer": "I would store the uploaded file and immediately return a response, then process it in the background with a queued job. The job reads the file as a stream, never loading it all into memory, for example with a lazy collection or generator. Rows are validated and written in chunks of around a thousand using bulk insert or upsert instead of one query per row. For very large files I split the work into batched jobs so they run in parallel and can be retried. I record progress and failed rows so the user gets a report.",
+      "answer": "**Why not in the request**: PHP's execution time and memory limits, web server timeouts, and a blocked user.\n\n**Steps**\n\n1. Validate the upload (type, size) and store it.\n2. Create an `imports` record (status, total, processed, failed) and dispatch a job.\n3. Read lazily: `LazyCollection`, `SplFileObject` or `fgetcsv` in a generator.\n4. Validate each row; collect failures with row numbers in an errors file or table.\n5. Write in chunks with `insert()` or `upsert()`; wrap each chunk in a transaction.\n6. Update progress; notify the user when done.\n\n**Performance details**\n\n- Bulk writes skip model events and timestamps, so set `created_at` yourself.\n- Disable the query log; avoid loading related models per row (preload lookup maps such as `category name → id`).\n- Make it idempotent with a unique key and `upsert`, so a retry does not duplicate rows.\n- For millions of rows consider MySQL's `LOAD DATA INFILE` into a staging table, then validate and merge with SQL.\n\nPackages such as Laravel Excel provide chunk reading and queued imports out of the box.",
+      "topic": "Queues",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "laravel",
+        "queues",
+        "csv",
+        "import",
+        "performance",
+        "scalability"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class ImportProducts implements ShouldQueue\n{\n    use Queueable;\n\n    public int $timeout = 1800;\n\n    public function __construct(public Import $import) {}\n\n    public function handle(): void\n    {\n        LazyCollection::make(function () {\n            $handle = fopen(Storage::path($this->import->path), 'r');\n            $header = fgetcsv($handle);\n            while (($row = fgetcsv($handle)) !== false) {\n                yield array_combine($header, $row);\n            }\n            fclose($handle);\n        })\n        ->chunk(1000)\n        ->each(function (LazyCollection $chunk) {\n            $rows = $chunk\n                ->filter(fn ($row) => filled($row['sku']) && is_numeric($row['price']))\n                ->map(fn ($row) => [\n                    'sku'        => $row['sku'],\n                    'name'       => $row['name'],\n                    'price'      => (int) round($row['price'] * 100),\n                    'updated_at' => now(),\n                    'created_at' => now(),\n                ])\n                ->all();\n\n            Product::upsert($rows, uniqueBy: ['sku'], update: ['name', 'price', 'updated_at']);\n\n            $this->import->increment('processed', $chunk->count());\n        });\n\n        $this->import->update(['status' => 'finished']);\n    }\n}"
+      },
+      "related": [
+        "laravel-028",
+        "laravel-037",
+        "php-025",
+        "laravel-032"
+      ]
+    },
+    {
+      "id": "laravel-037",
+      "order": 37,
+      "question": "What is the difference between chunk(), chunkById(), cursor() and lazy()?",
+      "shortAnswer": "All four process large result sets without loading every row at once. `chunk` and `chunkById` run several limited queries; `cursor` runs one query and hydrates one model at a time; `lazy` chunks behind the scenes but gives you a single flat collection.",
+      "interviewAnswer": "They all keep memory low on big tables. chunk fetches pages with limit and offset and passes each page to a callback. chunkById pages by primary key instead of offset, which is faster on large tables and safe when I update the rows I am iterating. cursor runs a single query and yields one model at a time through a generator, so PHP memory is low, but relationships cannot be eager loaded. lazy and lazyById combine chunked queries with a lazy collection, so I get a simple loop and eager loading still works.",
+      "answer": "| Method | Queries | Eager loading | Safe when updating the filtered column |\n|---|---|---|---|\n| `chunk(1000, fn)` | many, `LIMIT/OFFSET` | yes | no (rows shift between pages) |\n| `chunkById(1000, fn)` | many, `WHERE id > ?` | yes | yes |\n| `cursor()` | one | no | yes |\n| `lazy(1000)` / `lazyById(1000)` | many | yes | `lazyById`: yes |\n\n- With `chunk`, updating a column used in the `where` clause makes rows skip, because the offset moves. Use `chunkById`.\n- `OFFSET` gets slower the deeper it goes; keyset paging by ID does not.\n- `cursor()` keeps PHP memory low, but with buffered queries the MySQL driver still holds the full result set.\n- For user-facing lists use `paginate()`, `simplePaginate()` or `cursorPaginate()`, not these.",
+      "topic": "Eloquent",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "laravel",
+        "eloquent",
+        "chunking",
+        "memory",
+        "performance"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "php",
+        "content": "// Updating rows while iterating: chunkById is the safe choice\nUser::where('newsletter', true)\n    ->chunkById(1000, function (Collection $users) {\n        foreach ($users as $user) {\n            SendNewsletter::dispatch($user);\n        }\n    });\n\n// One query, one model in memory at a time\nforeach (Order::where('status', 'paid')->cursor() as $order) {\n    $export->addRow($order->only(['id', 'total']));\n}\n\n// Lazy collection with eager loading\nOrder::with('customer')->lazyById(500)->each(function (Order $order) {\n    // ...\n});"
+      },
+      "related": [
+        "laravel-036",
+        "php-025",
+        "laravel-035"
+      ]
+    },
+    {
+      "id": "laravel-038",
+      "order": 38,
+      "question": "How would you structure a large Laravel application?",
+      "shortAnswer": "Keep controllers thin and move business logic into action or service classes, use Form Requests, policies, resources, events and jobs for their specific concerns, and group code by domain once the default folders get crowded.",
+      "interviewAnswer": "I start from Laravel's conventions and add layers only where they help. Controllers stay thin: a Form Request validates, a policy authorizes, an action or service class performs the business operation, and an API Resource formats the result. Side effects go into events, listeners and queued jobs. Reusable query logic lives in scopes or query classes. When the app grows, I group code by business domain, such as Billing, Orders and Catalog, instead of only by technical type, and enforce boundaries with interfaces and tests.",
+      "answer": "**A request's path through the layers**\n\n1. Route → middleware\n2. Controller (orchestration only)\n3. Form Request (validation, authorization)\n4. Action / Service (one business use case, wrapped in a transaction)\n5. Models, scopes, query objects (persistence)\n6. Events → listeners → jobs (side effects)\n7. Resource (response shape)\n\n**Guidelines**\n\n- One action class per use case (`PlaceOrder`, `RefundPayment`) is easy to find, test and reuse from controllers, commands and jobs.\n- DTOs or validated arrays between layers instead of passing the `Request` deep into services.\n- Enums for statuses, value objects for money and dates.\n- Interfaces at the edges that vary: payment gateways, SMS, storage, external APIs.\n- Domain folders: `app/Domain/Orders/{Actions,Models,Events,Policies}` or a modular `src/` structure.\n- Config in `config/*.php`, never `env()` in code.\n- Feature tests on every endpoint, unit tests on actions; static analysis (Larastan) and Pint in CI.\n\nAvoid over-engineering: repositories for every model, deep inheritance, and abstractions without a second implementation make a codebase harder, not easier.",
+      "topic": "Design Patterns",
+      "difficulty": "Advanced",
+      "type": "Architecture",
+      "tags": [
+        "laravel",
+        "architecture",
+        "design-patterns",
+        "services",
+        "actions"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Controller: orchestration only\nclass OrderController extends Controller\n{\n    public function store(StoreOrderRequest $request, PlaceOrder $placeOrder)\n    {\n        $order = $placeOrder->handle($request->user(), OrderData::from($request->validated()));\n\n        return (new OrderResource($order))->response()->setStatusCode(201);\n    }\n}\n\n// Action: one business use case\nfinal class PlaceOrder\n{\n    public function __construct(private PaymentGateway $payments, private StockService $stock) {}\n\n    public function handle(User $user, OrderData $data): Order\n    {\n        return DB::transaction(function () use ($user, $data) {\n            $this->stock->reserve($data->items);\n            $order = $user->orders()->create($data->toArray());\n            OrderPlaced::dispatch($order);\n\n            return $order;\n        });\n    }\n}"
+      },
+      "related": [
+        "laravel-033",
+        "laravel-002",
+        "oop-010",
+        "laravel-026"
+      ]
+    },
+    {
+      "id": "laravel-039",
+      "order": 39,
+      "question": "What steps do you take when deploying a Laravel application to production?",
+      "shortAnswer": "Install dependencies without dev packages, set the production environment, run migrations, build assets, cache config, routes and views, restart queue workers, and make sure the web root is `public/` with debug off.",
+      "interviewAnswer": "My deployment checklist: pull the code, run composer install with no-dev and an optimised autoloader, build front-end assets, and run migrations with the force flag. Then I cache configuration, routes, views and events with artisan optimize, and restart queue workers so they load the new code. The environment must have APP_ENV set to production, APP_DEBUG false and a secure APP_KEY. The web server's document root points at the public folder, storage and bootstrap/cache are writable, and the scheduler cron entry and Supervisor for queues are configured.",
+      "answer": "**Each deploy**\n\n1. `php artisan down` (optional, with `--secret` for bypass)\n2. `git pull` or upload the release\n3. `composer install --no-dev --optimize-autoloader`\n4. `npm ci && npm run build`\n5. `php artisan migrate --force`\n6. `php artisan optimize` (config, routes, views, events)\n7. `php artisan queue:restart` (and `horizon:terminate` if using Horizon)\n8. `php artisan up`\n\n**One-time server setup**\n\n- Document root is `/public`; nothing else is web accessible.\n- `.env` with `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, database, cache, queue and mail settings.\n- `php artisan storage:link`; `storage/` and `bootstrap/cache/` writable.\n- Cron: `* * * * * php artisan schedule:run`.\n- Supervisor (or a managed platform) keeps `queue:work` running.\n- HTTPS, OPcache, Redis for cache, session and queue.\n\n**Good practice**: zero-downtime releases with symlinked release folders, backward-compatible migrations, a health check route (`/up`), error tracking, and automated tests in CI before deploy.",
+      "topic": "Deployment",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "deployment",
+        "production",
+        "optimization",
+        "devops"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "#!/usr/bin/env bash\nset -e\n\ncd /var/www/app\n\nphp artisan down --retry=15 || true\n\ngit pull origin main\ncomposer install --no-dev --prefer-dist --optimize-autoloader\nnpm ci && npm run build\n\nphp artisan migrate --force\nphp artisan optimize\nphp artisan queue:restart\n\nphp artisan up"
+      },
+      "related": [
+        "laravel-030",
+        "laravel-028",
+        "git-010"
+      ]
+    },
+    {
+      "id": "laravel-040",
+      "order": 40,
+      "question": "How do you debug a problem in a Laravel application?",
+      "shortAnswer": "Read the exception and the log first, reproduce the problem, then inspect state with `dd()`, `dump()`, the query log, Telescope or Debugbar, and Tinker. Fix the cause and add a test.",
+      "interviewAnswer": "I start with the error message and stack trace, and storage/logs/laravel.log if there is no screen output. Then I reproduce the issue with the smallest input I can. To inspect values I use dd, dump or Log calls, and for database problems I look at the generated SQL with toSql or the query log. Telescope and Debugbar show requests, queries, jobs and mail in one place, and Tinker lets me try code against real data. Once I find the cause, I write a failing test, fix it and confirm the test passes.",
+      "answer": "**Tools**\n\n- `dd($value)`, `dump()`, `ddd`, `$query->dd()`, `$query->toRawSql()`, `$collection->dump()`.\n- `Log::debug('context', [...])`; channels and levels in `config/logging.php`; `php artisan pail` to tail logs.\n- `php artisan tinker` for an interactive shell.\n- Telescope, Debugbar, Clockwork; Xdebug for step debugging; Ray if the team uses it.\n- `php artisan route:list`, `config:show`, `about`, `model:show` to check what the framework sees.\n\n**Common causes**\n\n- Stale caches: `php artisan optimize:clear`.\n- `.env` changes not picked up because config is cached.\n- 419: missing or expired CSRF token. 403: policy or `authorize()` in a Form Request. 404 on a model route: binding did not match. 405: wrong HTTP verb. 422: validation failed. 500: read the log.\n- Queued job using old code: restart workers.\n- Wrong `$fillable`, so attributes are silently not saved.\n- Permissions on `storage/` and `bootstrap/cache/`.\n\n**Exceptions**: report and render behaviour is customised in `bootstrap/app.php` (`withExceptions`) or `app/Exceptions/Handler.php` in older versions. Never enable `APP_DEBUG` in production; use an error tracker.",
+      "topic": "Debugging",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "laravel",
+        "debugging",
+        "logging",
+        "telescope",
+        "errors"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// See the SQL Eloquent will run\nOrder::where('status', 'paid')->whereHas('items')->dd();\n\n// Count queries for a block of code\nDB::enableQueryLog();\n$orders = Order::with('items')->take(10)->get();\ndump(count(DB::getQueryLog()));\n\n// Structured log with context\nLog::warning('Payment webhook rejected', [\n    'order_id' => $order->id,\n    'reason'   => $e->getMessage(),\n]);\n\n// Clear every cache when behaviour makes no sense\n// php artisan optimize:clear"
+      },
+      "related": [
+        "php-016",
+        "laravel-035",
+        "api-004"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "skill": "git",
+  "questions": [
+    {
+      "id": "git-001",
+      "order": 1,
+      "question": "What is Git, and how is it different from GitHub? Explain the working directory, staging area and repository.",
+      "shortAnswer": "Git is a distributed version control system that runs on your machine. GitHub is a hosting service for Git repositories with collaboration features. Changes move from the working directory to the staging area with `git add`, and into the repository with `git commit`.",
+      "interviewAnswer": "Git is a distributed version control system: every developer has the full history locally and can commit, branch and merge offline. GitHub is a cloud platform that hosts Git repositories and adds pull requests, code review, issues and CI. Git has three areas. The working directory holds the files I am editing. The staging area, or index, holds the changes I have selected for the next commit with git add. The repository stores committed snapshots. git push then sends commits to a remote like GitHub.",
+      "answer": "**Flow**: working directory → `git add` → staging area → `git commit` → local repository → `git push` → remote.\n\n**File states**: untracked, modified, staged, committed.\n\n**Everyday commands**\n\n- `git status`: what changed and what is staged.\n- `git diff` (unstaged) and `git diff --staged`.\n- `git add -p`: stage selected hunks, so each commit is one logical change.\n- `git log --oneline --graph`: history.\n- `git restore <file>`: discard working changes. `git restore --staged <file>`: unstage.\n\n**Why a staging area**: it lets you build a commit from part of your changes instead of everything you touched.\n\n**Distributed** means there is no single point of failure and most operations are local and fast. Alternatives to GitHub: GitLab, Bitbucket, or a self-hosted server.",
+      "topic": "Git Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "github",
+        "basics",
+        "staging"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "git init                      # or: git clone <url>\ngit status\ngit add app/Models/Order.php  # stage one file\ngit add -p                    # stage selected hunks\ngit commit -m \"Add order status enum\"\ngit log --oneline -5\ngit remote add origin git@github.com:me/shop.git\ngit push -u origin main"
+      },
+      "related": [
+        "git-002",
+        "git-003"
+      ]
+    },
+    {
+      "id": "git-002",
+      "order": 2,
+      "question": "What makes a good commit? How do you change the last commit?",
+      "shortAnswer": "A good commit contains one logical change and a clear message in the imperative mood. `git commit --amend` rewrites the last commit; only do that before it is pushed.",
+      "interviewAnswer": "A good commit is small and focused on one logical change, so it is easy to review and to revert. The message has a short summary line in the imperative, like \"Add order refund endpoint\", and a body explaining why when it is not obvious. To fix the last commit, whether the message or a forgotten file, I use git commit --amend. That creates a new commit hash, so I only amend commits that have not been pushed to a shared branch.",
+      "answer": "**Message format**\n\n- Summary of about 50 characters, imperative mood, no trailing period.\n- Blank line, then a body explaining what and why (not how).\n- Reference the ticket: `Refs #214`.\n- Many teams use Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`.\n\n**Amending**\n\n- `git commit --amend -m \"New message\"`: change the message.\n- `git add forgotten.php && git commit --amend --no-edit`: add a file.\n- Already pushed to your own feature branch: `git push --force-with-lease`.\n- Already on a shared branch: do not amend; make a new commit.\n\n**What not to commit**: secrets and `.env`, `vendor/` and `node_modules/`, build output, IDE settings, large binaries.\n\n`git commit -a` stages all tracked, modified files but not new ones.",
+      "topic": "Commit",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "git",
+        "commit",
+        "amend",
+        "best-practices"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "git commit -m \"Fix N+1 query on orders index\" -m \"Eager load customer and item count. Cuts queries from 101 to 3.\"\n\n# Forgot a file\ngit add tests/Feature/OrderIndexTest.php\ngit commit --amend --no-edit\n\n# Reword\ngit commit --amend -m \"Fix N+1 queries on the orders index\"\n\n# Only for your own, already pushed feature branch\ngit push --force-with-lease"
+      },
+      "related": [
+        "git-001",
+        "git-006"
+      ]
+    },
+    {
+      "id": "git-003",
+      "order": 3,
+      "question": "What is a branch, and how do you create and switch branches?",
+      "shortAnswer": "A branch is a movable pointer to a commit, which lets you develop a feature in isolation. Create and switch with `git switch -c name` (or `git checkout -b name`).",
+      "interviewAnswer": "A branch in Git is just a lightweight pointer to a commit, so creating one is instant. It lets me work on a feature or fix without affecting the main branch. HEAD points to the branch I am currently on. I create and switch with git switch -c, or the older git checkout -b, push it with the upstream flag, and delete it after it is merged. Because branches are cheap, the normal practice is one branch per task.",
+      "answer": "- `git branch`: list local branches. `-a` includes remote ones. `-vv` shows upstream tracking.\n- `git switch -c feature/refunds`: create and switch.\n- `git switch main`: switch. `git switch -` goes back to the previous branch.\n- `git push -u origin feature/refunds`: publish and set upstream.\n- `git branch -d name`: delete if merged. `-D` forces.\n- `git push origin --delete name`: delete on the remote.\n- `git branch -m new-name`: rename.\n\n**HEAD** is a pointer to the current branch. **Detached HEAD** means HEAD points directly at a commit (for example after checking out a tag); commits made there are not on any branch until you create one.\n\n**Remote-tracking branches** such as `origin/main` are your local record of where the remote branch was at the last fetch.\n\nNaming conventions: `feature/…`, `fix/…`, `hotfix/…`, often with the ticket number.",
+      "topic": "Branch",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "branch",
+        "head",
+        "workflow"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "git switch main\ngit pull\ngit switch -c feature/order-refunds\n\n# ...commit work...\ngit push -u origin feature/order-refunds\n\n# After the pull request is merged\ngit switch main\ngit pull\ngit branch -d feature/order-refunds"
+      },
+      "related": [
+        "git-004",
+        "git-010"
+      ]
+    },
+    {
+      "id": "git-004",
+      "order": 4,
+      "question": "What is the difference between git merge and git rebase?",
+      "shortAnswer": "Merge joins two branches with a merge commit and keeps history as it happened. Rebase replays your commits on top of another branch, giving a straight history but new commit hashes.",
+      "interviewAnswer": "Both bring changes from one branch into another. Merge creates a merge commit that ties the two histories together; it is non-destructive and shows exactly what happened. Rebase moves my branch's commits so they start from the tip of the target branch, which rewrites them as new commits and gives a clean, linear history. The golden rule is never to rebase commits that others have already pulled, because rewriting shared history causes problems. I rebase my local feature branch onto main to stay up to date, and merge through a pull request.",
+      "answer": "| | Merge | Rebase |\n|---|---|---|\n| History | Preserved, with a merge commit | Rewritten, linear |\n| Commit hashes | Unchanged | New |\n| Conflicts | Resolved once | Possibly once per replayed commit |\n| Safe on shared branches | Yes | No |\n\n- **Fast-forward merge**: if the target has no new commits, Git just moves the pointer. `--no-ff` forces a merge commit.\n- **Squash merge** (`git merge --squash` or the GitHub button) combines the branch into one commit on main.\n- **Interactive rebase** (`git rebase -i HEAD~4`) reorders, squashes, rewords or drops commits before review.\n- During a rebase: fix conflicts, `git add`, `git rebase --continue`; `--abort` returns to the starting point.\n- After rebasing a pushed branch you must `git push --force-with-lease`.\n- `git pull --rebase` avoids the small merge commits created by a plain `git pull`.",
+      "topic": "Rebase",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "merge",
+        "rebase",
+        "history"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "# Merge main into the feature branch (keeps history, adds a merge commit)\ngit switch feature/refunds\ngit merge main\n\n# Rebase the feature branch onto main (linear history)\ngit switch feature/refunds\ngit fetch origin\ngit rebase origin/main\n# resolve conflicts -> git add . -> git rebase --continue\ngit push --force-with-lease\n\n# Tidy the last 3 commits before opening a pull request\ngit rebase -i HEAD~3"
+      },
+      "related": [
+        "git-008",
+        "git-005",
+        "git-010"
+      ]
+    },
+    {
+      "id": "git-005",
+      "order": 5,
+      "question": "What is the difference between git fetch and git pull?",
+      "shortAnswer": "`git fetch` downloads new commits from the remote without changing your branch. `git pull` is `fetch` followed by a merge (or rebase) into your current branch.",
+      "interviewAnswer": "git fetch downloads commits, branches and tags from the remote and updates my remote-tracking branches like origin/main, but it does not touch my working files or my local branch, so it is always safe. git pull does a fetch and then immediately integrates the remote branch into my current one, by merge by default or by rebase with the rebase option. When I want to see what changed before integrating, I fetch and inspect first.",
+      "answer": "- `git fetch origin`: update `origin/*`. `--prune` removes references to branches deleted on the remote.\n- `git log main..origin/main` or `git diff main origin/main`: see what is incoming.\n- `git pull` = `git fetch` + `git merge origin/<branch>`.\n- `git pull --rebase` = `git fetch` + `git rebase origin/<branch>`; set as default with `git config --global pull.rebase true`.\n- `git pull --ff-only`: refuse to create a merge commit; fail if the branches have diverged.\n\nIf `git pull` reports a conflict, resolve it like any merge conflict. Commit or stash local changes before pulling.",
+      "topic": "Fetch",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "fetch",
+        "pull",
+        "remote"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "git fetch origin --prune\ngit status                       # \"Your branch is behind 'origin/main' by 3 commits\"\ngit log --oneline main..origin/main\ngit merge origin/main            # integrate when ready\n\n# Or in one step\ngit pull --rebase origin main"
+      },
+      "related": [
+        "git-004",
+        "git-009"
+      ]
+    },
+    {
+      "id": "git-006",
+      "order": 6,
+      "question": "What is the difference between git reset and git revert?",
+      "shortAnswer": "`git reset` moves the branch pointer backwards and rewrites history. `git revert` adds a new commit that undoes an earlier one and leaves history intact. Use revert on shared branches.",
+      "interviewAnswer": "git reset moves the current branch to an earlier commit, effectively removing later commits from the branch. It has three modes: soft keeps the changes staged, mixed keeps them in the working directory, and hard discards them. Because it rewrites history, I use it only for local commits. git revert creates a new commit that applies the opposite of a given commit, so history is preserved and it is safe for commits that have already been pushed.",
+      "answer": "| `git reset` mode | Branch pointer | Staging area | Working directory |\n|---|---|---|---|\n| `--soft` | Moved | Kept | Kept |\n| `--mixed` (default) | Moved | Reset | Kept |\n| `--hard` | Moved | Reset | Reset (changes lost) |\n\n- `git reset --soft HEAD~1`: undo the last commit, keep everything staged.\n- `git reset HEAD~1`: undo the commit, keep the changes as unstaged edits.\n- `git reset --hard HEAD~1`: throw the commit and its changes away.\n- `git revert <hash>`: new commit that undoes `<hash>`. For a merge commit use `-m 1`.\n- `git restore <file>` discards changes in one file; `git restore --staged <file>` unstages.\n\n**Safety net**: `git reflog` lists where HEAD has been, so a commit removed by `reset --hard` can usually be recovered with `git reset --hard <hash-from-reflog>`. Uncommitted changes cannot.",
+      "topic": "Reset",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "reset",
+        "revert",
+        "undo"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "# Local, not pushed: remove the last commit but keep the work\ngit reset --soft HEAD~1\n\n# Already pushed to main: undo safely with a new commit\ngit revert a1b2c3d\ngit push\n\n# Recover from a mistaken hard reset\ngit reflog\ngit reset --hard HEAD@{1}"
+      },
+      "related": [
+        "git-011",
+        "git-002"
+      ]
+    },
+    {
+      "id": "git-007",
+      "order": 7,
+      "question": "What is git stash and when do you use it?",
+      "shortAnswer": "`git stash` saves your uncommitted changes on a stack and gives you a clean working directory. `git stash pop` brings them back.",
+      "interviewAnswer": "git stash temporarily shelves uncommitted changes so I can switch context, for example to fix an urgent bug on another branch or to pull, without making a half-finished commit. The changes go onto a stack and the working directory returns to the last commit. git stash pop re-applies the most recent stash and removes it from the stack, while apply keeps it. By default only tracked files are stashed; the -u flag includes untracked files.",
+      "answer": "- `git stash push -m \"wip: refund form\"`: stash with a label.\n- `git stash -u`: include untracked files. `-a` also includes ignored files.\n- `git stash list`: show the stack (`stash@{0}` is the newest).\n- `git stash show -p stash@{1}`: view a stash as a diff.\n- `git stash pop`: apply and drop. `git stash apply stash@{1}`: apply and keep.\n- `git stash drop stash@{0}`, `git stash clear`.\n- `git stash branch new-branch`: create a branch from a stash, useful when it no longer applies cleanly.\n- `git stash push -- path/to/file`: stash specific files.\n\nA stash can conflict when popped, just like a merge. Stashes are local and easy to forget, so for anything longer than a quick switch, a WIP commit on a branch is safer.",
+      "topic": "Stash",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "git",
+        "stash",
+        "workflow"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "# Urgent fix while in the middle of something\ngit stash push -u -m \"wip: refund form\"\ngit switch main && git pull\ngit switch -c hotfix/login-redirect\n# ...fix, commit, push...\n\ngit switch feature/refunds\ngit stash pop"
+      },
+      "related": [
+        "git-003"
+      ]
+    },
+    {
+      "id": "git-008",
+      "order": 8,
+      "question": "What is a merge conflict and how do you resolve one?",
+      "shortAnswer": "A conflict happens when two branches change the same lines, or one deletes a file the other edits, and Git cannot combine them automatically. You edit the file to the correct result, remove the markers, stage it and complete the merge.",
+      "interviewAnswer": "A merge conflict occurs when Git cannot automatically combine changes because both branches modified the same part of a file. Git pauses and marks the conflicting sections with markers showing my version and the incoming version. I open each file, decide what the final code should be, which is often a combination of both, remove the markers, run the tests, stage the files and then commit, or continue the rebase. To reduce conflicts I keep branches short-lived and update from main often.",
+      "answer": "**Markers**\n\n- `<<<<<<< HEAD`: your current branch's version.\n- `=======`: separator.\n- `>>>>>>> branch-name`: the incoming version.\n\n**Steps**\n\n1. `git status` lists files under \"both modified\".\n2. Edit each file to the intended result; delete the markers.\n3. Run tests or at least load the page.\n4. `git add <file>`.\n5. `git commit` (merge) or `git rebase --continue` (rebase).\n\n**Helpers**\n\n- `git merge --abort` / `git rebase --abort`: back out completely.\n- `git checkout --ours <file>` / `--theirs <file>`: take one side for a whole file. In a rebase, \"ours\" and \"theirs\" are swapped relative to a merge.\n- `git diff --name-only --diff-filter=U`: list unresolved files.\n- IDE merge tools show both sides and the result.\n- Lock files (`composer.lock`, `package-lock.json`): do not hand-edit; take one side and re-run the install or update command.\n\nTalk to the other author when the intent is unclear. Resolving a conflict by guessing is how bugs get merged.",
+      "topic": "Conflict Resolution",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "git",
+        "merge-conflict",
+        "conflict-resolution"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "<<<<<<< HEAD\n    return $order->total * 1.18;\n=======\n    return $order->total + $order->tax;\n>>>>>>> feature/tax-column\n\n# Resolve by editing to the intended result, then:\ngit add app/Services/Pricing.php\ngit commit                 # completes the merge\n# or, during a rebase:\ngit rebase --continue"
+      },
+      "related": [
+        "git-004",
+        "git-010"
+      ]
+    },
+    {
+      "id": "git-009",
+      "order": 9,
+      "question": "What is the difference between cloning and forking? What are origin and upstream?",
+      "shortAnswer": "Cloning copies a repository to your machine. Forking creates your own copy of someone else's repository on GitHub. `origin` is the default name for the remote you cloned from; `upstream` conventionally names the original repository you forked.",
+      "interviewAnswer": "git clone downloads a repository with its full history to my computer and sets up a remote called origin pointing at the source. A fork is a GitHub feature: a server-side copy of someone else's repository under my account, which I can push to even without write access to the original. The usual open-source flow is fork, clone my fork, add the original as a second remote called upstream, push branches to origin and open pull requests against upstream.",
+      "answer": "- `git clone <url>`: full copy. `--depth 1` makes a shallow clone with only the latest commit, which is faster for CI.\n- `git remote -v`: list remotes. `git remote add upstream <url>`.\n- Keep a fork current: `git fetch upstream`, then merge or rebase `upstream/main` into your `main` and push to `origin`.\n- HTTPS vs SSH URLs: HTTPS uses a token; SSH uses a key pair and avoids typing credentials.\n- Within a company you normally clone the shared repository directly and work on branches; forks are for contributing without write access.",
+      "topic": "Clone",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "clone",
+        "fork",
+        "remote",
+        "github"
+      ],
+      "code": {
+        "language": "bash",
+        "content": "# Contribute to a project you cannot push to\ngit clone git@github.com:me/framework.git\ncd framework\ngit remote add upstream git@github.com:laravel/framework.git\n\ngit fetch upstream\ngit switch -c fix/typo upstream/main\n# ...commit...\ngit push -u origin fix/typo      # then open a pull request to upstream"
+      },
+      "related": [
+        "git-005",
+        "git-010"
+      ]
+    },
+    {
+      "id": "git-010",
+      "order": 10,
+      "question": "Describe the Git workflow you follow in a team. What is a pull request?",
+      "shortAnswer": "Branch from an up-to-date `main`, make small commits, push the branch and open a pull request. The pull request is reviewed, automated checks run, and after approval it is merged and deployed.",
+      "interviewAnswer": "I follow a feature-branch workflow. I update main, create a branch for the task, commit in small steps and push. Then I open a pull request, which is a request to merge my branch into main and the place where teammates review the code and CI runs tests and linters. I respond to review comments with further commits, keep the branch up to date with main, and once it is approved and green it is merged, often as a squash merge, and the branch is deleted. Main is protected, so nobody pushes to it directly.",
+      "answer": "**Common models**\n\n- **GitHub Flow / trunk-based**: short-lived branches off `main`, pull request, merge, deploy. Simple and common for web apps.\n- **Git Flow**: long-lived `main` and `develop`, plus `feature/`, `release/` and `hotfix/` branches. Suits versioned releases.\n\n**A good pull request**\n\n- Small and focused; a clear title and description of what and why.\n- Linked to the issue; screenshots for UI changes; notes on how to test.\n- Includes tests and migrations; no unrelated formatting changes.\n- Self-reviewed before requesting review.\n\n**Repository settings that help**: branch protection (required reviews and passing checks), CI on every push, CODEOWNERS, a PR template.\n\n**Merge options on GitHub**: merge commit, squash and merge, rebase and merge.\n\n**Releases**: tags (`git tag -a v1.4.0 -m \"...\"`, `git push --tags`) mark deployed versions.\n\n**Hotfix**: branch from `main`, fix, pull request, merge, deploy, and make sure the fix reaches any other long-lived branch.",
+      "topic": "GitHub",
+      "difficulty": "Intermediate",
+      "type": "Interview",
+      "tags": [
+        "git",
+        "github",
+        "workflow",
+        "pull-request",
+        "code-review"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "bash",
+        "content": "git switch main && git pull\ngit switch -c feature/214-order-refunds\n\ngit add -p\ngit commit -m \"Add refund action and policy\"\ngit push -u origin feature/214-order-refunds\n\n# Open the pull request (GitHub CLI)\ngh pr create --title \"Add order refunds\" --body \"Closes #214. Adds RefundOrder action, policy and feature tests.\"\n\n# Stay current while in review\ngit fetch origin && git rebase origin/main && git push --force-with-lease"
+      },
+      "related": [
+        "git-003",
+        "git-004",
+        "laravel-039"
+      ]
+    },
+    {
+      "id": "git-011",
+      "order": 11,
+      "question": "You committed to the wrong branch, or pushed a secret by mistake. How do you fix it?",
+      "shortAnswer": "Wrong branch: create the right branch at the current commit, then reset the wrong one back. Pushed secret: revoke and rotate the secret first, then remove it from the code and, if needed, from history.",
+      "interviewAnswer": "For a commit on the wrong branch that has not been pushed, I create the correct branch from where I am, which keeps the commit, then switch back and reset the wrong branch to its previous state. Alternatively I cherry-pick the commit onto the right branch. For a pushed secret, the first step is always to revoke and rotate the credential, because it must be considered compromised the moment it reached the remote. Then I remove it from the code, move it to environment configuration, and if policy requires, rewrite history with git filter-repo and force push in coordination with the team.",
+      "answer": "**Committed to `main` instead of a feature branch (not pushed)**\n\n1. `git switch -c feature/x`: the new branch has the commit.\n2. `git switch main`\n3. `git reset --hard origin/main`: main is back to the remote state.\n\n**Committed to the wrong feature branch**: `git switch right-branch`, `git cherry-pick <hash>`, then remove it from the wrong branch with `git reset --hard HEAD~1` (if unpushed) or `git revert`.\n\n**Pushed a secret**\n\n1. **Rotate it now**: new API key or password, old one disabled.\n2. Remove it from the code; load it from `.env`; make sure `.env` is in `.gitignore`.\n3. Rewriting history (`git filter-repo` or BFG) removes it from the repository, but forks, clones and caches may still have it. That is why rotation comes first.\n4. Enable secret scanning and push protection to prevent a repeat.\n\n**Other undo recipes**\n\n- Unstage a file: `git restore --staged file`.\n- Discard local edits: `git restore file`.\n- Undo a pushed commit: `git revert <hash>`.\n- Recover a deleted branch or lost commit: `git reflog`, then `git branch name <hash>`.",
+      "topic": "Reset",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "git",
+        "undo",
+        "reset",
+        "cherry-pick",
+        "secrets",
+        "security"
+      ],
+      "priority": "high",
+      "code": {
+        "language": "bash",
+        "content": "# Commit landed on main by mistake (not pushed)\ngit switch -c feature/refunds      # keep the work here\ngit switch main\ngit reset --hard origin/main       # main is clean again\n\n# Move one commit to another branch\ngit switch feature/refunds\ngit cherry-pick 9f8e7d6\n\n# Stop tracking a file that should never have been committed\ngit rm --cached .env\necho \".env\" >> .gitignore\ngit commit -m \"Stop tracking .env\""
+      },
+      "related": [
+        "git-006",
+        "git-012"
+      ]
+    },
+    {
+      "id": "git-012",
+      "order": 12,
+      "question": "What is .gitignore? How do you stop tracking a file that is already committed?",
+      "shortAnswer": "`.gitignore` lists files and patterns Git should not track. It only affects untracked files, so for a file that is already committed you also run `git rm --cached <file>`.",
+      "interviewAnswer": "A .gitignore file tells Git which files and folders to leave untracked: dependencies like vendor and node_modules, environment files, logs, build output and editor settings. It has no effect on files that are already tracked. To stop tracking one, I add the pattern to .gitignore and run git rm --cached on the file, which removes it from the index but keeps it on disk, then commit. The file still exists in earlier commits, so if it contained secrets they need rotating.",
+      "answer": "**Pattern syntax**\n\n- `vendor/`: a directory.\n- `*.log`: by extension.\n- `/build`: only at the repository root.\n- `!storage/app/.gitkeep`: negate, to keep a specific file.\n- `**/cache/`: at any depth.\n- `#` starts a comment.\n\n**Levels**: the repository's `.gitignore` (committed and shared), `.git/info/exclude` (local to your clone), and a global file set with `core.excludesFile` for personal editor and OS files.\n\n**Laravel's default** ignores `/vendor`, `/node_modules`, `.env`, `/public/build`, `/public/storage`, `/storage/*.key` and IDE folders. `.env.example` is committed so others know which variables are needed.\n\n**Debugging**: `git check-ignore -v path` shows which rule ignores a file. `git status --ignored` lists ignored files.\n\nGit does not track empty directories; a placeholder file such as `.gitkeep` is the convention.",
+      "topic": "Git Basics",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "git",
+        "gitignore",
+        "basics"
+      ],
+      "code": {
+        "language": "bash",
+        "content": "# .gitignore\n/vendor\n/node_modules\n.env\n.env.*\n!.env.example\n/storage/logs/*.log\n/public/build\n.DS_Store\n.idea/\n\n# Stop tracking a file that was committed earlier (keeps it on disk)\ngit rm --cached storage/logs/laravel.log\ngit commit -m \"Stop tracking log file\""
+      },
+      "related": [
+        "git-011",
+        "git-001"
+      ]
+    },
+    {
+      "id": "git-013",
+      "order": 13,
+      "question": "What do git cherry-pick, git tag and git bisect do?",
+      "shortAnswer": "`cherry-pick` applies a specific commit from another branch onto the current one. `tag` names a specific commit, usually a release. `bisect` finds the commit that introduced a bug by binary search.",
+      "interviewAnswer": "git cherry-pick copies one or more specific commits onto my current branch as new commits, which is useful for bringing a hotfix from main into a release branch without merging everything. git tag puts a permanent label on a commit to mark a release version; annotated tags also store a message and author. git bisect does a binary search through history: I mark a known good and a known bad commit, Git checks out the midpoint, I test and mark it, and in a few steps it identifies the commit that introduced the bug.",
+      "answer": "**cherry-pick**\n\n- `git cherry-pick <hash>`; a range with `A^..B`; `-x` records the original hash in the message.\n- Conflicts are resolved like a merge, then `git cherry-pick --continue`.\n- It duplicates commits, so prefer merging when you want the whole branch.\n\n**tag**\n\n- Lightweight: `git tag v1.2.0`. Annotated: `git tag -a v1.2.0 -m \"Release 1.2.0\"`.\n- Tags are not pushed by default: `git push origin v1.2.0` or `git push --tags`.\n- Semantic versioning: `MAJOR.MINOR.PATCH`.\n\n**bisect**\n\n- `git bisect start`, `git bisect bad`, `git bisect good v1.1.0`, then mark each checkout `good` or `bad`.\n- Automate with a test: `git bisect run php artisan test --filter=OrderTotalTest`.\n- `git bisect reset` when finished.\n\nRelated: `git blame <file>` shows who last changed each line, and `git log -S \"text\"` finds commits that added or removed a string.",
+      "topic": "Commit",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "git",
+        "cherry-pick",
+        "tag",
+        "bisect",
+        "debugging"
+      ],
+      "code": {
+        "language": "bash",
+        "content": "# Bring one fix into the release branch\ngit switch release/1.4\ngit cherry-pick -x 4c2a9e1\n\n# Tag a release\ngit tag -a v1.4.1 -m \"Fix refund rounding\"\ngit push origin v1.4.1\n\n# Find the commit that broke a test\ngit bisect start\ngit bisect bad\ngit bisect good v1.4.0\ngit bisect run php artisan test --filter=RefundTest\ngit bisect reset"
+      },
+      "related": [
+        "git-011",
+        "git-010"
+      ]
+    }
+  ]
+}

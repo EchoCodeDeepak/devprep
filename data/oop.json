@@ -1,0 +1,498 @@
+{
+  "skill": "oop",
+  "questions": [
+    {
+      "id": "oop-001",
+      "order": 1,
+      "question": "What is object-oriented programming? What are its four pillars?",
+      "shortAnswer": "OOP organises code into objects that combine data and behaviour. Its four pillars are encapsulation, abstraction, inheritance and polymorphism.",
+      "interviewAnswer": "Object-oriented programming models software as objects that hold state and the behaviour that works on it, created from classes. The four pillars are encapsulation, which hides internal state behind methods; abstraction, which exposes what an object does and hides how; inheritance, which lets a class reuse and extend another; and polymorphism, which lets different classes be used through the same interface. The goal is code that is modular, reusable and easier to change.",
+      "answer": "| Pillar | One line | PHP tools |\n|---|---|---|\n| Encapsulation | Keep data private and expose controlled methods | `private`, `protected`, `public`, `readonly` |\n| Abstraction | Show essential behaviour, hide implementation | `interface`, `abstract class` |\n| Inheritance | A child class reuses and specialises a parent | `extends`, `parent::`, `final` |\n| Polymorphism | One interface, many implementations | Interfaces, method overriding |\n\nBenefits: modularity, reuse, testability and a shared vocabulary for design.\n\nRisks when misused: deep inheritance trees, classes that do too much, and abstractions nobody needs. Modern practice favours small classes, interfaces and composition.\n\nCompared with procedural code, where functions operate on separate data, OOP keeps data and the rules about it in one place.",
+      "topic": "Class",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "pillars",
+        "basics"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface Shape                       // abstraction\n{\n    public function area(): float;\n}\n\nabstract class BaseShape implements Shape\n{\n    public function __construct(private string $name) {}   // encapsulation\n\n    public function describe(): string\n    {\n        return sprintf('%s with area %.2f', $this->name, $this->area());\n    }\n}\n\nfinal class Circle extends BaseShape  // inheritance\n{\n    public function __construct(private float $radius) { parent::__construct('Circle'); }\n    public function area(): float { return M_PI * $this->radius ** 2; }\n}\n\nfinal class Rectangle extends BaseShape\n{\n    public function __construct(private float $w, private float $h) { parent::__construct('Rectangle'); }\n    public function area(): float { return $this->w * $this->h; }\n}\n\nforeach ([new Circle(2), new Rectangle(3, 4)] as $shape) {\n    echo $shape->describe(), PHP_EOL;  // polymorphism\n}"
+      },
+      "related": [
+        "oop-003",
+        "oop-006",
+        "oop-004",
+        "oop-005"
+      ]
+    },
+    {
+      "id": "oop-002",
+      "order": 2,
+      "question": "What is the difference between a class and an object?",
+      "shortAnswer": "A class is a blueprint that defines properties and methods. An object is an instance of that class, with its own values, created with `new`.",
+      "interviewAnswer": "A class is a template: it defines what properties and methods its objects will have. An object is a concrete instance created from the class with the new keyword, holding its own state. One class can produce many objects. The constructor runs when the object is created to set its initial state. In PHP, a variable holds a handle to the object, so assigning it to another variable gives two references to the same object unless I clone it.",
+      "answer": "- **Properties** hold state; **methods** define behaviour; **constants** hold fixed values.\n- `__construct()` initialises the object; constructor property promotion declares and assigns properties in one place.\n- `$this` refers to the current instance.\n- **Static** members belong to the class and are accessed with `::`.\n- `instanceof` tests whether an object is of a class or implements an interface.\n- `==` compares property values of two objects of the same class; `===` checks they are the same instance.\n- `clone` makes a shallow copy; implement `__clone()` to deep-copy nested objects.\n- Typed properties (`private int $qty`) are enforced at runtime.",
+      "topic": "Object",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "class",
+        "object",
+        "constructor"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class Product\n{\n    public const TAX = 0.18;\n\n    public function __construct(\n        private string $name,\n        private int $price,\n    ) {}\n\n    public function priceWithTax(): int\n    {\n        return (int) round($this->price * (1 + self::TAX));\n    }\n}\n\n$pen  = new Product('Pen', 100);     // object 1\n$book = new Product('Book', 500);    // object 2\n\necho $pen->priceWithTax();           // 118\nvar_dump($pen instanceof Product);   // true\n\n$alias = $pen;                       // same object\n$copy  = clone $pen;                 // new object\nvar_dump($alias === $pen, $copy === $pen);  // true, false"
+      },
+      "related": [
+        "oop-001",
+        "php-014"
+      ]
+    },
+    {
+      "id": "oop-003",
+      "order": 3,
+      "question": "What is encapsulation? Explain public, protected and private.",
+      "shortAnswer": "Encapsulation bundles data with the methods that work on it and restricts direct access to that data. `public` is accessible everywhere, `protected` in the class and its subclasses, `private` only in the class itself.",
+      "interviewAnswer": "Encapsulation means an object keeps its state private and exposes methods that enforce its rules, so the outside world cannot put it into an invalid state. Access modifiers control visibility: public members can be used from anywhere, protected members from the class and its children, and private members only inside the class that declares them. For example, a bank account keeps its balance private and offers deposit and withdraw methods that validate the amount. This lets me change the internals without breaking callers.",
+      "answer": "| Modifier | Same class | Subclass | Outside |\n|---|---|---|---|\n| `public` | Yes | Yes | Yes |\n| `protected` | Yes | Yes | No |\n| `private` | Yes | No | No |\n\n- Default to `private`; widen only when needed.\n- Getters and setters for every property are not encapsulation; they just expose the data with extra steps. Prefer methods that express behaviour: `$order->cancel()`, not `$order->setStatus('cancelled')`.\n- `readonly` properties (PHP 8.1) can be public and still safe, because they cannot be changed after construction. That suits value objects and DTOs.\n- PHP 8.4 adds asymmetric visibility (`public private(set)`) and property hooks.\n- Visibility is per class, not per object: one instance can read another instance's private properties of the same class.",
+      "topic": "Encapsulation",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "encapsulation",
+        "access-modifiers",
+        "visibility"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "final class BankAccount\n{\n    private int $balance = 0;          // cannot be changed from outside\n\n    public function deposit(int $amount): void\n    {\n        if ($amount <= 0) {\n            throw new InvalidArgumentException('Deposit must be positive.');\n        }\n        $this->balance += $amount;\n    }\n\n    public function withdraw(int $amount): void\n    {\n        if ($amount > $this->balance) {\n            throw new DomainException('Insufficient funds.');\n        }\n        $this->balance -= $amount;\n    }\n\n    public function balance(): int\n    {\n        return $this->balance;\n    }\n}\n\n$account = new BankAccount();\n$account->deposit(1000);\n// $account->balance = 999999;   // Error: cannot access private property"
+      },
+      "related": [
+        "oop-001",
+        "oop-006"
+      ]
+    },
+    {
+      "id": "oop-004",
+      "order": 4,
+      "question": "What is inheritance? Why is \"composition over inheritance\" often recommended?",
+      "shortAnswer": "Inheritance lets a class extend another and reuse or override its behaviour: an \"is-a\" relationship. Composition builds a class from other objects it holds: a \"has-a\" relationship. Composition is more flexible because parts can be swapped without a class hierarchy.",
+      "interviewAnswer": "Inheritance creates an is-a relationship: a child class extends a parent, inherits its public and protected members, and can override methods. PHP supports single inheritance only. It is useful when classes really are specialisations of a common base. Composition is a has-a relationship: a class is given other objects and delegates work to them. It is often preferred because inheritance couples the child tightly to the parent's implementation, and deep hierarchies become rigid, while composed parts can be replaced or tested independently.",
+      "answer": "**Inheritance in PHP**\n\n- `class Admin extends User`; one parent only.\n- `parent::method()` calls the parent's version; `parent::__construct()` is not called automatically.\n- `final` on a class or method prevents extending or overriding.\n- Overriding must keep a compatible signature.\n- Types: single, multilevel (A → B → C) and hierarchical (several children of one parent). Multiple inheritance of classes is not supported; interfaces and traits fill the gap.\n\n**Problems with overuse**\n\n- The fragile base class: a change in the parent breaks children.\n- Children inherit things they do not need.\n- Behaviour is fixed at compile time and cannot be swapped at runtime.\n- Combinations explode: `PdfEmailReport`, `CsvEmailReport`, `PdfSlackReport`, ...\n\n**Guideline**: inherit when the child is a true subtype that can replace the parent everywhere (Liskov). Otherwise compose and depend on interfaces.",
+      "topic": "Inheritance",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "inheritance",
+        "composition",
+        "design"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Inheritance: rigid combinations\n// class PdfEmailReport extends PdfReport {}  class CsvEmailReport extends CsvReport {} ...\n\n// Composition: mix any formatter with any sender\ninterface Formatter { public function format(array $rows): string; }\ninterface Sender    { public function send(string $content): void; }\n\nfinal class Report\n{\n    public function __construct(\n        private Formatter $formatter,\n        private Sender $sender,\n    ) {}\n\n    public function deliver(array $rows): void\n    {\n        $this->sender->send($this->formatter->format($rows));\n    }\n}\n\n$report = new Report(new CsvFormatter(), new EmailSender('ops@example.com'));\n$report->deliver($rows);"
+      },
+      "related": [
+        "oop-001",
+        "oop-012",
+        "oop-017"
+      ]
+    },
+    {
+      "id": "oop-005",
+      "order": 5,
+      "question": "What is polymorphism? What is the difference between overriding and overloading?",
+      "shortAnswer": "Polymorphism lets different classes respond to the same method call in their own way, through a shared interface or parent. Overriding redefines an inherited method in a child; overloading means several methods with the same name but different parameters, which PHP does not support directly.",
+      "interviewAnswer": "Polymorphism means \"many forms\": code written against an interface or base class works with any implementation, and each one behaves in its own way. For example, a notify method can receive an email, SMS or Slack channel object and just call send. Method overriding is a child class providing its own version of a parent method, which is runtime polymorphism. Method overloading is having several methods with the same name and different signatures; PHP does not have it, but default parameters, union types, variadics and the __call magic method cover similar needs.",
+      "answer": "**Why it matters**: polymorphism replaces `if`/`switch` chains on type. Adding a new behaviour means adding a class, not editing existing conditionals.\n\n**Overriding rules in PHP**\n\n- Same method name; compatible parameters (may be wider) and return type (may be narrower).\n- Visibility can be the same or less restrictive.\n- `#[\\Override]` (PHP 8.3) makes PHP verify that a parent method exists.\n- `final` methods cannot be overridden.\n\n**Overloading substitutes in PHP**\n\n- Optional parameters: `function find(int $id, bool $withTrashed = false)`\n- Union types: `function add(int|float $n)`\n- Variadics: `function sum(int ...$nums)`\n- Named constructors: `Money::fromRupees()`, `Money::fromPaise()`\n\nIn Laravel, notifications, queue drivers, cache stores and filesystem disks are all polymorphism in action: one contract, many drivers.",
+      "topic": "Polymorphism",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "polymorphism",
+        "overriding",
+        "overloading"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface Channel\n{\n    public function send(string $to, string $message): void;\n}\n\nfinal class EmailChannel implements Channel\n{\n    public function send(string $to, string $message): void { /* SMTP */ }\n}\n\nfinal class SmsChannel implements Channel\n{\n    public function send(string $to, string $message): void { /* SMS API */ }\n}\n\nfunction notify(Channel $channel, string $to): void\n{\n    $channel->send($to, 'Your order has shipped.');   // no if/else on type\n}\n\nnotify(new EmailChannel(), 'asha@example.com');\nnotify(new SmsChannel(), '+919800000000');"
+      },
+      "related": [
+        "oop-001",
+        "oop-007",
+        "oop-011"
+      ]
+    },
+    {
+      "id": "oop-006",
+      "order": 6,
+      "question": "What is abstraction, and how is it different from encapsulation?",
+      "shortAnswer": "Abstraction hides complexity by exposing only what an object does. Encapsulation hides an object's internal state and protects it. Abstraction is about design; encapsulation is about access control.",
+      "interviewAnswer": "Abstraction means showing only the essential features and hiding the implementation details. When I call Storage::put, I do not need to know whether the file goes to local disk or S3. In PHP I achieve it with interfaces and abstract classes. Encapsulation is related but different: it is about bundling data with behaviour and restricting direct access to the data with access modifiers. Abstraction answers \"what does it do?\" at the design level; encapsulation answers \"how do I protect its internals?\" at the implementation level.",
+      "answer": "| | Abstraction | Encapsulation |\n|---|---|---|\n| Hides | Complexity and implementation | Internal state |\n| Achieved with | Interfaces, abstract classes | Access modifiers, methods |\n| Level | Design | Implementation |\n| Example | `PaymentGateway::charge()` | `private $apiKey` |\n\n**Abstract class rules**\n\n- Cannot be instantiated.\n- May contain abstract methods (no body) that children must implement, and concrete methods they inherit.\n- A class with any abstract method must itself be abstract.\n\n**A good abstraction** is small, named for what the caller wants, and stable. A leaky abstraction forces callers to know implementation details anyway.\n\nThe **template method** pattern is a common use of abstract classes: the base class defines the steps of an algorithm and children fill in specific steps.",
+      "topic": "Abstraction",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "abstraction",
+        "abstract-class",
+        "encapsulation"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "abstract class Importer\n{\n    // Template method: the fixed algorithm\n    final public function import(string $path): int\n    {\n        $rows = $this->read($path);\n        $valid = array_filter($rows, [$this, 'isValid']);\n        $this->store($valid);\n\n        return count($valid);\n    }\n\n    abstract protected function read(string $path): array;   // children decide how\n\n    protected function isValid(array $row): bool\n    {\n        return ! empty($row['email']);\n    }\n\n    private function store(array $rows): void { /* insert */ }\n}\n\nfinal class CsvImporter extends Importer\n{\n    protected function read(string $path): array { /* parse CSV */ return []; }\n}"
+      },
+      "related": [
+        "php-012",
+        "oop-003",
+        "oop-007"
+      ]
+    },
+    {
+      "id": "oop-007",
+      "order": 7,
+      "question": "What does \"program to an interface, not an implementation\" mean?",
+      "shortAnswer": "Depend on a contract that says what is needed, not on a specific class that does it. Then implementations can be swapped, faked in tests, or added later without changing the code that uses them.",
+      "interviewAnswer": "It means my classes should depend on abstractions. Instead of type-hinting a concrete StripeGateway, I type-hint a PaymentGateway interface that declares the charge method. The calling code does not know or care which implementation it receives. That gives three benefits: I can switch providers by changing one binding, I can pass a fake in tests, and new implementations can be added without modifying existing code. In Laravel, binding the interface to a class in a service provider makes this work with dependency injection.",
+      "answer": "**An interface**\n\n- Declares public method signatures and constants; no state.\n- A class can implement many: `class A implements Countable, JsonSerializable`.\n- Interfaces can extend other interfaces.\n- Is a type: usable in type hints and `instanceof`.\n\n**When to introduce one**\n\n- There are, or will soon be, several implementations (mail drivers, payment providers).\n- The dependency crosses a boundary you do not control (external API, filesystem, clock).\n- You need a fake for tests.\n\n**When not to**: a class with one implementation and no boundary, such as a small internal helper. An interface there adds indirection without benefit.\n\n**Naming**: by capability (`Arrayable`, `ShouldQueue`, `PaymentGateway`), not `IThing`.\n\nUseful built-in interfaces: `Countable`, `IteratorAggregate`, `ArrayAccess`, `JsonSerializable`, `Stringable`.",
+      "topic": "Interface",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "interfaces",
+        "contracts",
+        "testing",
+        "decoupling"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface Clock\n{\n    public function now(): DateTimeImmutable;\n}\n\nfinal class SystemClock implements Clock\n{\n    public function now(): DateTimeImmutable { return new DateTimeImmutable(); }\n}\n\nfinal class FixedClock implements Clock    // for tests\n{\n    public function __construct(private DateTimeImmutable $at) {}\n    public function now(): DateTimeImmutable { return $this->at; }\n}\n\nfinal class TrialPolicy\n{\n    public function __construct(private Clock $clock) {}\n\n    public function hasExpired(DateTimeImmutable $startedAt): bool\n    {\n        return $startedAt->modify('+14 days') < $this->clock->now();\n    }\n}\n\n$policy = new TrialPolicy(new FixedClock(new DateTimeImmutable('2025-06-20')));\nvar_dump($policy->hasExpired(new DateTimeImmutable('2025-06-01')));   // true"
+      },
+      "related": [
+        "php-012",
+        "oop-013",
+        "laravel-026"
+      ]
+    },
+    {
+      "id": "oop-008",
+      "order": 8,
+      "question": "When would you use a trait instead of inheritance or an interface?",
+      "shortAnswer": "Use a trait to share an implementation between classes that are not related by inheritance. Use inheritance for a true is-a relationship, and an interface to define a contract.",
+      "interviewAnswer": "A trait is for reusing code horizontally. If several unrelated classes need the same small piece of behaviour, such as generating a UUID or logging activity, a trait lets me write it once without forcing them under a common parent. Inheritance is for real specialisation, and an interface defines a contract without code. A trait is not a type, so I often pair it with an interface: the interface declares the capability and the trait supplies the default implementation. I keep traits small, because large traits hide dependencies.",
+      "answer": "| | Provides code | Defines a type | How many per class |\n|---|---|---|---|\n| Parent class | Yes | Yes | One |\n| Interface | No | Yes | Many |\n| Trait | Yes | No | Many |\n\n**Laravel examples**: `HasFactory`, `SoftDeletes`, `Notifiable`, `HasApiTokens`, `Queueable`, `Dispatchable`.\n\nEloquent boots traits by convention: a `bootTraitName()` static method runs when the model boots, which is how `SoftDeletes` registers its global scope.\n\n**Alternatives to consider**: a small collaborating class injected through the constructor is often clearer than a trait, because the dependency is explicit and can be replaced.",
+      "topic": "Traits",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "traits",
+        "code-reuse",
+        "laravel"
+      ],
+      "code": {
+        "language": "php",
+        "content": "interface HasUuid\n{\n    public function uuid(): string;\n}\n\ntrait GeneratesUuid\n{\n    public static function bootGeneratesUuid(): void\n    {\n        static::creating(fn ($model) => $model->uuid ??= (string) Str::uuid());\n    }\n\n    public function uuid(): string\n    {\n        return $this->uuid;\n    }\n}\n\nclass Order extends Model implements HasUuid\n{\n    use GeneratesUuid;\n}\n\nclass Invoice extends Model implements HasUuid\n{\n    use GeneratesUuid;\n}"
+      },
+      "related": [
+        "php-013",
+        "oop-004",
+        "oop-007"
+      ]
+    },
+    {
+      "id": "oop-009",
+      "order": 9,
+      "question": "What are the SOLID principles?",
+      "shortAnswer": "Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation and Dependency Inversion: five guidelines for classes that are easy to change and test.",
+      "interviewAnswer": "SOLID is five design principles. Single Responsibility: a class should have one reason to change. Open/Closed: classes should be open for extension but closed for modification, so I add behaviour with new classes instead of editing existing ones. Liskov Substitution: a subclass must be usable wherever its parent is expected. Interface Segregation: prefer small, specific interfaces over one large one. Dependency Inversion: depend on abstractions, not concrete classes. Together they reduce coupling and make code easier to test and extend.",
+      "answer": "| Letter | Principle | Violation smell | Typical fix |\n|---|---|---|---|\n| S | Single Responsibility | A controller that validates, calculates, emails and exports | Split into request, action, mailable, exporter |\n| O | Open/Closed | A growing `switch ($type)` | Interface plus one class per case (Strategy) |\n| L | Liskov Substitution | A subclass that throws \"not supported\" | Redesign the hierarchy or use composition |\n| I | Interface Segregation | Implementations with empty methods | Several small interfaces |\n| D | Dependency Inversion | `new MysqlRepository()` inside a service | Inject an interface |\n\nThey are guidelines, not laws. Applying them everywhere produces many tiny classes and needless indirection; apply them where change is likely.\n\nIn Laravel: Form Requests, policies, jobs and resources are SRP in practice; drivers and contracts are OCP and DIP; the container makes DIP convenient.",
+      "topic": "SOLID Principles",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "solid",
+        "design-principles"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "related": [
+        "oop-010",
+        "oop-011",
+        "oop-012",
+        "oop-013"
+      ]
+    },
+    {
+      "id": "oop-010",
+      "order": 10,
+      "question": "Explain the Single Responsibility Principle with an example.",
+      "shortAnswer": "A class should have one reason to change. If one class handles validation, business rules, persistence and notifications, split it so each concern lives in its own class.",
+      "interviewAnswer": "The Single Responsibility Principle says a class should have only one reason to change, meaning it serves one concern or one stakeholder. A typical violation is a fat controller method that validates input, calculates totals, saves to the database, charges a card and sends an email. Any change to any of those forces editing the same class. I refactor by moving validation to a Form Request, the business operation to an action class, payment to a gateway service, and the email to a queued listener. Each class becomes small, named for what it does, and testable in isolation.",
+      "answer": "\"One responsibility\" does not mean \"one method\". It means the class's methods all serve the same purpose and change for the same reason.\n\n**Signs of violation**\n\n- The class name includes \"Manager\", \"Helper\" or \"And\".\n- Many unrelated dependencies in the constructor.\n- Tests need lots of set-up for unrelated things.\n- Changes in unrelated features keep touching the same file.\n\n**Laravel mapping**\n\n| Concern | Home |\n|---|---|\n| Input validation | Form Request |\n| Authorization | Policy |\n| Business operation | Action / Service |\n| Side effects | Events, listeners, jobs |\n| Response shape | API Resource |\n| Query logic | Scopes / query classes |\n\nDo not over-split: three lines that always change together belong together.",
+      "topic": "SOLID Principles",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "oop",
+        "solid",
+        "single-responsibility",
+        "refactoring"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Before: one method, five reasons to change\npublic function store(Request $request)\n{\n    $request->validate([...]);\n    $total = collect($request->items)->sum(fn ($i) => $i['price'] * $i['qty']);\n    $order = Order::create([...]);\n    Http::post('https://gateway.example/charge', [...]);\n    Mail::to($request->user())->send(new OrderConfirmed($order));\n    return response()->json($order, 201);\n}\n\n// After: each concern has a home\npublic function store(StoreOrderRequest $request, PlaceOrder $placeOrder)\n{\n    $order = $placeOrder->handle($request->user(), $request->validated());\n\n    return (new OrderResource($order))->response()->setStatusCode(201);\n}\n// StoreOrderRequest -> validation      PlaceOrder -> totals, persistence, payment gateway\n// OrderPlaced event -> queued email    OrderResource -> JSON shape"
+      },
+      "related": [
+        "oop-009",
+        "laravel-038"
+      ]
+    },
+    {
+      "id": "oop-011",
+      "order": 11,
+      "question": "Explain the Open/Closed Principle with an example.",
+      "shortAnswer": "Code should be open for extension and closed for modification: you add new behaviour by adding new classes, not by editing tested ones. Replacing a `switch` on type with an interface and one class per case is the classic example.",
+      "interviewAnswer": "The Open/Closed Principle says I should be able to add new behaviour without changing existing, working code. The usual violation is a method with a switch or if-else chain on a type, such as calculating shipping per carrier: every new carrier means editing that method and risking the others. The fix is an interface with one implementation per carrier, and the calculator just calls the interface. Adding a carrier is then a new class and a registration, with no change to the calculator.",
+      "answer": "**Tools for extension**: interfaces and polymorphism, the Strategy pattern, decorators, events and listeners, configuration-driven maps, and in Laravel, drivers and macros.\n\n**How implementations get chosen**: a map from key to class resolved through the container, a factory, or tagged services. The one place that knows all the cases is the registration, not the business logic.\n\n**Balance**: you cannot be closed against every kind of change. Start simple; when the second or third variation arrives, refactor to an extension point.\n\nPHP 8's `match` with an enum is acceptable for small, stable sets. If each case has substantial logic or cases are added often, move to classes.",
+      "topic": "SOLID Principles",
+      "difficulty": "Advanced",
+      "type": "Practical",
+      "tags": [
+        "oop",
+        "solid",
+        "open-closed",
+        "strategy",
+        "refactoring"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "php",
+        "content": "// Violation: edit this method for every new carrier\nfunction shippingCost(string $carrier, float $kg): int\n{\n    switch ($carrier) {\n        case 'bluedart':  return (int) (60 + $kg * 20);\n        case 'delhivery': return (int) (45 + $kg * 25);\n        default: throw new InvalidArgumentException('Unknown carrier');\n    }\n}\n\n// Open for extension\ninterface Carrier { public function cost(float $kg): int; }\n\nfinal class BlueDart implements Carrier  { public function cost(float $kg): int { return (int) (60 + $kg * 20); } }\nfinal class Delhivery implements Carrier { public function cost(float $kg): int { return (int) (45 + $kg * 25); } }\nfinal class Ekart implements Carrier     { public function cost(float $kg): int { return (int) (40 + $kg * 22); } } // new: nothing else changes\n\nfinal class ShippingCalculator\n{\n    /** @param array<string, Carrier> $carriers */\n    public function __construct(private array $carriers) {}\n\n    public function cost(string $carrier, float $kg): int\n    {\n        return ($this->carriers[$carrier] ?? throw new InvalidArgumentException('Unknown carrier'))->cost($kg);\n    }\n}"
+      },
+      "related": [
+        "oop-009",
+        "oop-017",
+        "oop-005"
+      ]
+    },
+    {
+      "id": "oop-012",
+      "order": 12,
+      "question": "What are the Liskov Substitution and Interface Segregation principles?",
+      "shortAnswer": "Liskov: objects of a subclass must be usable in place of the parent without breaking the program. Interface Segregation: no class should be forced to implement methods it does not use, so keep interfaces small.",
+      "interviewAnswer": "Liskov Substitution says that if code works with a parent type, it must keep working when given any subclass. A subclass should not strengthen preconditions, weaken guarantees or throw for an inherited method. The classic example is a Square extending Rectangle and breaking code that sets width and height independently. Interface Segregation says clients should not depend on methods they do not use: instead of one large interface, define several focused ones, so a read-only class is not forced to implement write methods with empty bodies.",
+      "answer": "**Liskov violations**\n\n- Overriding a method to throw `BadMethodCallException`.\n- Returning a different type or `null` where the parent never does.\n- Requiring extra set-up before a method can be called.\n- Checking `instanceof` in calling code to handle a \"special\" subclass.\n\nFix: the subclass is not really a subtype. Extract a narrower interface, or use composition.\n\n**Interface Segregation violations**\n\n- Implementations with empty methods or \"not supported\" exceptions.\n- Classes depending on a large interface but calling one method.\n\nFix: split by role. PHP classes can implement several interfaces, so combining small ones is free.\n\nThe two are related: fat interfaces often lead to LSP violations, because some implementers cannot honour every method.",
+      "topic": "SOLID Principles",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "solid",
+        "liskov",
+        "interface-segregation"
+      ],
+      "code": {
+        "language": "php",
+        "content": "// ISP violation: a read-only report source is forced to implement writes\ninterface Repository\n{\n    public function find(int $id): ?array;\n    public function save(array $row): void;\n    public function delete(int $id): void;\n}\n\n// Segregated\ninterface Readable  { public function find(int $id): ?array; }\ninterface Writable  { public function save(array $row): void; public function delete(int $id): void; }\n\nfinal class ArchiveStore implements Readable\n{\n    public function find(int $id): ?array { /* read-only source */ return null; }\n}\n\nfinal class OrderStore implements Readable, Writable { /* ... */ }\n\n// LSP: any Readable must behave like a Readable\nfunction show(Readable $source, int $id): string\n{\n    return json_encode($source->find($id) ?? ['error' => 'not found']);\n}"
+      },
+      "related": [
+        "oop-009",
+        "oop-004",
+        "oop-007"
+      ]
+    },
+    {
+      "id": "oop-013",
+      "order": 13,
+      "question": "What is the Dependency Inversion Principle? How does it relate to dependency injection?",
+      "shortAnswer": "High-level code should depend on abstractions, not on low-level details. Dependency injection is the technique that supplies those abstractions from outside; an IoC container automates the injection.",
+      "interviewAnswer": "The Dependency Inversion Principle says that high-level business logic should not depend on low-level details like a specific database or mail provider; both should depend on an abstraction, usually an interface that the high-level code defines. Dependency injection is how I apply it: the class receives its dependencies through the constructor instead of creating them. Inversion of control is the broader idea that the framework, not my class, controls object creation, and Laravel's service container is the tool that does it.",
+      "answer": "Three related terms that interviewers ask you to separate:\n\n| Term | What it is |\n|---|---|\n| Dependency Inversion Principle | A design **principle**: depend on abstractions |\n| Dependency Injection | A **technique**: pass dependencies in from outside |\n| Inversion of Control container | A **tool**: builds objects and injects their dependencies |\n\n\"Inversion\" refers to the direction of the source-code dependency. Without DIP, `OrderService` → `StripeClient`. With DIP, `OrderService` → `PaymentGateway` ← `StripeGateway`: the detail now depends on an interface owned by the business layer.\n\nYou can use dependency injection without honouring DIP (injecting a concrete class), and that is often fine. DIP matters at boundaries that are likely to change or that you need to fake.",
+      "topic": "SOLID Principles",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "solid",
+        "dependency-inversion",
+        "dependency-injection",
+        "ioc"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// High-level policy owns the abstraction\ninterface PaymentGateway\n{\n    public function charge(int $amount, string $token): string;\n}\n\nfinal class Checkout\n{\n    public function __construct(private PaymentGateway $gateway) {}   // injected\n\n    public function pay(Order $order, string $token): void\n    {\n        $order->markPaid($this->gateway->charge($order->total, $token));\n    }\n}\n\n// Low-level detail depends on the abstraction\nfinal class StripeGateway implements PaymentGateway\n{\n    public function charge(int $amount, string $token): string { /* HTTP call */ return 'ch_1'; }\n}\n\n// Wiring in one place (Laravel service provider)\n$this->app->bind(PaymentGateway::class, StripeGateway::class);"
+      },
+      "related": [
+        "php-026",
+        "laravel-023",
+        "laravel-026",
+        "oop-007"
+      ]
+    },
+    {
+      "id": "oop-014",
+      "order": 14,
+      "question": "Which design patterns have you used?",
+      "shortAnswer": "Name patterns you can explain with a real example: Singleton, Factory, Strategy, Observer, Repository, Decorator, Facade, Adapter and Builder all appear in Laravel.",
+      "interviewAnswer": "Design patterns are named, reusable solutions to common design problems. In Laravel work I meet several daily. The service container manages singletons. Factories create models for tests, and manager classes act as factories for drivers. Strategy appears wherever drivers are swapped, like cache or payment gateways. Observer is events, listeners and model observers. Middleware is a pipeline, a form of chain of responsibility. The query builder is the Builder pattern, facades provide a simplified static interface, and I have used the Repository and Adapter patterns to wrap data access and third-party APIs.",
+      "answer": "| Category | Pattern | Laravel example |\n|---|---|---|\n| Creational | Singleton | `$this->app->singleton()` bindings |\n| Creational | Factory / Factory Method | Model factories, `Cache::store()`, `Storage::disk()` |\n| Creational | Builder | Query builder, `MailMessage` |\n| Structural | Facade | `Cache::`, `DB::` |\n| Structural | Adapter | Flysystem adapters, wrapping a third-party SDK |\n| Structural | Decorator | Middleware wrapping a request, cached repository |\n| Structural | Proxy | Lazy relationship loading, higher-order messages |\n| Behavioural | Strategy | Drivers, pluggable payment or shipping calculators |\n| Behavioural | Observer | Events and listeners, model observers |\n| Behavioural | Chain of Responsibility / Pipeline | Middleware stack, `Pipeline` |\n| Behavioural | Command | Jobs, Artisan commands |\n| Behavioural | Template Method | `FormRequest`, abstract base classes |\n| Architectural | MVC, Repository, Active Record | Framework structure, Eloquent |\n\nIn an interview, pick two or three and tell the story: the problem, why the pattern fitted, and what it cost. Patterns are a vocabulary, not a goal.",
+      "topic": "Design Patterns",
+      "difficulty": "Intermediate",
+      "type": "Interview",
+      "tags": [
+        "oop",
+        "design-patterns",
+        "laravel",
+        "interview"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "related": [
+        "oop-015",
+        "oop-016",
+        "oop-017",
+        "oop-018",
+        "laravel-033"
+      ]
+    },
+    {
+      "id": "oop-015",
+      "order": 15,
+      "question": "What is the Singleton pattern? Why is it often called an anti-pattern?",
+      "shortAnswer": "A singleton ensures a class has only one instance and provides global access to it. It is criticised because it introduces hidden global state, tight coupling and hard-to-test code.",
+      "interviewAnswer": "The Singleton pattern restricts a class to a single instance, classically with a private constructor and a static getInstance method. It is used for things that should exist once, like a configuration object or a connection. The criticism is that it is global state in disguise: any code can reach it, dependencies become hidden, tests cannot easily replace it and they can leak state into each other. The better approach is to let a dependency injection container manage the lifetime: in Laravel I register a singleton binding and still inject it normally.",
+      "answer": "**Classic implementation**: private constructor, private `__clone`, a static property holding the instance, and a static accessor.\n\n**Problems**\n\n- Hidden dependencies: a method calling `Config::getInstance()` does not declare that it needs configuration.\n- Hard to test: you cannot substitute a fake without extra hooks.\n- Shared mutable state between tests and, in long-running workers, between requests.\n- Violates single responsibility: the class manages its own lifecycle as well as its job.\n\n**Container-managed singleton**: `$this->app->singleton(Foo::class)` gives one shared instance, but consumers receive it through the constructor, so they remain testable.\n\n**Long-running processes** (queue workers, Octane): a singleton lives across many jobs or requests. Do not store per-request data in it; use `scoped()` bindings for request lifetime.",
+      "topic": "Design Patterns",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "design-patterns",
+        "singleton",
+        "anti-pattern"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Classic singleton\nfinal class Settings\n{\n    private static ?Settings $instance = null;\n    private array $values = [];\n\n    private function __construct() {}\n    private function __clone() {}\n\n    public static function getInstance(): self\n    {\n        return self::$instance ??= new self();\n    }\n\n    public function get(string $key, mixed $default = null): mixed\n    {\n        return $this->values[$key] ?? $default;\n    }\n}\n\n$a = Settings::getInstance();\n$b = Settings::getInstance();\nvar_dump($a === $b);   // true\n\n// Preferred in Laravel: the container controls the lifetime, the class stays ordinary\n$this->app->singleton(SmsClient::class, fn () => new SmsClient(config('services.sms.key')));"
+      },
+      "related": [
+        "oop-014",
+        "laravel-023"
+      ]
+    },
+    {
+      "id": "oop-016",
+      "order": 16,
+      "question": "What is the Factory pattern?",
+      "shortAnswer": "A factory is a class or method whose job is to create objects, so the calling code does not need to know which concrete class to instantiate or how to build it.",
+      "interviewAnswer": "The Factory pattern centralises object creation. Instead of scattering new statements and conditionals through the code, I ask a factory for an object, and it decides which concrete class to build and how to configure it. The caller depends only on the interface that comes back. That hides construction details and makes it easy to add new types. Laravel uses it widely: the cache, queue and filesystem managers are factories that return the right driver, and model factories build test data.",
+      "answer": "**Variants**\n\n- **Simple factory**: one method with a `match` on a key. Not a formal Gang of Four pattern but the most common in practice.\n- **Factory Method**: a base class declares a creation method and subclasses decide which class to instantiate.\n- **Abstract Factory**: creates families of related objects that must be used together.\n- **Static / named constructors**: `Money::fromRupees(499)`, `Carbon::parse('...')`. A lightweight factory on the class itself.\n\n**When to use one**\n\n- Creation involves a decision (by type, configuration or environment).\n- Construction is complex or needs dependencies the caller should not know about.\n- You want one place to add new variants.\n\n**Factory vs container**: the container wires long-lived services at start-up; a factory creates objects at runtime from data, for example choosing an exporter from a request parameter.",
+      "topic": "Design Patterns",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "design-patterns",
+        "factory",
+        "creational"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface Exporter { public function export(iterable $rows): string; }\n\nfinal class CsvExporter implements Exporter  { public function export(iterable $rows): string { /* ... */ return ''; } }\nfinal class JsonExporter implements Exporter { public function export(iterable $rows): string { return json_encode([...$rows]); } }\n\nfinal class ExporterFactory\n{\n    public function make(string $format): Exporter\n    {\n        return match ($format) {\n            'csv'  => new CsvExporter(),\n            'json' => new JsonExporter(),\n            default => throw new InvalidArgumentException(\"Unsupported format: {$format}\"),\n        };\n    }\n}\n\n// Controller\npublic function download(Request $request, ExporterFactory $factory)\n{\n    $exporter = $factory->make($request->query('format', 'csv'));\n\n    return response($exporter->export(Order::cursor()));\n}"
+      },
+      "related": [
+        "oop-014",
+        "oop-017"
+      ]
+    },
+    {
+      "id": "oop-017",
+      "order": 17,
+      "question": "What is the Strategy pattern?",
+      "shortAnswer": "Strategy defines a family of interchangeable algorithms behind one interface, so the algorithm can be chosen at runtime without changing the code that uses it.",
+      "interviewAnswer": "The Strategy pattern encapsulates each variation of an algorithm in its own class behind a common interface, and the context object is given the strategy to use. It replaces conditional logic like \"if discount type is percentage do this, if fixed do that\". Each strategy is small and testable, new ones can be added without touching existing code, and the choice can be made at runtime from configuration or user input. Laravel's drivers for cache, mail and queues are strategies selected by configuration.",
+      "answer": "**Participants**: the **strategy interface**, the **concrete strategies**, and the **context** that holds a strategy and delegates to it.\n\n**Use it when**\n\n- You have several ways of doing the same thing (pricing, tax, shipping, sorting, export, authentication).\n- A method is dominated by a `switch` on type.\n- The behaviour must change at runtime.\n\n**Related patterns**\n\n- **Factory** often chooses which strategy to create.\n- **State** has the same structure, but the object switches its own behaviour as its state changes.\n- **Template Method** varies steps through inheritance; Strategy varies through composition.\n\nFor very small variations, a closure or first-class callable is a perfectly good strategy.",
+      "topic": "Design Patterns",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "design-patterns",
+        "strategy",
+        "behavioural"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface DiscountStrategy\n{\n    public function apply(int $subtotal): int;\n}\n\nfinal class NoDiscount implements DiscountStrategy\n{\n    public function apply(int $subtotal): int { return $subtotal; }\n}\n\nfinal class PercentageDiscount implements DiscountStrategy\n{\n    public function __construct(private int $percent) {}\n    public function apply(int $subtotal): int { return (int) round($subtotal * (100 - $this->percent) / 100); }\n}\n\nfinal class FixedDiscount implements DiscountStrategy\n{\n    public function __construct(private int $amount) {}\n    public function apply(int $subtotal): int { return max(0, $subtotal - $this->amount); }\n}\n\nfinal class Cart\n{\n    public function __construct(private DiscountStrategy $discount = new NoDiscount()) {}\n\n    public function total(int $subtotal): int\n    {\n        return $this->discount->apply($subtotal);\n    }\n}\n\necho (new Cart(new PercentageDiscount(10)))->total(2000);  // 1800\necho (new Cart(new FixedDiscount(250)))->total(2000);      // 1750"
+      },
+      "related": [
+        "oop-011",
+        "oop-016",
+        "oop-014"
+      ]
+    },
+    {
+      "id": "oop-018",
+      "order": 18,
+      "question": "What is the Observer pattern?",
+      "shortAnswer": "In the Observer pattern a subject keeps a list of observers and notifies them when something happens, so the subject does not need to know what the observers do.",
+      "interviewAnswer": "The Observer pattern defines a one-to-many relationship: when one object, the subject, changes or does something, all registered observers are notified automatically. The subject only knows that observers exist, not what they do, which keeps it decoupled from side effects. Laravel's events and listeners are this pattern: dispatching an OrderPlaced event notifies listeners that send email, update stock or record analytics. Eloquent model observers are another example. The trade-off is that the flow becomes less visible, so I use it for side effects, not for core steps.",
+      "answer": "**Participants**: subject (publisher), observers (subscribers), and optionally an event object carrying data.\n\n**Benefits**: new reactions without editing the publisher; reactions can be queued; each listener is small and testable.\n\n**Costs**: indirect control flow, ordering between listeners is implicit, and errors in one listener can affect the others unless isolated.\n\n**PHP's SPL** provides `SplSubject` and `SplObserver` interfaces. **Publish/subscribe** is the same idea with a broker in between, such as an event dispatcher or message queue, so publishers and subscribers never reference each other.\n\nIn JavaScript, `addEventListener` is the observer pattern.",
+      "topic": "Design Patterns",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "oop",
+        "design-patterns",
+        "observer",
+        "events"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface Listener\n{\n    public function handle(object $event): void;\n}\n\nfinal class EventBus\n{\n    /** @var array<class-string, Listener[]> */\n    private array $listeners = [];\n\n    public function listen(string $event, Listener $listener): void\n    {\n        $this->listeners[$event][] = $listener;\n    }\n\n    public function dispatch(object $event): void\n    {\n        foreach ($this->listeners[$event::class] ?? [] as $listener) {\n            $listener->handle($event);\n        }\n    }\n}\n\nfinal class OrderPlaced { public function __construct(public int $orderId) {} }\n\nfinal class SendConfirmation implements Listener\n{\n    public function handle(object $event): void { echo \"Email for order {$event->orderId}\\n\"; }\n}\n\n$bus = new EventBus();\n$bus->listen(OrderPlaced::class, new SendConfirmation());\n$bus->dispatch(new OrderPlaced(15));   // Email for order 15"
+      },
+      "related": [
+        "laravel-027",
+        "oop-014"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "skills": [
+    {
+      "id": "php",
+      "name": "PHP",
+      "prefix": "php",
+      "file": "php.json",
+      "color": "#7377AD",
+      "description": "Core PHP for interviews: types and operators, arrays and strings, functions and scope, OOP in PHP, error handling, sessions, security, Composer and modern PHP 8 features.",
+      "topics": ["PHP Basics", "Variables", "Data Types", "Strings", "Arrays", "Functions", "Scope", "Operators", "Loops", "Conditional Statements", "OOP", "Classes & Objects", "Inheritance", "Encapsulation", "Abstraction", "Interfaces", "Traits", "Exception Handling", "Sessions", "Cookies", "File Handling", "PHP Security", "Composer", "Namespaces", "Modern PHP", "Interview Questions"]
+    },
+    {
+      "id": "laravel",
+      "name": "Laravel",
+      "prefix": "laravel",
+      "file": "laravel.json",
+      "color": "#E5484D",
+      "description": "Laravel interview preparation covering core framework concepts, architecture, Eloquent, APIs, security and practical development.",
+      "topics": ["Laravel Basics", "MVC", "Routing", "Controllers", "Middleware", "Requests", "Validation", "Blade", "Eloquent", "Relationships", "Query Builder", "Migrations", "Seeders", "Factories", "Authentication", "Authorization", "Policies", "Gates", "Sanctum", "APIs", "Resource Controllers", "Form Requests", "Events", "Listeners", "Jobs", "Queues", "Notifications", "Mail", "Storage", "Files", "Caching", "Sessions", "Service Container", "Service Providers", "Facades", "Dependency Injection", "Repository Pattern", "Design Patterns", "Laravel Security", "Performance", "Deployment", "Debugging", "Common Laravel Interview Questions"]
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL",
+      "prefix": "mysql",
+      "file": "mysql.json",
+      "color": "#1E8FA8",
+      "description": "SQL and database design: joins, grouping, subqueries, indexes, keys and constraints, normalization, transactions and query optimization.",
+      "topics": ["SQL Basics", "SELECT", "INSERT", "UPDATE", "DELETE", "WHERE", "JOIN", "INNER JOIN", "LEFT JOIN", "GROUP BY", "HAVING", "ORDER BY", "Subqueries", "Indexes", "Primary Keys", "Foreign Keys", "Constraints", "Normalization", "Transactions", "ACID", "Database Design", "Query Optimization", "Common SQL Interview Questions"]
+    },
+    {
+      "id": "javascript",
+      "name": "JavaScript",
+      "prefix": "js",
+      "file": "javascript.json",
+      "color": "#D4A106",
+      "description": "The JavaScript a backend-leaning developer is still asked about: scope, closures, hoisting, the event loop, promises, async/await, the DOM and ES6+.",
+      "topics": ["Variables", "Data Types", "Functions", "Arrays", "Objects", "Loops", "DOM", "Events", "ES6+", "Promises", "Async/Await", "Fetch API", "Closures", "Scope", "Hoisting", "Event Loop", "Common Interview Questions"]
+    },
+    {
+      "id": "html-css",
+      "name": "HTML/CSS",
+      "prefix": "web",
+      "file": "html-css.json",
+      "color": "#E8743B",
+      "description": "Markup and styling fundamentals: semantic HTML, forms, accessibility, the box model, Flexbox, Grid, positioning, specificity, responsive design and Tailwind CSS.",
+      "topics": ["HTML Basics", "Semantic HTML", "Forms", "Input Types", "Tables", "Accessibility", "SEO", "HTML5", "CSS Basics", "Box Model", "Flexbox", "Grid", "Positioning", "Responsive Design", "Media Queries", "Specificity", "Pseudo Classes", "Animations", "Tailwind CSS"]
+    },
+    {
+      "id": "rest-api",
+      "name": "REST API",
+      "prefix": "api",
+      "file": "rest-api.json",
+      "color": "#2E9E6A",
+      "description": "HTTP and API design: methods, status codes, REST principles, authentication and authorization, validation, security, JSON and testing with Postman.",
+      "topics": ["HTTP", "GET", "POST", "PUT", "PATCH", "DELETE", "Status Codes", "Authentication", "Authorization", "REST principles", "API validation", "API security", "JSON", "Postman"]
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "prefix": "git",
+      "file": "git.json",
+      "color": "#B05CC6",
+      "description": "Everyday Git and GitHub: commits and branches, merge and rebase, pull and fetch, reset and revert, stash, conflict resolution and pull requests.",
+      "topics": ["Git Basics", "Commit", "Branch", "Merge", "Rebase", "Pull", "Push", "Clone", "Fetch", "Reset", "Revert", "Stash", "Conflict Resolution", "GitHub"]
+    },
+    {
+      "id": "oop",
+      "name": "OOP",
+      "prefix": "oop",
+      "file": "oop.json",
+      "color": "#5B7CFA",
+      "description": "Object-oriented design independent of framework: the four pillars, interfaces and abstract classes, composition, SOLID principles and common design patterns.",
+      "topics": ["Class", "Object", "Encapsulation", "Inheritance", "Polymorphism", "Abstraction", "Interface", "Traits", "SOLID Principles", "Design Patterns"]
+    },
+    {
+      "id": "coding-logic",
+      "name": "Coding Logic",
+      "prefix": "logic",
+      "file": "coding-logic.json",
+      "color": "#6B7280",
+      "description": "Programming logic and problem solving: strings, arrays, numbers, searching and sorting, with PHP solutions and a few SQL problems.",
+      "topics": ["String manipulation", "Array manipulation", "Numbers", "Searching", "Sorting", "PHP-specific coding problems", "SQL coding problems"]
+    }
+  ],
+  "paths": [
+    {
+      "id": "php-developer",
+      "name": "PHP Developer Interview Path",
+      "description": "A suggested order from language fundamentals to framework depth. Progress updates as you mark questions learned.",
+      "steps": [
+        { "title": "PHP Fundamentals", "match": [{ "skill": "php", "topics": ["PHP Basics", "Variables", "Data Types", "Strings", "Arrays", "Functions", "Scope", "Operators", "Loops", "Conditional Statements"] }] },
+        { "title": "OOP", "match": [{ "skill": "oop" }, { "skill": "php", "topics": ["OOP", "Classes & Objects", "Inheritance", "Encapsulation", "Abstraction", "Interfaces", "Traits"] }] },
+        { "title": "Advanced PHP", "match": [{ "skill": "php", "topics": ["Exception Handling", "Sessions", "Cookies", "File Handling", "Composer", "Namespaces", "Modern PHP", "Interview Questions"] }] },
+        { "title": "MySQL", "match": [{ "skill": "mysql" }] },
+        { "title": "REST APIs", "match": [{ "skill": "rest-api" }] },
+        { "title": "Laravel Fundamentals", "match": [{ "skill": "laravel", "topics": ["Laravel Basics", "MVC", "Routing", "Controllers", "Middleware", "Requests", "Validation", "Form Requests", "Blade", "Eloquent", "Relationships", "Query Builder", "Migrations", "Seeders", "Factories", "Resource Controllers"] }] },
+        { "title": "Laravel Advanced", "match": [{ "skill": "laravel", "exceptTopics": ["Laravel Basics", "MVC", "Routing", "Controllers", "Middleware", "Requests", "Validation", "Form Requests", "Blade", "Eloquent", "Relationships", "Query Builder", "Migrations", "Seeders", "Factories", "Resource Controllers", "Laravel Security", "Performance"] }] },
+        { "title": "Security", "match": [{ "tag": "security" }] },
+        { "title": "Performance", "match": [{ "tag": "performance" }] },
+        { "title": "Coding Logic", "match": [{ "skill": "coding-logic" }] }
+      ]
+    }
+  ]
+}

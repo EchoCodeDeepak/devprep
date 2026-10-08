@@ -1,0 +1,513 @@
+{
+  "skill": "html-css",
+  "questions": [
+    {
+      "id": "web-001",
+      "order": 1,
+      "question": "What is semantic HTML and why does it matter?",
+      "shortAnswer": "Semantic HTML uses elements that describe the meaning of their content, such as `<header>`, `<nav>`, `<main>`, `<article>` and `<button>`, instead of generic `<div>` and `<span>` elements.",
+      "interviewAnswer": "Semantic HTML means choosing elements for what the content is, not how it looks: header, nav, main, article, section, aside and footer for structure, headings in order, button for actions and a for links. It matters for accessibility, because screen readers use these elements to announce and navigate the page; for SEO, because search engines understand the structure; and for maintainability, because the markup is easier to read. A div with a click handler is not a button: it has no keyboard support or role.",
+      "answer": "| Element | Meaning |\n|---|---|\n| `<header>`, `<footer>` | Introductory and closing content of the page or a section |\n| `<nav>` | Major navigation links |\n| `<main>` | The page's primary content, once per page |\n| `<article>` | Self-contained content that makes sense on its own |\n| `<section>` | A thematic group, normally with a heading |\n| `<aside>` | Related but secondary content |\n| `<figure>`, `<figcaption>` | Media with a caption |\n| `<time datetime=\"\">` | A machine-readable date |\n\nRules of thumb:\n\n- One `<h1>` per page, and do not skip heading levels for styling.\n- `<button>` for actions, `<a href>` for navigation.\n- `<ul>`/`<ol>` for lists, `<table>` for tabular data only.\n- `<div>` and `<span>` are fine when no semantic element fits.",
+      "topic": "Semantic HTML",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "html",
+        "semantic-html",
+        "accessibility",
+        "seo"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "html",
+        "content": "<body>\n  <header>\n    <a href=\"/\">DevPrep</a>\n    <nav aria-label=\"Main\">\n      <ul>\n        <li><a href=\"/questions\">Questions</a></li>\n        <li><a href=\"/practice\">Practice</a></li>\n      </ul>\n    </nav>\n  </header>\n\n  <main>\n    <article>\n      <h1>What is middleware?</h1>\n      <p>Published <time datetime=\"2025-06-01\">1 June 2025</time></p>\n      <section>\n        <h2>Short answer</h2>\n        <p>...</p>\n      </section>\n    </article>\n    <aside>Related questions</aside>\n  </main>\n\n  <footer>...</footer>\n</body>"
+      },
+      "related": [
+        "web-005",
+        "web-006"
+      ]
+    },
+    {
+      "id": "web-002",
+      "order": 2,
+      "question": "What is the difference between block, inline and inline-block elements?",
+      "shortAnswer": "Block elements start on a new line and take the full width. Inline elements flow within a line and ignore width and height. Inline-block elements flow within a line but accept width, height and vertical margins.",
+      "interviewAnswer": "A block element, like div, p or h1, starts on a new line and stretches to the full width of its container. An inline element, like span, a or strong, sits within the text flow and only takes the space of its content; width, height and vertical margins have no effect. inline-block is in between: the element stays in the line but respects width, height, padding and margin. Any element's behaviour can be changed with the CSS display property.",
+      "answer": "| | block | inline | inline-block |\n|---|---|---|---|\n| Starts on a new line | Yes | No | No |\n| Width / height apply | Yes | No | Yes |\n| Vertical margin / padding affect layout | Yes | No | Yes |\n| Examples | `div`, `p`, `section`, `ul` | `span`, `a`, `em`, `img`* | buttons, inputs |\n\n*`img` is a replaced inline element, so it does accept width and height.\n\nOther display values: `none`, `flex`, `inline-flex`, `grid`, `contents`, `table`.\n\nInline-block elements have a small gap between them caused by the whitespace in the HTML; flexbox with `gap` is the modern way to lay out a row.",
+      "topic": "HTML Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "html",
+        "css",
+        "display",
+        "layout"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": "span.tag {\n  display: inline-block;   /* now padding, width and vertical margin work */\n  padding: 4px 8px;\n  margin-block: 4px;\n}\n\nnav a {\n  display: block;          /* full-width clickable area */\n  padding: 12px 16px;\n}"
+      },
+      "related": [
+        "web-017",
+        "web-008"
+      ]
+    },
+    {
+      "id": "web-003",
+      "order": 3,
+      "question": "How do HTML forms work? What is the difference between GET and POST for a form?",
+      "shortAnswer": "A form collects input and sends it to the URL in `action` using the HTTP method in `method`. GET puts the data in the query string and is for searches; POST sends it in the request body and is for changes.",
+      "interviewAnswer": "A form sends the values of its named controls to the URL in the action attribute. With GET the data is appended to the URL as a query string, so it is visible, bookmarkable and limited in size, which suits search and filter forms. With POST the data goes in the request body, which is right for creating or changing data and required for file uploads with multipart encoding. Every input needs a label, and I add built-in validation attributes, but always validate again on the server.",
+      "answer": "- Only controls with a `name` attribute are submitted.\n- `enctype=\"multipart/form-data\"` is required for file uploads.\n- `<label for=\"id\">` (or wrapping the input) links the text to the control: clicking it focuses the field and screen readers announce it.\n- **Validation attributes**: `required`, `minlength`, `maxlength`, `min`, `max`, `step`, `pattern`, `type=\"email\"`. `novalidate` on the form turns them off.\n- `autocomplete` values (`email`, `new-password`, `one-time-code`) help browsers and password managers.\n- Group related controls with `<fieldset>` and `<legend>`.\n- A `<button>` inside a form is `type=\"submit\"` by default; use `type=\"button\"` for others.\n- HTML forms support only GET and POST. Laravel spoofs the rest with a hidden `_method` field (`@method('PUT')`) and requires `@csrf` on POST forms.",
+      "topic": "Forms",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "html",
+        "forms",
+        "validation",
+        "get",
+        "post"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "html",
+        "content": "<form action=\"/register\" method=\"post\" enctype=\"multipart/form-data\">\n  <!-- Laravel: @csrf -->\n  <div>\n    <label for=\"email\">Email</label>\n    <input id=\"email\" name=\"email\" type=\"email\" autocomplete=\"email\" required>\n  </div>\n\n  <div>\n    <label for=\"password\">Password</label>\n    <input id=\"password\" name=\"password\" type=\"password\" minlength=\"8\" autocomplete=\"new-password\" required>\n  </div>\n\n  <fieldset>\n    <legend>Experience</legend>\n    <label><input type=\"radio\" name=\"level\" value=\"junior\" checked> Junior</label>\n    <label><input type=\"radio\" name=\"level\" value=\"mid\"> Mid-level</label>\n  </fieldset>\n\n  <label for=\"cv\">CV (PDF)</label>\n  <input id=\"cv\" name=\"cv\" type=\"file\" accept=\"application/pdf\">\n\n  <button type=\"submit\">Create account</button>\n</form>"
+      },
+      "related": [
+        "web-004",
+        "api-002",
+        "laravel-008"
+      ]
+    },
+    {
+      "id": "web-004",
+      "order": 4,
+      "question": "Which HTML5 input types do you know, and why use them?",
+      "shortAnswer": "`email`, `url`, `tel`, `number`, `range`, `date`, `time`, `datetime-local`, `color`, `search`, `file` and more. They give built-in validation, the right mobile keyboard and native pickers.",
+      "interviewAnswer": "HTML5 added input types such as email, url, tel, number, range, date, time, color and search. Using the right type gives three things for free: the browser validates the format, mobile devices show a suitable keyboard, and some types show native pickers. They also carry meaning for assistive technology. They are a convenience, not security, so the server still validates everything.",
+      "answer": "| Type | Benefit |\n|---|---|\n| `email`, `url` | Format validation, keyboard with `@` or `/` |\n| `tel` | Numeric phone keypad (no validation) |\n| `number` | Spinner, `min`, `max`, `step` |\n| `date`, `time`, `datetime-local`, `month` | Native pickers; value is ISO formatted |\n| `range` | Slider |\n| `search` | Clear button, search keyboard |\n| `color` | Colour picker |\n| `file` | `accept`, `multiple`, `capture` |\n| `password` | Masked, works with password managers |\n| `hidden` | Sent but not shown |\n\nTips:\n\n- For codes like OTPs and card numbers use `type=\"text\"` with `inputmode=\"numeric\"`; `number` adds spinners and strips leading zeros.\n- `<datalist>` gives suggestions for a text input.\n- Other useful attributes: `placeholder` (not a substitute for a label), `readonly`, `disabled` (not submitted), `autofocus`, `multiple`.",
+      "topic": "Input Types",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "html",
+        "html5",
+        "forms",
+        "input-types"
+      ],
+      "code": {
+        "language": "html",
+        "content": "<input type=\"email\" name=\"email\" required>\n<input type=\"number\" name=\"qty\" min=\"1\" max=\"10\" step=\"1\" value=\"1\">\n<input type=\"date\" name=\"dob\" max=\"2010-12-31\">\n<input type=\"text\" name=\"otp\" inputmode=\"numeric\" pattern=\"[0-9]{6}\" autocomplete=\"one-time-code\">\n\n<input type=\"text\" name=\"city\" list=\"cities\">\n<datalist id=\"cities\">\n  <option value=\"Pune\"></option>\n  <option value=\"Mumbai\"></option>\n</datalist>"
+      },
+      "related": [
+        "web-003"
+      ]
+    },
+    {
+      "id": "web-005",
+      "order": 5,
+      "question": "How do you make a web page accessible?",
+      "shortAnswer": "Use semantic HTML, give every control a label and every image alt text, make everything work with the keyboard and show visible focus, keep colour contrast sufficient, and use ARIA only where native HTML cannot express something.",
+      "interviewAnswer": "Accessibility starts with semantic HTML, because native elements bring keyboard support and roles for free. Every form control has a label, images have meaningful alt text or empty alt if decorative, and headings follow a logical order. Everything must be operable with the keyboard, with a visible focus indicator. Text needs enough contrast, at least 4.5 to 1, and information must not depend on colour alone. I add ARIA only when HTML is not enough, and test with the keyboard and a screen reader.",
+      "answer": "**Checklist (WCAG basics)**\n\n- Semantic landmarks: `header`, `nav`, `main`, `footer`.\n- `<label>` for inputs; `aria-label` for icon-only buttons.\n- `alt=\"\"` for decorative images; descriptive `alt` for informative ones.\n- Keyboard: Tab order follows the visual order; no keyboard traps; a \"Skip to content\" link.\n- Never remove the focus outline without replacing it (`:focus-visible`).\n- Contrast: 4.5:1 for normal text, 3:1 for large text and UI components.\n- Do not rely on colour alone; add text or an icon.\n- Forms: link errors with `aria-describedby`, mark fields `aria-invalid`, announce dynamic messages with `aria-live`.\n- Modals: move focus in, trap it, close on Escape, return focus afterwards.\n- Respect `prefers-reduced-motion`.\n- Touch targets around 44 px; text can be zoomed to 200%.\n- Set `<html lang=\"en\">`.\n\n**First rule of ARIA**: if a native element does the job, use it. Common attributes: `aria-expanded`, `aria-controls`, `aria-current`, `aria-hidden`, `role=\"dialog\"`.",
+      "topic": "Accessibility",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "html",
+        "accessibility",
+        "aria",
+        "wcag"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "html",
+        "content": "<a class=\"skip-link\" href=\"#main\">Skip to content</a>\n\n<button type=\"button\" aria-label=\"Close dialog\">\n  <svg aria-hidden=\"true\" width=\"16\" height=\"16\">...</svg>\n</button>\n\n<label for=\"email\">Email</label>\n<input id=\"email\" type=\"email\" aria-invalid=\"true\" aria-describedby=\"email-error\">\n<p id=\"email-error\">Enter an email address in the format name@example.com.</p>\n\n<div role=\"status\" aria-live=\"polite\">Saved.</div>\n\n<style>\n  :focus-visible { outline: 2px solid #2b59e0; outline-offset: 2px; }\n  @media (prefers-reduced-motion: reduce) {\n    * { animation: none !important; transition: none !important; }\n  }\n</style>"
+      },
+      "related": [
+        "web-001",
+        "web-003"
+      ]
+    },
+    {
+      "id": "web-006",
+      "order": 6,
+      "question": "Which HTML elements matter for SEO?",
+      "shortAnswer": "A unique `<title>` and meta description, one `<h1>` with a logical heading structure, semantic markup, descriptive link text and image alt text, a canonical URL, Open Graph tags, and a fast, mobile-friendly page.",
+      "interviewAnswer": "On-page SEO in HTML comes down to a unique, descriptive title tag and meta description for each page, a single h1 and a sensible heading hierarchy, semantic elements, descriptive anchor text and alt attributes. I add a canonical link to avoid duplicate-content issues, Open Graph tags for social sharing, and the viewport meta tag for mobile. Search engines also weigh page speed and mobile friendliness, and content must be present in the HTML, which is a consideration for JavaScript-rendered pages.",
+      "answer": "- `<title>`: about 50 to 60 characters, unique per page.\n- `<meta name=\"description\">`: about 150 characters; shown in results.\n- `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">`.\n- `<link rel=\"canonical\" href=\"...\">` for the preferred URL.\n- `<meta name=\"robots\" content=\"noindex\">` to keep a page out of results.\n- Open Graph: `og:title`, `og:description`, `og:image`, `og:url`.\n- Structured data in JSON-LD for rich results.\n- Clean, readable URLs; `sitemap.xml` and `robots.txt`.\n- Performance: Core Web Vitals (LCP, INP, CLS). Set image `width` and `height`, lazy-load below-the-fold images, defer scripts.\n- Content rendered only by client-side JavaScript is indexed less reliably than server-rendered HTML.",
+      "topic": "SEO",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "html",
+        "seo",
+        "meta-tags",
+        "performance"
+      ],
+      "code": {
+        "language": "html",
+        "content": "<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>What is Laravel middleware? | DevPrep</title>\n  <meta name=\"description\" content=\"A short interview answer and a detailed explanation of Laravel middleware, with a custom middleware example.\">\n  <link rel=\"canonical\" href=\"https://example.com/questions/laravel-middleware\">\n\n  <meta property=\"og:title\" content=\"What is Laravel middleware?\">\n  <meta property=\"og:description\" content=\"Interview-ready answer with code.\">\n  <meta property=\"og:image\" content=\"https://example.com/og/middleware.png\">\n</head>\n\n<img src=\"lifecycle.png\" alt=\"Diagram of the Laravel request lifecycle\" width=\"800\" height=\"450\" loading=\"lazy\">"
+      },
+      "related": [
+        "web-001",
+        "web-007"
+      ]
+    },
+    {
+      "id": "web-007",
+      "order": 7,
+      "question": "What is the difference between async and defer on a script tag?",
+      "shortAnswer": "Both download the script without blocking HTML parsing. `async` runs it as soon as it arrives, in any order. `defer` runs scripts in document order after parsing finishes.",
+      "interviewAnswer": "A plain script tag blocks HTML parsing while it downloads and executes. With async the script downloads in parallel and executes as soon as it is ready, which may interrupt parsing, and the order between async scripts is not guaranteed, so it suits independent scripts like analytics. With defer the script downloads in parallel but executes only after the document is parsed, in the order the tags appear, just before DOMContentLoaded. That makes defer the default choice for application code. Module scripts are deferred automatically.",
+      "answer": "| | Blocks parsing while downloading | Executes | Order kept |\n|---|---|---|---|\n| `<script>` | Yes | Immediately | Yes |\n| `<script async>` | No | As soon as downloaded | No |\n| `<script defer>` | No | After parsing, before `DOMContentLoaded` | Yes |\n| `<script type=\"module\">` | No | Deferred by default | Yes |\n\n- `async` and `defer` apply to external scripts (`src`), not inline classic scripts.\n- Putting a classic script at the end of `<body>` has a similar effect to `defer`, but `defer` in the `<head>` lets the download start earlier.\n- CSS in the `<head>` is render-blocking by design; keep it small.\n- `<link rel=\"preload\">` hints the browser to fetch a critical resource early.",
+      "topic": "HTML5",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "html",
+        "html5",
+        "script",
+        "performance",
+        "async",
+        "defer"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "html",
+        "content": "<head>\n  <link rel=\"stylesheet\" href=\"/css/app.css\">\n  <script src=\"/js/app.js\" defer></script>            <!-- app code: ordered, after parsing -->\n  <script src=\"https://example.com/analytics.js\" async></script>  <!-- independent -->\n  <script type=\"module\" src=\"/js/main.js\"></script>   <!-- deferred automatically -->\n</head>"
+      },
+      "related": [
+        "web-006",
+        "js-013"
+      ]
+    },
+    {
+      "id": "web-008",
+      "order": 8,
+      "question": "Explain the CSS box model. What does box-sizing: border-box do?",
+      "shortAnswer": "Every element is a box made of content, padding, border and margin. With `box-sizing: border-box`, `width` and `height` include padding and border, so a box stays the size you set.",
+      "interviewAnswer": "The box model describes every element as four layers: the content, then padding, then the border, then margin outside it. By default, with content-box, the width property sets only the content width, so padding and border are added on top and the element becomes wider than declared. With border-box, the declared width includes padding and border, which makes layouts predictable. Most projects set border-box on all elements. I would also mention that vertical margins between blocks collapse.",
+      "answer": "- **content-box** (default): rendered width = `width` + padding + border.\n- **border-box**: rendered width = `width`; the content area shrinks to fit padding and border.\n- Margin is always outside and never part of the width.\n- **Margin collapse**: adjacent vertical margins of block elements combine into the larger one. It does not happen inside flex or grid containers.\n- `outline` and `box-shadow` do not take up space.\n- Percentage padding and margin are calculated from the parent's **width**, even vertically.\n- Logical properties (`margin-inline`, `padding-block`) adapt to writing direction.",
+      "topic": "Box Model",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "box-model",
+        "box-sizing",
+        "layout"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": "*, *::before, *::after {\n  box-sizing: border-box;\n}\n\n.card {\n  width: 300px;\n  padding: 20px;\n  border: 1px solid #ddd;\n  margin: 16px;\n}\n/* content-box: 300 + 40 + 2 = 342px wide\n   border-box:  300px wide (content area is 258px) */"
+      },
+      "related": [
+        "web-002",
+        "web-014"
+      ]
+    },
+    {
+      "id": "web-009",
+      "order": 9,
+      "question": "How does Flexbox work? Explain the main properties.",
+      "shortAnswer": "Flexbox lays out the children of a container along one axis. `flex-direction` sets the main axis, `justify-content` aligns along it, `align-items` aligns across it, and `flex` controls how items grow and shrink.",
+      "interviewAnswer": "Flexbox is a one-dimensional layout system. Setting display flex on a container makes its children flex items arranged along the main axis, which is a row by default. justify-content distributes items along the main axis, and align-items aligns them on the cross axis. gap adds space between items and flex-wrap lets them wrap. On the items, the flex shorthand sets grow, shrink and basis, so flex: 1 makes items share the free space equally. I use it for navigation bars, toolbars, and aligning things inside a component.",
+      "answer": "**Container**\n\n- `display: flex` / `inline-flex`\n- `flex-direction: row | column` (plus `-reverse`)\n- `justify-content: flex-start | center | space-between | space-around | space-evenly | flex-end`\n- `align-items: stretch | center | flex-start | flex-end | baseline`\n- `flex-wrap: wrap`, `gap: 1rem`\n- `align-content` for multiple wrapped lines\n\n**Items**\n\n- `flex: 1` = `flex-grow: 1; flex-shrink: 1; flex-basis: 0%`\n- `flex: none` keeps the item at its natural size\n- `align-self` overrides alignment for one item\n- `margin-left: auto` pushes an item to the far end\n- `order` changes visual order (not tab order, so use carefully)\n\n**Gotcha**: flex items have `min-width: auto`, so long text or a wide child will not shrink below its content. Add `min-width: 0` to allow truncation.",
+      "topic": "Flexbox",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "flexbox",
+        "layout"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": ".navbar {\n  display: flex;\n  align-items: center;\n  gap: 1rem;\n}\n.navbar .spacer { flex: 1; }          /* pushes the rest to the right */\n\n.card-row {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 1rem;\n}\n.card-row > .card {\n  flex: 1 1 280px;                    /* grow, shrink, start at 280px */\n  min-width: 0;\n}\n\n.center {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}"
+      },
+      "related": [
+        "web-010",
+        "web-016"
+      ]
+    },
+    {
+      "id": "web-010",
+      "order": 10,
+      "question": "What is the difference between Flexbox and CSS Grid?",
+      "shortAnswer": "Flexbox arranges items in one dimension, a row or a column, sized by their content. Grid arranges items in two dimensions, rows and columns together, sized by the container's tracks.",
+      "interviewAnswer": "Flexbox is one-dimensional: it distributes items along a single row or column, and the content largely determines sizes. Grid is two-dimensional: I define columns and rows on the container and place items into that structure, so alignment works in both directions. I use Grid for page layouts and card grids, and Flexbox for aligning items inside a component such as a toolbar. They work well together: a grid for the page, flex inside each cell.",
+      "answer": "**Grid essentials**\n\n- `display: grid; grid-template-columns: 240px 1fr; gap: 1rem;`\n- `fr` is a share of the remaining space.\n- `repeat(3, 1fr)`, `minmax(200px, 1fr)`.\n- Responsive without media queries: `grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));`\n- Placement: `grid-column: 1 / 3`, `grid-column: span 2`, `grid-row`.\n- Named areas: `grid-template-areas` for readable page layouts.\n- Alignment: `justify-items`, `align-items`, `place-items: center`.\n\n**Choosing**\n\n| Need | Use |\n|---|---|\n| Items in a line with flexible spacing | Flexbox |\n| Rows and columns that must line up | Grid |\n| Layout driven by content size | Flexbox |\n| Layout driven by a defined structure | Grid |",
+      "topic": "Grid",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "grid",
+        "flexbox",
+        "layout",
+        "responsive"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": ".layout {\n  display: grid;\n  grid-template-columns: 16rem 1fr;\n  grid-template-areas:\n    \"sidebar header\"\n    \"sidebar main\";\n  min-height: 100vh;\n}\n.sidebar { grid-area: sidebar; }\n.header  { grid-area: header; }\n.main    { grid-area: main; }\n\n.cards {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));\n  gap: 1rem;\n}\n\n@media (max-width: 768px) {\n  .layout {\n    grid-template-columns: 1fr;\n    grid-template-areas: \"header\" \"main\";\n  }\n  .sidebar { display: none; }\n}"
+      },
+      "related": [
+        "web-009",
+        "web-013"
+      ]
+    },
+    {
+      "id": "web-011",
+      "order": 11,
+      "question": "Explain the CSS position values: static, relative, absolute, fixed and sticky.",
+      "shortAnswer": "`static` is the normal flow. `relative` offsets an element from its own position. `absolute` positions it against the nearest positioned ancestor. `fixed` positions it against the viewport. `sticky` scrolls normally until a threshold, then sticks.",
+      "interviewAnswer": "static is the default: the element is in normal flow and offsets do nothing. relative keeps the element's space in the flow but lets me nudge it, and it becomes the reference for absolutely positioned children. absolute removes the element from the flow and positions it relative to the nearest ancestor that is not static. fixed is positioned relative to the viewport and stays put while scrolling. sticky acts like relative until the scroll position reaches the offset I set, then behaves like fixed inside its container.",
+      "answer": "| Value | In normal flow | Positioned relative to |\n|---|---|---|\n| `static` | Yes | Not positioned |\n| `relative` | Yes (space kept) | Its own normal position |\n| `absolute` | No | Nearest positioned ancestor, else the page |\n| `fixed` | No | The viewport |\n| `sticky` | Yes | Its scroll container, after the threshold |\n\n- `top`, `right`, `bottom`, `left` and `inset` only work on positioned elements.\n- `z-index` only works on positioned elements (and flex or grid items), and only within the same **stacking context**. `transform`, `opacity` below 1, and `position: fixed` each create a new stacking context, which is why a huge z-index sometimes does nothing.\n- `sticky` needs an offset such as `top: 0` and fails if an ancestor has `overflow: hidden` or `auto`.\n- A `transform` on an ancestor makes `fixed` children position relative to that ancestor.",
+      "topic": "Positioning",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "positioning",
+        "z-index",
+        "sticky"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": ".card { position: relative; }\n\n.card .badge {\n  position: absolute;      /* relative to .card */\n  top: 8px;\n  right: 8px;\n}\n\n.site-header {\n  position: sticky;\n  top: 0;\n  z-index: 10;\n}\n\n.toast {\n  position: fixed;\n  bottom: 1rem;\n  right: 1rem;\n}\n\n.overlay {\n  position: fixed;\n  inset: 0;                /* top, right, bottom, left = 0 */\n}"
+      },
+      "related": [
+        "web-016",
+        "web-008"
+      ]
+    },
+    {
+      "id": "web-012",
+      "order": 12,
+      "question": "How does CSS specificity work?",
+      "shortAnswer": "When several rules target the same element, the most specific selector wins: inline styles, then IDs, then classes, attributes and pseudo-classes, then element names. With equal specificity the later rule wins, and `!important` overrides the normal order.",
+      "interviewAnswer": "Specificity is how the browser decides which declaration applies when rules conflict. I think of it as three numbers: the count of ID selectors, the count of classes, attributes and pseudo-classes, and the count of element selectors. They are compared left to right, so one ID beats any number of classes. Inline styles beat selectors, and !important beats everything except another !important with higher specificity. If specificity is equal, the rule that comes last wins. I keep specificity low with single classes so styles stay easy to override.",
+      "answer": "| Selector | Specificity (id, class, element) |\n|---|---|\n| `p` | 0, 0, 1 |\n| `.card` | 0, 1, 0 |\n| `.card p` | 0, 1, 1 |\n| `a:hover`, `[type=\"text\"]` | 0, 1, 1 / 0, 1, 0 |\n| `#header` | 1, 0, 0 |\n| `#header .nav a` | 1, 1, 1 |\n| `style=\"\"` | Wins over any selector |\n\n- The universal selector `*` and combinators add nothing.\n- `:where()` has zero specificity; `:is()` and `:not()` take the highest specificity among their arguments.\n- **The cascade** in order: origin and `!important`, cascade layers (`@layer`), specificity, then source order.\n- **Inheritance** is separate: properties such as `color` and `font-family` pass to children; `margin` and `border` do not.\n\nAvoid `!important` except for utility classes. Utility-first frameworks such as Tailwind sidestep specificity fights by using single classes.",
+      "topic": "Specificity",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "specificity",
+        "cascade",
+        "selectors"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": "p            { color: black; }   /* 0,0,1 */\n.note        { color: blue; }    /* 0,1,0  wins over p */\n#intro       { color: green; }   /* 1,0,0  wins over .note */\n.note.note   { color: purple; }  /* 0,2,0  still loses to #intro */\n\n/* <p id=\"intro\" class=\"note\" style=\"color: red\">  ->  red (inline) */\n\n:where(.prose) a { color: teal; }   /* 0,0,1: easy to override */"
+      },
+      "related": [
+        "web-015",
+        "web-019"
+      ]
+    },
+    {
+      "id": "web-013",
+      "order": 13,
+      "question": "How do you build a responsive layout? What is mobile-first?",
+      "shortAnswer": "Use fluid widths, flexible images and media queries so the layout adapts to the screen. Mobile-first means writing the base styles for small screens and adding `min-width` media queries for larger ones.",
+      "interviewAnswer": "Responsive design means one page that adapts to any screen size. I start with the viewport meta tag, use relative units and fluid containers instead of fixed widths, make images scale with max-width 100 percent, and use Flexbox and Grid, which wrap naturally. With a mobile-first approach the default CSS targets small screens, and min-width media queries add columns and spacing as space allows. That keeps the mobile CSS small and forces me to prioritise content. I test real breakpoints from 320 pixels up.",
+      "answer": "**Building blocks**\n\n- `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">`\n- Fluid sizing: `%`, `rem`, `fr`, `min()`, `max()`, `clamp()`.\n- `img { max-width: 100%; height: auto; }`; `srcset` and `sizes` for different resolutions.\n- Media queries: `@media (min-width: 768px) { ... }`.\n- Intrinsic layouts: `repeat(auto-fit, minmax(16rem, 1fr))`, `flex-wrap`.\n- Fluid type: `font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);`\n- Container queries (`@container`) style a component by its container's width.\n- Touch: targets of about 44 px, no hover-only interactions.\n\n**Other media features**: `prefers-color-scheme`, `prefers-reduced-motion`, `hover`, `pointer`, `orientation`, `print`.\n\n**Common breakpoints** (Tailwind's): 640, 768, 1024, 1280 px. Choose breakpoints where the content breaks, not for specific devices.\n\nOn small screens, navigation typically collapses into a drawer, tables scroll horizontally, and multi-column layouts stack.",
+      "topic": "Responsive Design",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "css",
+        "responsive",
+        "media-queries",
+        "mobile-first"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": "/* Base: mobile */\n.container { width: min(100% - 2rem, 72rem); margin-inline: auto; }\n.grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }\n.sidebar { display: none; }\nh1 { font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem); }\nimg { max-width: 100%; height: auto; }\n\n/* Tablet and up */\n@media (min-width: 768px) {\n  .grid { grid-template-columns: repeat(2, 1fr); }\n}\n\n/* Desktop and up */\n@media (min-width: 1024px) {\n  .grid { grid-template-columns: repeat(3, 1fr); }\n  .sidebar { display: block; }\n}"
+      },
+      "related": [
+        "web-010",
+        "web-014",
+        "web-019"
+      ]
+    },
+    {
+      "id": "web-014",
+      "order": 14,
+      "question": "What is the difference between px, em, rem, % and vw/vh?",
+      "shortAnswer": "`px` is a fixed unit. `em` is relative to the element's font size, `rem` to the root font size, `%` to the parent's size, and `vw`/`vh` to the viewport's width and height.",
+      "interviewAnswer": "px is an absolute unit. em is relative to the font size of the element itself, so it compounds when nested. rem is relative to the root html font size, usually 16 pixels, so it is consistent everywhere and respects the user's browser font setting, which is why I use rem for font sizes and spacing. Percent is relative to the parent. vw and vh are one percent of the viewport width and height; on mobile I prefer dvh, which accounts for the browser's address bar.",
+      "answer": "| Unit | Relative to | Typical use |\n|---|---|---|\n| `px` | Nothing (CSS pixel) | Borders, small fixed details |\n| `rem` | Root font size | Font sizes, spacing, breakpoints |\n| `em` | Current element's font size | Padding that scales with a component's text |\n| `%` | Parent (width for most properties) | Fluid widths |\n| `vw`, `vh` | Viewport | Full-screen sections |\n| `dvh`, `svh`, `lvh` | Dynamic, small and large viewport height | Mobile full-height layouts |\n| `ch` | Width of the \"0\" character | Line length: `max-width: 65ch` |\n| `fr` | Share of free space in a grid | Grid tracks |\n\nWhy `rem` for text: if a user sets the browser default to 20 px, `rem`-based sizes scale and `px` sizes do not.\n\nUnitless `line-height: 1.5` is preferred because it scales with each element's font size.",
+      "topic": "CSS Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "units",
+        "rem",
+        "em",
+        "responsive"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": "html { font-size: 100%; }             /* 16px unless the user changed it */\n\nbody { font-size: 1rem; line-height: 1.5; }\nh1   { font-size: 2rem; }             /* 32px */\n\n.button {\n  font-size: 0.875rem;\n  padding: 0.5em 1em;                 /* scales with the button's own font size */\n}\n\n.hero  { min-height: 100dvh; }\n.prose { max-width: 65ch; }"
+      },
+      "related": [
+        "web-013",
+        "web-008"
+      ]
+    },
+    {
+      "id": "web-015",
+      "order": 15,
+      "question": "What is the difference between a pseudo-class and a pseudo-element?",
+      "shortAnswer": "A pseudo-class (one colon) selects an element in a particular state or position, like `:hover` or `:first-child`. A pseudo-element (two colons) styles a part of an element or generated content, like `::before` or `::placeholder`.",
+      "interviewAnswer": "A pseudo-class targets an existing element when it is in a certain state or position: hover, focus, checked, disabled, first-child, nth-child, not. It uses a single colon. A pseudo-element creates or targets a part of an element that is not a separate node in the HTML: before and after for generated content, first-line, placeholder, selection and marker. It uses a double colon. before and after need the content property to render.",
+      "answer": "**Pseudo-classes**\n\n- State: `:hover`, `:active`, `:focus`, `:focus-visible`, `:focus-within`, `:visited`\n- Forms: `:checked`, `:disabled`, `:required`, `:invalid`, `:placeholder-shown`\n- Structure: `:first-child`, `:last-child`, `:nth-child(2n)`, `:nth-of-type()`, `:only-child`, `:empty`\n- Logic: `:not()`, `:is()`, `:where()`, `:has()`\n\n**Pseudo-elements**\n\n- `::before`, `::after` (require `content`)\n- `::placeholder`, `::selection`, `::marker`, `::first-line`, `::first-letter`, `::backdrop`\n\n`:nth-child(n)` counts all siblings; `:nth-of-type(n)` counts siblings of the same element type.\n\n`:has()` is the \"parent selector\": `.card:has(img)` matches cards that contain an image.\n\nGenerated content from `::before` is not reliably announced by screen readers, so do not put essential text there.",
+      "topic": "Pseudo Classes",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "pseudo-classes",
+        "pseudo-elements",
+        "selectors"
+      ],
+      "code": {
+        "language": "css",
+        "content": "a:hover, a:focus-visible { text-decoration: underline; }\n\ntr:nth-child(even) { background: #f6f7f9; }\nli:not(:last-child) { border-bottom: 1px solid #e3e6ec; }\n\ninput:invalid:not(:placeholder-shown) { border-color: #c42c2c; }\n.field:focus-within label { color: #2b59e0; }\n.card:has(img) { padding-top: 0; }\n\n.required::after {\n  content: \" *\";\n  color: #c42c2c;\n}\n::selection { background: #ffe14d; }"
+      },
+      "related": [
+        "web-012"
+      ]
+    },
+    {
+      "id": "web-016",
+      "order": 16,
+      "question": "How do you center an element horizontally and vertically?",
+      "shortAnswer": "Make the parent a flex or grid container and center the child: `display: grid; place-items: center;` or `display: flex; justify-content: center; align-items: center;`.",
+      "interviewAnswer": "The modern answer is Flexbox or Grid on the parent. With Grid it is two lines: display grid and place-items center. With Flexbox it is justify-content center and align-items center. For horizontal centering of a block with a width, margin-inline auto is enough. For an overlay element I can use position absolute with inset zero and margin auto, or top and left fifty percent with a translate of minus fifty percent. Text is centered with text-align center.",
+      "answer": "| Situation | Technique |\n|---|---|\n| Child inside a parent, both axes | `display: grid; place-items: center;` |\n| Same, with flex | `display: flex; justify-content: center; align-items: center;` |\n| Block with a width, horizontally | `margin-inline: auto;` |\n| Inline content or text | `text-align: center;` |\n| Absolutely positioned element | `inset: 0; margin: auto;` with a set size, or `top: 50%; left: 50%; transform: translate(-50%, -50%);` |\n| One item inside a flex container | `margin: auto;` on the item |\n\nThe parent needs a height for vertical centering to be visible, for example `min-height: 100dvh`.",
+      "topic": "CSS Basics",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "css",
+        "centering",
+        "flexbox",
+        "grid"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "css",
+        "content": "/* Grid: shortest */\n.parent { display: grid; place-items: center; min-height: 100dvh; }\n\n/* Flexbox */\n.parent { display: flex; justify-content: center; align-items: center; }\n\n/* Horizontal only */\n.container { max-width: 60rem; margin-inline: auto; }\n\n/* Absolute overlay */\n.modal {\n  position: fixed;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%);\n}"
+      },
+      "related": [
+        "web-009",
+        "web-011"
+      ]
+    },
+    {
+      "id": "web-017",
+      "order": 17,
+      "question": "What is the difference between display: none, visibility: hidden and opacity: 0?",
+      "shortAnswer": "`display: none` removes the element from layout entirely. `visibility: hidden` hides it but keeps its space. `opacity: 0` makes it transparent while it keeps its space and still receives clicks.",
+      "interviewAnswer": "display none removes the element from the layout and from the accessibility tree; it takes no space and cannot be focused. visibility hidden makes it invisible but its box still occupies space, and it cannot be clicked or focused. opacity zero only makes it transparent: it still takes space, still receives clicks and keyboard focus, and is still read by screen readers. To hide something visually but keep it for screen readers, I use a visually-hidden utility class.",
+      "answer": "| | Takes space | Clickable / focusable | Read by screen readers | Can transition |\n|---|---|---|---|---|\n| `display: none` | No | No | No | Not directly |\n| `visibility: hidden` | Yes | No | No | Yes (toggles at the end) |\n| `opacity: 0` | Yes | Yes | Yes | Yes |\n| `.sr-only` | No (1 px, clipped) | Focusable | Yes | n/a |\n\n- The HTML `hidden` attribute behaves like `display: none`.\n- `aria-hidden=\"true\"` hides from assistive technology only; the element stays visible.\n- For fade animations combine `opacity` with `visibility` (or `pointer-events: none`) so the invisible element cannot be clicked.",
+      "topic": "CSS Basics",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "display",
+        "visibility",
+        "accessibility"
+      ],
+      "code": {
+        "language": "css",
+        "content": ".is-removed   { display: none; }\n.is-invisible { visibility: hidden; }\n\n.fade {\n  opacity: 0;\n  visibility: hidden;\n  transition: opacity 150ms ease, visibility 150ms;\n}\n.fade.is-open { opacity: 1; visibility: visible; }\n\n/* Visible to screen readers only */\n.sr-only {\n  position: absolute;\n  width: 1px; height: 1px;\n  padding: 0; margin: -1px;\n  overflow: hidden;\n  clip: rect(0, 0, 0, 0);\n  white-space: nowrap;\n  border: 0;\n}"
+      },
+      "related": [
+        "web-002",
+        "web-005"
+      ]
+    },
+    {
+      "id": "web-018",
+      "order": 18,
+      "question": "What is the difference between CSS transitions and animations?",
+      "shortAnswer": "A transition animates a property from one value to another when it changes, for example on hover. An animation uses `@keyframes` to define multiple steps and can run on its own, loop and alternate.",
+      "interviewAnswer": "A transition needs a trigger: when a property value changes, because of hover, focus or a class change, the browser interpolates between the old and new values over a duration. An animation is defined with keyframes, can have many steps, starts on its own, and can repeat or alternate. For performance I animate transform and opacity, which the browser can handle on the compositor without recalculating layout, and I respect the user's reduced-motion preference.",
+      "answer": "**Transition**: `transition: property duration timing-function delay;`\n\n- Two states only (from and to).\n- List the properties instead of `all`.\n\n**Animation**: `animation: name duration timing-function delay iteration-count direction fill-mode;`\n\n- Any number of keyframes.\n- `infinite`, `alternate`, `forwards` (keep the final state), `animation-play-state`.\n\n**Performance**\n\n- Cheap: `transform`, `opacity`.\n- Expensive: `width`, `height`, `top`, `left`, `margin` (trigger layout), `box-shadow` (paint).\n- Keep UI transitions short: about 100 to 300 ms.\n\n**Accessibility**: wrap non-essential motion in `@media (prefers-reduced-motion: no-preference)` or disable it under `reduce`.",
+      "topic": "Animations",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "animations",
+        "transitions",
+        "performance"
+      ],
+      "code": {
+        "language": "css",
+        "content": ".button {\n  transition: background-color 150ms ease, transform 150ms ease;\n}\n.button:hover  { background-color: #2b59e0; }\n.button:active { transform: translateY(1px); }\n\n@keyframes spin {\n  to { transform: rotate(360deg); }\n}\n.spinner { animation: spin 800ms linear infinite; }\n\n@keyframes rise {\n  from { opacity: 0; transform: translateY(8px); }\n}\n.toast { animation: rise 160ms ease-out; }\n\n@media (prefers-reduced-motion: reduce) {\n  .spinner, .toast, .button { animation: none; transition: none; }\n}"
+      },
+      "related": [
+        "web-005"
+      ]
+    },
+    {
+      "id": "web-019",
+      "order": 19,
+      "question": "What is Tailwind CSS, and how is it different from Bootstrap?",
+      "shortAnswer": "Tailwind is a utility-first CSS framework: you compose designs from small single-purpose classes in the HTML. Bootstrap ships ready-made components with its own look.",
+      "interviewAnswer": "Tailwind is a utility-first framework. Instead of prebuilt components it gives low-level classes like flex, p-4 and text-sm that I combine directly in the markup, so I rarely write custom CSS. Responsive and state variants are prefixes, such as md:grid-cols-3 or hover:bg-blue-600. The build step scans the templates and generates only the classes that are used, so the CSS file stays small. Bootstrap gives ready components like navbars and modals quickly, but sites tend to look alike and customising means overriding its styles.",
+      "answer": "**How Tailwind works**\n\n- Utilities map to one or a few declarations: `p-4` → `padding: 1rem`.\n- **Variants**: `sm:`, `md:`, `lg:` (mobile-first `min-width`), `hover:`, `focus:`, `dark:`, `disabled:`, `group-hover:`, `aria-*:`, `data-*:`.\n- **Arbitrary values**: `w-[22rem]`, `bg-[#14171f]`.\n- **Design tokens** (colours, spacing, fonts) live in the theme configuration, so the whole UI stays consistent.\n- **Build**: the compiler scans your files for class names. Class names must appear as complete strings; `'text-' + color` will not be detected.\n- **Reuse**: extract a component (Blade, React) first; use `@apply` in a CSS class only for small repeated patterns such as buttons.\n\n| | Tailwind | Bootstrap |\n|---|---|---|\n| Approach | Utility classes | Prebuilt components |\n| Look | Yours | Recognisable default |\n| JavaScript | None included | Included for modals, dropdowns |\n| CSS size | Only what is used | Larger unless customised |\n\nCriticism to acknowledge: long class lists in the markup. The answer is components, not custom CSS.",
+      "topic": "Tailwind CSS",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "css",
+        "tailwind",
+        "utility-first",
+        "bootstrap"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "html",
+        "content": "<article class=\"rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 sm:p-5\">\n  <div class=\"flex items-center gap-2 text-xs text-slate-500\">\n    <span class=\"rounded bg-slate-100 px-1.5 py-0.5 font-medium\">Laravel</span>\n    <span>Intermediate</span>\n  </div>\n  <h3 class=\"mt-2 text-lg font-semibold leading-snug\">What is middleware?</h3>\n  <p class=\"mt-1 line-clamp-2 text-sm text-slate-600\">A layer every request passes through...</p>\n  <div class=\"mt-4 grid gap-2 sm:grid-cols-2\">\n    <button class=\"rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2\">\n      View answer\n    </button>\n  </div>\n</article>"
+      },
+      "related": [
+        "web-013",
+        "web-012"
+      ]
+    }
+  ]
+}

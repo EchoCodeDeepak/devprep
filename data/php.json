@@ -1,0 +1,688 @@
+{
+  "skill": "php",
+  "questions": [
+    {
+      "id": "php-001",
+      "order": 1,
+      "question": "What is the difference between == and === in PHP?",
+      "shortAnswer": "`==` compares values after type juggling; `===` compares both value and type with no conversion.",
+      "interviewAnswer": "Double equals is loose comparison: PHP converts the operands to a common type first, so the string \"5\" equals the integer 5. Triple equals is strict: it is true only when both the type and the value match. I default to strict comparison because loose comparison hides bugs, especially around null, zero, empty strings and functions like strpos that can return 0 or false.",
+      "answer": "Loose comparison (`==`) applies type juggling before comparing. Strict comparison (`===`) never converts, so `\"5\" === 5` is false.\n\nThings worth knowing for an interview:\n\n- PHP 8 changed string-to-number comparison. `0 == \"abc\"` was `true` in PHP 7 and is `false` in PHP 8, because a non-numeric string is now compared as a string.\n- Numeric strings are still compared as numbers: `\"10\" == \"1e1\"` is `true`.\n- `null == false`, `[] == false` and `\"\" == null` are all `true` under loose comparison.\n- For objects, `==` is true when both are instances of the same class with equal properties; `===` is true only when both variables point to the same instance.\n- `strpos()` returns `0` for a match at the start and `false` for no match, so always test it with `!== false`.\n\nThe same rule applies to `!=` versus `!==`, and to `in_array()` and `array_search()`, which are loose unless you pass `true` as the third argument.",
+      "topic": "Operators",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "operators",
+        "comparison",
+        "type-juggling"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "var_dump(5 == \"5\");        // true  (value only)\nvar_dump(5 === \"5\");       // false (int vs string)\nvar_dump(0 == \"abc\");      // false in PHP 8, true in PHP 7\nvar_dump(\"10\" == \"1e1\");   // true  (both numeric strings)\nvar_dump(null == false);   // true\nvar_dump(null === false);  // false\n\n// Classic bug: match at position 0 is falsy\nif (strpos(\"php rocks\", \"php\") !== false) {\n    echo \"found\";\n}"
+      },
+      "related": [
+        "php-004",
+        "php-003"
+      ]
+    },
+    {
+      "id": "php-002",
+      "order": 2,
+      "question": "What is the difference between include and require in PHP?",
+      "shortAnswer": "Both load another file. If the file is missing, `include` raises a warning and the script continues; `require` raises a fatal error and stops.",
+      "interviewAnswer": "Both statements pull another PHP file into the current script. The difference is failure behaviour: include emits a warning and carries on, require stops the script with a fatal error. I use require for anything the application cannot run without, like configuration or the autoloader. The _once variants make sure a file is loaded only one time, which avoids redeclaring functions or classes. In modern projects Composer's autoloader replaces most manual includes.",
+      "answer": "| Statement | Missing file | Loads the file again if already loaded |\n|---|---|---|\n| `include` | `E_WARNING`, script continues | Yes |\n| `require` | Fatal error, script stops | Yes |\n| `include_once` | `E_WARNING`, script continues | No |\n| `require_once` | Fatal error, script stops | No |\n\nPractical guidance:\n\n- Use `require` or `require_once` for files the script depends on: bootstrap, config, the autoloader.\n- Use `include` only where missing content is acceptable, such as an optional template partial.\n- The `_once` versions keep a list of loaded files, so they cost slightly more but prevent \"cannot redeclare\" errors.\n- An included file can `return` a value, which is how config files that return arrays work: `$config = require 'config.php';`.",
+      "topic": "PHP Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "files",
+        "include",
+        "require"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Application cannot run without this\nrequire_once __DIR__ . '/vendor/autoload.php';\n\n// Config file that returns an array\n$config = require __DIR__ . '/config/app.php';\n\n// Optional partial: a warning is acceptable\ninclude 'partials/banner.php';"
+      },
+      "related": [
+        "php-019",
+        "php-020"
+      ]
+    },
+    {
+      "id": "php-003",
+      "order": 3,
+      "question": "What is the difference between isset(), empty() and is_null()?",
+      "shortAnswer": "`isset()` is true when a variable exists and is not null. `empty()` is true when it does not exist or is falsy. `is_null()` is true only for null and warns on an undefined variable.",
+      "interviewAnswer": "isset checks that a variable or array key exists and is not null. empty is the opposite of a truthy check: it returns true for a missing variable and for falsy values like zero, the string \"0\", an empty string, an empty array, null and false. is_null only tests for null and raises a warning if the variable was never defined. The common trap is empty treating the string \"0\" as empty, so for form input I check for an empty string explicitly.",
+      "answer": "| Value | `isset()` | `empty()` | `is_null()` |\n|---|---|---|---|\n| not defined | false | true | true, with a warning |\n| `null` | false | true | true |\n| `\"\"` | true | true | false |\n| `0` or `\"0\"` | true | true | false |\n| `[]` | true | true | false |\n| `\"a\"` | true | false | false |\n\n- `isset()` and `empty()` are language constructs, so they do not raise warnings for undefined variables or missing array keys.\n- `isset($a, $b)` accepts several arguments and is true only if all are set.\n- `array_key_exists('k', $arr)` is true even when the value is `null`; `isset($arr['k'])` is not.\n- The null coalescing operator `??` is shorthand for an `isset()` check: `$name = $_GET['name'] ?? 'guest';`.",
+      "topic": "Variables",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "variables",
+        "isset",
+        "empty",
+        "null"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "$data = ['qty' => 0, 'note' => null];\n\nvar_dump(isset($data['qty']));             // true\nvar_dump(empty($data['qty']));             // true  (0 is falsy)\nvar_dump(isset($data['note']));            // false (value is null)\nvar_dump(array_key_exists('note', $data)); // true\n\n$page = $_GET['page'] ?? 1;                // default when missing or null"
+      },
+      "related": [
+        "php-001",
+        "php-011"
+      ]
+    },
+    {
+      "id": "php-004",
+      "order": 4,
+      "question": "What data types does PHP support, and what is type juggling?",
+      "shortAnswer": "PHP has scalar types (int, float, string, bool), compound types (array, object, callable, iterable) and special types (null, resource). Type juggling is PHP converting values between types automatically based on context.",
+      "interviewAnswer": "PHP is dynamically typed. The scalar types are int, float, string and bool; the compound types are array, object, callable and iterable; and there are null and resource. Type juggling means PHP converts a value automatically when the context needs another type, for example adding the string \"5\" to an integer. It is convenient but can hide bugs, so I add type declarations to parameters and return values and enable strict_types in new code.",
+      "answer": "Type juggling happens in arithmetic, comparisons, string concatenation and boolean contexts.\n\n- `\"5\" + 3` is `8`. In PHP 8 a non-numeric string in arithmetic throws a `TypeError`; a leading-numeric string like `\"5 apples\"` works with a warning.\n- Falsy values are `false`, `0`, `0.0`, `\"\"`, `\"0\"`, `[]` and `null`. Everything else is truthy, including `\"0.0\"` and `\" \"`.\n- You can cast explicitly with `(int)`, `(float)`, `(string)`, `(bool)`, `(array)`.\n\n**Type declarations** let you state what a function accepts and returns. By default PHP runs in coercive mode and will convert a scalar argument if it can. With `declare(strict_types=1);` at the top of a file, calls made from that file must pass the exact scalar type or a `TypeError` is thrown.\n\nPHP 8 added union types (`int|string`), `mixed`, and the nullable shorthand `?string` already existed from 7.1.",
+      "topic": "Data Types",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "data-types",
+        "type-juggling",
+        "strict-types"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "declare(strict_types=1);\n\nfunction total(int $qty, float $price): float\n{\n    return $qty * $price;\n}\n\necho total(3, 9.5);     // 28.5\necho total(\"3\", 9.5);   // TypeError under strict_types\n\nvar_dump((bool) \"0\");   // false\nvar_dump((bool) \"0.0\"); // true\nvar_dump((int) \"12abc\"); // 12"
+      },
+      "related": [
+        "php-001",
+        "php-022"
+      ]
+    },
+    {
+      "id": "php-005",
+      "order": 5,
+      "question": "What is the difference between single-quoted and double-quoted strings?",
+      "shortAnswer": "Double-quoted strings interpolate variables and process escape sequences like `\\n`. Single-quoted strings are literal apart from `\\'` and `\\\\`.",
+      "interviewAnswer": "In a double-quoted string PHP parses variables and escape sequences, so a variable name is replaced by its value and backslash-n becomes a newline. A single-quoted string is taken literally. Heredoc behaves like double quotes and nowdoc like single quotes, which is useful for multi-line text. The performance difference is negligible today, so I choose based on readability.",
+      "answer": "- **Single quotes**: no variable interpolation; only `\\'` and `\\\\` are recognised.\n- **Double quotes**: variables are interpolated and escapes such as `\\n`, `\\t`, `\\\"` and `\\$` are processed.\n- **Complex expressions** need braces: `\"Total: {$order->items[0]->price}\"`.\n- **Heredoc** (`<<<TEXT`) works like a double-quoted string across multiple lines.\n- **Nowdoc** (`<<<'TEXT'`) works like a single-quoted string across multiple lines.\n\nFor building strings from many values, `sprintf()` is often clearer than long interpolation, and it handles number formatting.",
+      "topic": "Strings",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "strings",
+        "heredoc"
+      ],
+      "code": {
+        "language": "php",
+        "content": "$name = 'Asha';\n\necho 'Hello $name\\n';   // Hello $name\\n\necho \"Hello $name\\n\";   // Hello Asha + newline\necho \"Role: {$user['role']}\";\n\n$html = <<<HTML\n<p>Welcome, {$name}</p>\nHTML;\n\necho sprintf('%s has %d orders worth %.2f', $name, 3, 1499.5);"
+      },
+      "related": [
+        "php-006"
+      ]
+    },
+    {
+      "id": "php-006",
+      "order": 6,
+      "question": "What is the difference between echo and print?",
+      "shortAnswer": "Both output strings. `echo` accepts multiple arguments and returns nothing; `print` takes one argument and always returns 1, so it can be used in an expression.",
+      "interviewAnswer": "Both are language constructs that output text. echo can take several comma-separated arguments and has no return value. print takes a single argument and returns 1, so it can appear inside an expression. In practice everyone uses echo. For debugging I would mention print_r and var_dump, which show structure and types.",
+      "answer": "- `echo 'a', 'b';` is valid; `print 'a', 'b';` is a syntax error.\n- `print` returns `1`, so `$ok = print 'hi';` works. `echo` cannot be used that way.\n- Neither is a real function, so parentheses are optional.\n\nRelated output tools:\n\n- `print_r($value)` prints a readable structure; pass `true` as the second argument to return it as a string.\n- `var_dump($value)` also shows types and lengths, which is what you want when debugging loose comparisons.\n- `var_export($value, true)` returns valid PHP code for the value.\n- The short echo tag `<?= $value ?>` is always available and is the usual choice in templates.",
+      "topic": "PHP Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "basics",
+        "output"
+      ],
+      "code": {
+        "language": "php",
+        "content": "echo 'Hello', ' ', 'world';   // multiple arguments\nprint 'Hello world';          // one argument, returns 1\n\nvar_dump(\"5\" == 5);           // bool(true)\nprint_r(['a' => 1, 'b' => [2, 3]]);"
+      },
+      "related": [
+        "php-005"
+      ]
+    },
+    {
+      "id": "php-007",
+      "order": 7,
+      "question": "What is the difference between array_map(), array_filter() and array_reduce()?",
+      "shortAnswer": "`array_map` transforms every element, `array_filter` keeps elements that pass a test, and `array_reduce` folds the array into a single value.",
+      "interviewAnswer": "array_map applies a callback to each element and returns a new array of the same length. array_filter returns only the elements for which the callback returns true, and it preserves the original keys, so I often wrap it in array_values. array_reduce carries an accumulator through the array to produce one result, like a sum. They replace many foreach loops and make intent clearer.",
+      "answer": "- `array_map(callable $cb, array $arr)`: callback first, array second. Returns the transformed array. With one array, string keys are preserved.\n- `array_filter(array $arr, ?callable $cb)`: array first. With no callback it removes all falsy values, including `0` and `\"0\"`. **Keys are preserved**, which leaves gaps in a list; use `array_values()` to reindex.\n- `array_reduce(array $arr, callable $cb, $initial)`: the callback receives `($carry, $item)`.\n- `array_walk()` is different: it iterates by reference for side effects and returns a bool.\n\nPass `ARRAY_FILTER_USE_KEY` or `ARRAY_FILTER_USE_BOTH` as the third argument to filter on keys.\n\nArrow functions (`fn`) keep these calls short and capture outer variables automatically.",
+      "topic": "Arrays",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "php",
+        "arrays",
+        "functional"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "$prices = [120, 80, 250, 40];\n\n$withTax  = array_map(fn ($p) => $p * 1.18, $prices);\n$premium  = array_filter($prices, fn ($p) => $p > 100);  // [0 => 120, 2 => 250]\n$premium  = array_values($premium);                      // [120, 250]\n$total    = array_reduce($prices, fn ($sum, $p) => $sum + $p, 0); // 490"
+      },
+      "related": [
+        "php-023"
+      ]
+    },
+    {
+      "id": "php-008",
+      "order": 8,
+      "question": "How do the PHP sorting functions differ: sort, asort, ksort and usort?",
+      "shortAnswer": "`sort` orders values and resets keys, `asort` orders values and keeps keys, `ksort` orders by key, and `usort` orders with your own comparison function.",
+      "interviewAnswer": "They differ in what they sort by and whether keys survive. sort orders by value and reindexes. asort orders by value but keeps the key association, which matters for associative arrays. ksort orders by key. usort takes a comparison callback, and the spaceship operator makes that callback one line. All of them sort in place and return a boolean, so you do not assign the result.",
+      "answer": "| Function | Sorts by | Keeps keys | Reverse |\n|---|---|---|---|\n| `sort` | value | no | `rsort` |\n| `asort` | value | yes | `arsort` |\n| `ksort` | key | yes | `krsort` |\n| `usort` | callback | no | flip the comparison |\n| `uasort` | callback | yes | flip the comparison |\n| `uksort` | callback on keys | yes | flip the comparison |\n\n- They modify the array in place and return `true`; `$sorted = sort($arr)` is a common mistake.\n- The callback returns a negative number, zero or a positive number. The spaceship operator `<=>` does exactly that.\n- Since PHP 8.0 sorting is stable: equal elements keep their original order.\n- To sort by several fields, compare arrays: `[$a['city'], $a['name']] <=> [$b['city'], $b['name']]`.",
+      "topic": "Arrays",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "php",
+        "arrays",
+        "sorting"
+      ],
+      "code": {
+        "language": "php",
+        "content": "$users = [\n    ['name' => 'Ravi', 'age' => 31],\n    ['name' => 'Meera', 'age' => 26],\n];\n\nusort($users, fn ($a, $b) => $a['age'] <=> $b['age']);      // ascending by age\nusort($users, fn ($a, $b) => $b['age'] <=> $a['age']);      // descending\n\n$stock = ['pen' => 40, 'book' => 12];\nasort($stock);  // ['book' => 12, 'pen' => 40]\nksort($stock);  // ['book' => 12, 'pen' => 40]"
+      },
+      "related": [
+        "php-007"
+      ]
+    },
+    {
+      "id": "php-009",
+      "order": 9,
+      "question": "What is the difference between passing by value and passing by reference?",
+      "shortAnswer": "By value, the function works on a copy and the caller's variable is unchanged. By reference (`&`), the function works on the caller's variable itself.",
+      "interviewAnswer": "By default PHP passes arguments by value, so the function gets its own copy and changes do not affect the caller. Adding an ampersand to the parameter passes by reference, so the function modifies the original variable. Objects are a special case: the variable holds a handle to the object, and that handle is copied, so changing a property inside the function is visible outside even without an ampersand.",
+      "answer": "- **By value** is the default for scalars and arrays. Arrays use copy-on-write, so passing a large array is cheap until the function modifies it.\n- **By reference** is declared in the function signature: `function add(array &$list)`. Built-in examples are `sort()`, `array_push()` and `preg_match()` with its `$matches` argument.\n- **Objects** are passed by handle. Inside the function, `$obj->name = 'x'` changes the same object. Reassigning the parameter (`$obj = new Foo`) does not affect the caller unless the parameter is declared with `&`.\n- Use `clone` when you need an independent copy of an object.\n\nReferences make data flow harder to follow, so prefer returning a new value unless there is a clear reason.",
+      "topic": "Functions",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "functions",
+        "references"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "function addTax(float $amount): void { $amount *= 1.18; }\nfunction addTaxRef(float &$amount): void { $amount *= 1.18; }\n\n$price = 100;\naddTax($price);     echo $price; // 100\naddTaxRef($price);  echo $price; // 118\n\nfunction rename(User $u): void { $u->name = 'Changed'; }\n$user = new User('Original');\nrename($user);\necho $user->name;   // Changed (same object)"
+      },
+      "related": [
+        "php-023"
+      ]
+    },
+    {
+      "id": "php-010",
+      "order": 10,
+      "question": "How does variable scope work in PHP? Explain global, static and closures.",
+      "shortAnswer": "Functions have their own local scope and cannot see outer variables unless you use `global`, pass them in, or capture them in a closure with `use`. `static` keeps a local variable's value between calls.",
+      "interviewAnswer": "A function in PHP has its own scope and does not see variables defined outside it, unlike JavaScript. You can import a global with the global keyword, but passing arguments is cleaner. A static variable inside a function keeps its value between calls. Anonymous functions capture outer variables explicitly with use, by value unless you add an ampersand. Arrow functions capture by value automatically.",
+      "answer": "- **Local scope**: variables declared in a function exist only there.\n- **Global scope**: variables declared outside functions. Access them inside a function with `global $x;` or `$GLOBALS['x']`. This is rarely a good idea because it hides dependencies.\n- **Static variables**: `static $count = 0;` is initialised once and persists across calls to that function.\n- **Closures**: `function () use ($tax) { ... }` copies `$tax` at the moment the closure is defined. Use `use (&$tax)` to share the variable.\n- **Arrow functions**: `fn ($x) => $x * $tax` captures by value automatically and cannot modify the outer variable.\n- **Superglobals** such as `$_GET`, `$_POST`, `$_SESSION` and `$_SERVER` are available in every scope.",
+      "topic": "Scope",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "scope",
+        "closures",
+        "static"
+      ],
+      "code": {
+        "language": "php",
+        "content": "function counter(): int\n{\n    static $n = 0;   // survives between calls\n    return ++$n;\n}\ncounter(); counter();\necho counter();      // 3\n\n$rate = 0.18;\n$withTax = function (float $amount) use ($rate) {\n    return $amount * (1 + $rate);\n};\n$short = fn (float $amount) => $amount * (1 + $rate);"
+      },
+      "related": [
+        "php-009",
+        "php-014"
+      ]
+    },
+    {
+      "id": "php-011",
+      "order": 11,
+      "question": "What do the ??, ?:, ?-> and <=> operators do?",
+      "shortAnswer": "`??` returns the left side if it is set and not null. `?:` returns the left side if it is truthy. `?->` calls a method only if the object is not null. `<=>` returns -1, 0 or 1 for comparisons.",
+      "interviewAnswer": "The null coalescing operator returns its left operand when it exists and is not null, otherwise the right one, and it does not warn about undefined keys. The short ternary, sometimes called Elvis, checks truthiness instead, so zero and empty strings fall through. The nullsafe operator from PHP 8 short-circuits a chain to null when something in it is null. The spaceship operator returns minus one, zero or one and is mostly used in sort callbacks.",
+      "answer": "- `$a ?? $b`: like `isset($a) ? $a : $b`. Safe on undefined variables and array keys. Chains: `$a ?? $b ?? 'default'`.\n- `$a ??= $b`: assigns `$b` to `$a` only when `$a` is null or unset.\n- `$a ?: $b`: like `$a ? $a : $b`. Warns if `$a` is undefined, and treats `0`, `\"\"` and `[]` as missing.\n- `$user?->profile?->city`: evaluates to `null` as soon as one link is null instead of throwing an error.\n- `$a <=> $b`: returns `-1`, `0` or `1`. Works on numbers, strings and arrays.\n\nThe difference between `??` and `?:` is the usual follow-up: with `$qty = 0`, `$qty ?? 5` gives `0` but `$qty ?: 5` gives `5`.",
+      "topic": "Operators",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "operators",
+        "null-coalescing",
+        "php8"
+      ],
+      "priority": "high",
+      "code": {
+        "language": "php",
+        "content": "$qty = 0;\necho $qty ?? 5;   // 0  (set and not null)\necho $qty ?: 5;   // 5  (0 is falsy)\n\n$city = $order?->customer?->address?->city ?? 'Unknown';\n\n$options['per_page'] ??= 20;\n\nusort($items, fn ($a, $b) => $a->price <=> $b->price);"
+      },
+      "related": [
+        "php-003",
+        "php-022"
+      ]
+    },
+    {
+      "id": "php-012",
+      "order": 12,
+      "question": "What is the difference between an abstract class and an interface?",
+      "shortAnswer": "An interface is a contract of method signatures that any class can implement, and a class can implement many. An abstract class is a partial base class with shared state and code, and a class can extend only one.",
+      "interviewAnswer": "An interface defines what a class must be able to do: public method signatures and constants, with no state. A class can implement several interfaces. An abstract class is a base class that cannot be instantiated; it can hold properties, a constructor and implemented methods alongside abstract ones, but a class can extend only one. I use an interface to define a capability that unrelated classes share, and an abstract class when related classes share real code.",
+      "answer": "| | Interface | Abstract class |\n|---|---|---|\n| Methods | Signatures only, always public | Abstract and concrete, any visibility |\n| Properties | None (constants only) | Yes |\n| Constructor | Can declare a signature | Can implement one |\n| Multiple | A class can implement many | A class can extend one |\n| Meaning | \"can do\" | \"is a\" |\n\nThey are often combined: an interface defines the contract, and an abstract class provides a partial default implementation of it.\n\nIn Laravel terms: `ShouldQueue` and `Authenticatable` are interfaces (contracts); `Model` and `FormRequest` are abstract classes you extend.\n\nDepend on interfaces in type hints so implementations can be swapped, which is the dependency inversion principle.",
+      "topic": "Abstraction",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "oop",
+        "interfaces",
+        "abstract-class"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface PaymentGateway\n{\n    public function charge(int $amountInPaise): string;\n}\n\nabstract class BaseGateway implements PaymentGateway\n{\n    public function __construct(protected string $apiKey) {}\n\n    protected function log(string $message): void { /* shared code */ }\n}\n\nfinal class RazorpayGateway extends BaseGateway\n{\n    public function charge(int $amountInPaise): string\n    {\n        $this->log(\"Charging {$amountInPaise}\");\n        return 'pay_123';\n    }\n}"
+      },
+      "related": [
+        "php-013",
+        "oop-006",
+        "oop-007"
+      ]
+    },
+    {
+      "id": "php-013",
+      "order": 13,
+      "question": "What are traits in PHP and when would you use one?",
+      "shortAnswer": "A trait is a set of methods and properties that can be reused in several unrelated classes with `use`. It gives horizontal code reuse in a single-inheritance language.",
+      "interviewAnswer": "PHP allows a class to extend only one parent, so traits exist to share code between classes that are not related by inheritance. A trait is a group of methods and properties that gets copied into the class at compile time. Laravel uses them heavily: SoftDeletes, HasFactory and Notifiable are traits. If two traits define the same method, I resolve the conflict with insteadof and as. I avoid putting too much into traits because they hide dependencies.",
+      "answer": "- A trait cannot be instantiated and is not a type: you cannot type-hint against it or use `instanceof` with it.\n- A class can use several traits: `use Loggable, Cacheable;`.\n- Precedence: a method in the class overrides the trait's method, which overrides an inherited method.\n- **Conflicts** are resolved explicitly with `insteadof`, and `as` creates an alias or changes visibility.\n- Traits can declare abstract methods to demand something from the host class, and can have static methods and properties.\n\nTrait versus interface: an interface says what a class can do without providing code; a trait provides code without defining a type. They pair well: an interface for the contract, a trait for the default implementation.",
+      "topic": "Traits",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "oop",
+        "traits"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "trait Loggable\n{\n    public function log(string $msg): void\n    {\n        echo static::class . \": {$msg}\\n\";\n    }\n}\n\ntrait Auditable\n{\n    public function log(string $msg): void { /* writes to audit table */ }\n}\n\nclass Invoice\n{\n    use Loggable, Auditable {\n        Loggable::log insteadof Auditable;\n        Auditable::log as audit;\n    }\n}\n\n(new Invoice)->log('created');  // Invoice: created"
+      },
+      "related": [
+        "php-012",
+        "oop-008"
+      ]
+    },
+    {
+      "id": "php-014",
+      "order": 14,
+      "question": "What is the difference between self, static and $this?",
+      "shortAnswer": "`$this` is the current object. `self` is the class where the code is written. `static` is the class that was actually called at runtime (late static binding).",
+      "interviewAnswer": "$this refers to the current instance and is only available in non-static methods. self refers to the class in which the method is defined, resolved at compile time. static refers to the class that was called at runtime, which is late static binding. The difference shows with inheritance: new self in a parent always creates the parent, while new static creates whichever child class the method was called on. That is how Eloquent's static methods return the right model.",
+      "answer": "- `$this->prop`: instance property or method on the current object.\n- `self::method()` or `self::CONST`: resolved to the class where the line of code lives.\n- `static::method()`: resolved to the class used in the call, so child classes can override behaviour.\n- `parent::method()`: the parent's implementation.\n\n**Static members** belong to the class, not to an instance. They are called with `::` and cannot use `$this`. Overusing static state makes code hard to test because it behaves like a global.\n\nReturn type `static` (PHP 8) documents that a method returns an instance of the called class, which is useful for fluent interfaces and factories.",
+      "topic": "Classes & Objects",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "oop",
+        "static",
+        "late-static-binding"
+      ],
+      "priority": "high",
+      "code": {
+        "language": "php",
+        "content": "class Model\n{\n    public static function make(): static\n    {\n        return new static();   // late static binding\n    }\n\n    public static function makeSelf(): self\n    {\n        return new self();     // always Model\n    }\n}\n\nclass User extends Model {}\n\nvar_dump(User::make()::class);      // \"User\"\nvar_dump(User::makeSelf()::class);  // \"Model\""
+      },
+      "related": [
+        "php-010",
+        "php-015"
+      ]
+    },
+    {
+      "id": "php-015",
+      "order": 15,
+      "question": "What are magic methods in PHP? Name the ones you use most.",
+      "shortAnswer": "Magic methods start with two underscores and are called automatically by PHP on certain events, such as `__construct` on creation, `__get` on reading an inaccessible property and `__toString` on string conversion.",
+      "interviewAnswer": "Magic methods are hooks PHP calls for you. __construct and __destruct run when an object is created and destroyed. __get and __set fire when code reads or writes a property that is not accessible, which is how Eloquent exposes database columns as properties. __call and __callStatic catch calls to undefined methods, which is how facades and query scopes work. __toString, __invoke and __clone cover string conversion, calling an object as a function, and cloning.",
+      "answer": "| Method | Called when |\n|---|---|\n| `__construct` / `__destruct` | An object is created or destroyed |\n| `__get` / `__set` | Reading or writing an inaccessible or missing property |\n| `__isset` / `__unset` | `isset()` or `unset()` on such a property |\n| `__call` / `__callStatic` | Calling an inaccessible or missing method |\n| `__toString` | The object is used as a string |\n| `__invoke` | The object is called like a function |\n| `__clone` | After `clone`, to deep-copy nested objects |\n| `__serialize` / `__unserialize` | Serialising and restoring |\n\nThey are powerful but hide behaviour from IDEs and static analysis, and they are slower than real members. Use them for genuinely dynamic cases, and document them with `@property` and `@method` annotations.",
+      "topic": "Classes & Objects",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "oop",
+        "magic-methods"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class Settings\n{\n    private array $data = ['theme' => 'dark'];\n\n    public function __get(string $key): mixed\n    {\n        return $this->data[$key] ?? null;\n    }\n\n    public function __call(string $name, array $args): mixed\n    {\n        throw new BadMethodCallException(\"Method {$name} does not exist\");\n    }\n\n    public function __toString(): string\n    {\n        return json_encode($this->data);\n    }\n}\n\n$s = new Settings;\necho $s->theme;  // dark\necho $s;         // {\"theme\":\"dark\"}"
+      },
+      "related": [
+        "php-014",
+        "laravel-025"
+      ]
+    },
+    {
+      "id": "php-016",
+      "order": 16,
+      "question": "How does exception handling work in PHP? What is the difference between Exception and Error?",
+      "shortAnswer": "Code that may fail goes in `try`; `catch` handles a thrown object; `finally` always runs. `Exception` is for application-level failures, `Error` is for engine-level problems like type errors, and both implement `Throwable`.",
+      "interviewAnswer": "You wrap risky code in a try block, catch specific exception types, and use finally for cleanup that must always run. Since PHP 7 everything throwable implements the Throwable interface, with two branches: Exception for conditions the application can anticipate, and Error for engine problems like a TypeError or calling a method on null. I catch the most specific type I can handle, create custom exception classes for domain errors, and never leave a catch block empty.",
+      "answer": "- Order `catch` blocks from most specific to most general. One block can catch several types: `catch (A | B $e)`.\n- `finally` runs whether or not an exception was thrown, even if the `try` block returns.\n- Rethrow with context using exception chaining: `throw new OrderFailed('...', previous: $e);`.\n- Catch `Throwable` only at the outer boundary of the application, for logging and a generic error response.\n- Custom exceptions extend `Exception` (or a more specific SPL class such as `InvalidArgumentException`).\n- In PHP 8 `throw` is an expression, so `$user = $repo->find($id) ?? throw new NotFound();` is valid.\n- `set_exception_handler()` registers a last-resort handler; frameworks do this for you.\n\nDo not use exceptions for normal control flow, and do not show raw messages to users in production.",
+      "topic": "Exception Handling",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "exceptions",
+        "error-handling"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "class InsufficientFunds extends DomainException {}\n\nfunction withdraw(float $balance, float $amount): float\n{\n    if ($amount > $balance) {\n        throw new InsufficientFunds(\"Balance is {$balance}, tried {$amount}\");\n    }\n    return $balance - $amount;\n}\n\ntry {\n    $left = withdraw(500, 900);\n} catch (InsufficientFunds $e) {\n    error_log($e->getMessage());\n    $left = 500;\n} catch (Throwable $e) {\n    throw new RuntimeException('Withdrawal failed', previous: $e);\n} finally {\n    // release the lock, close the handle\n}"
+      },
+      "related": [
+        "laravel-040"
+      ]
+    },
+    {
+      "id": "php-017",
+      "order": 17,
+      "question": "What is the difference between sessions and cookies?",
+      "shortAnswer": "A cookie is a small piece of data stored in the browser and sent with every request. A session stores data on the server and gives the browser only a session ID, usually inside a cookie.",
+      "interviewAnswer": "Cookies live in the browser, are limited to about four kilobytes, and can be read and changed by the user, so they must not hold anything sensitive. Session data stays on the server; the browser only keeps a session identifier in a cookie. That makes sessions the right place for login state. To keep them safe I regenerate the session ID after login and set the cookie flags HttpOnly, Secure and SameSite.",
+      "answer": "| | Cookie | Session |\n|---|---|---|\n| Stored | Browser | Server (files, Redis, database) |\n| Size | About 4 KB each | Limited by server storage |\n| Lifetime | Until its expiry date | Until it times out or is destroyed |\n| Trust | User can edit it | User sees only the ID |\n\nSecurity points interviewers look for:\n\n- `session_regenerate_id(true)` after login prevents session fixation.\n- `HttpOnly` stops JavaScript reading the cookie (limits XSS damage); `Secure` sends it over HTTPS only; `SameSite=Lax` or `Strict` reduces CSRF.\n- `session_start()` must run before any output because it sends headers.\n- File-based sessions lock per request; on multiple servers use a shared store such as Redis.\n\nStateless APIs usually skip sessions and send a token with each request instead.",
+      "topic": "Sessions",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "sessions",
+        "cookies",
+        "security"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Cookie: stored in the browser\nsetcookie('theme', 'dark', [\n    'expires'  => time() + 86400 * 30,\n    'path'     => '/',\n    'secure'   => true,\n    'httponly' => true,\n    'samesite' => 'Lax',\n]);\n\n// Session: stored on the server\nsession_start();\n$_SESSION['user_id'] = 42;\nsession_regenerate_id(true);   // after login\n\n// Logout\n$_SESSION = [];\nsession_destroy();"
+      },
+      "related": [
+        "api-007",
+        "php-018"
+      ]
+    },
+    {
+      "id": "php-018",
+      "order": 18,
+      "question": "How do you prevent SQL injection, XSS and CSRF in a PHP application?",
+      "shortAnswer": "Use prepared statements for SQL injection, escape output with `htmlspecialchars()` for XSS, and require a per-session token on state-changing requests for CSRF.",
+      "interviewAnswer": "SQL injection is prevented by never concatenating user input into a query and using prepared statements with bound parameters instead. Cross-site scripting is prevented by escaping data when it is output, with htmlspecialchars in plain PHP or Blade's double curly braces. CSRF is prevented by a random token stored in the session that every POST, PUT or DELETE form must send back, plus SameSite cookies. On top of that I validate all input and hash passwords with password_hash.",
+      "answer": "**SQL injection.** The query and the data travel separately when you use PDO or MySQLi prepared statements, so input can never change the query structure. Bound parameters cannot be used for table or column names; whitelist those.\n\n**XSS.** Escape on output, in the right context: `htmlspecialchars($value, ENT_QUOTES, 'UTF-8')` for HTML. Add a Content-Security-Policy header as a second layer. Mark session cookies `HttpOnly`.\n\n**CSRF.** Generate a token with `bin2hex(random_bytes(32))`, store it in the session, include it in each form, and compare with `hash_equals()` on submit.\n\n**Also expected:**\n\n- Hash passwords with `password_hash()` and check with `password_verify()`. Never MD5 or SHA-1.\n- Validate uploads by MIME type and size, rename them, and store them outside the web root.\n- Turn off `display_errors` in production and log instead.\n- Keep dependencies updated (`composer audit`).",
+      "topic": "PHP Security",
+      "difficulty": "Intermediate",
+      "type": "Scenario",
+      "tags": [
+        "php",
+        "security",
+        "sql-injection",
+        "xss",
+        "csrf"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// SQL injection: prepared statement\n$stmt = $pdo->prepare('SELECT id, name FROM users WHERE email = :email');\n$stmt->execute(['email' => $_POST['email']]);\n$user = $stmt->fetch(PDO::FETCH_ASSOC);\n\n// XSS: escape on output\necho htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8');\n\n// CSRF: token check\nif (! hash_equals($_SESSION['csrf'], $_POST['csrf'] ?? '')) {\n    http_response_code(419);\n    exit('Invalid CSRF token');\n}\n\n// Passwords\n$hash = password_hash($plain, PASSWORD_DEFAULT);\nif (password_verify($plain, $hash)) { /* log in */ }"
+      },
+      "related": [
+        "laravel-034",
+        "api-010",
+        "php-017"
+      ]
+    },
+    {
+      "id": "php-019",
+      "order": 19,
+      "question": "What is Composer? Explain composer.json, composer.lock and autoloading.",
+      "shortAnswer": "Composer is PHP's dependency manager. `composer.json` lists the packages and version ranges you want, `composer.lock` records the exact versions installed, and Composer generates an autoloader so classes load without manual `require` calls.",
+      "interviewAnswer": "Composer manages a project's libraries. composer.json declares the dependencies and version constraints, and composer.lock pins the exact versions that were resolved so every machine installs the same thing. That is why the lock file is committed. composer install reads the lock file; composer update re-resolves versions and rewrites it. Composer also generates vendor/autoload.php, which maps namespaces to folders following PSR-4.",
+      "answer": "- `composer install`: installs exactly what `composer.lock` says. Use it on servers and in CI.\n- `composer update`: finds the newest versions allowed by `composer.json` and updates the lock file. Run it deliberately, then commit the lock file.\n- `composer require vendor/package`: adds a dependency. `--dev` puts it under `require-dev`.\n- `composer dump-autoload -o`: rebuilds an optimised class map for production.\n- Version constraints: `^8.2` allows `>=8.2.0 <9.0.0`; `~8.2.1` allows `>=8.2.1 <8.3.0`.\n\n**PSR-4 autoloading** maps a namespace prefix to a directory. With `\"App\\\\\": \"app/\"`, the class `App\\Models\\User` must live in `app/Models/User.php`.\n\nCommit `composer.json` and `composer.lock`; never commit `vendor/`.",
+      "topic": "Composer",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "composer",
+        "autoloading",
+        "psr-4"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": [
+        {
+          "language": "json",
+          "content": "{\n    \"require\": {\n        \"php\": \"^8.2\",\n        \"guzzlehttp/guzzle\": \"^7.8\"\n    },\n    \"require-dev\": {\n        \"phpunit/phpunit\": \"^11.0\"\n    },\n    \"autoload\": {\n        \"psr-4\": { \"App\\\\\": \"app/\" }\n    }\n}",
+          "title": "composer.json"
+        },
+        {
+          "language": "php",
+          "content": "require __DIR__ . '/vendor/autoload.php';\n\nuse App\\Services\\Billing;\n\n$billing = new Billing();   // loaded from app/Services/Billing.php",
+          "title": "index.php"
+        }
+      ],
+      "related": [
+        "php-020",
+        "php-021",
+        "php-002"
+      ]
+    },
+    {
+      "id": "php-020",
+      "order": 20,
+      "question": "What are namespaces and why are they needed?",
+      "shortAnswer": "Namespaces group classes, functions and constants under a prefix so that two libraries can use the same class name without conflict.",
+      "interviewAnswer": "A namespace is like a folder for class names. Without namespaces, two packages that both define a class called Request would collide. With them, each has a fully qualified name such as App\\Http\\Request. You declare the namespace at the top of the file and import classes from other namespaces with use, optionally with an alias. Combined with PSR-4, the namespace also tells the autoloader where the file is.",
+      "answer": "- Declare with `namespace App\\Services;` as the first statement in the file.\n- Import with `use App\\Models\\User;` and alias with `use Carbon\\Carbon as Date;`.\n- A leading backslash means the global namespace: `\\Exception`, `\\strlen()`.\n- Inside a namespace, an unqualified **class** name is resolved in the current namespace only, so forgetting `use Exception;` gives \"Class App\\Services\\Exception not found\". Unqualified **functions and constants** fall back to the global namespace.\n- `User::class` gives the fully qualified name as a string and is preferred over hand-written strings.\n- Import functions and constants with `use function` and `use const`.",
+      "topic": "Namespaces",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "namespaces",
+        "autoloading"
+      ],
+      "code": {
+        "language": "php",
+        "content": "namespace App\\Services;\n\nuse App\\Models\\User;\nuse Illuminate\\Support\\Collection as BaseCollection;\nuse InvalidArgumentException;\n\nclass UserService\n{\n    public function find(int $id): User\n    {\n        if ($id < 1) {\n            throw new InvalidArgumentException('Invalid id');\n        }\n        return User::findOrFail($id);\n    }\n}\n\necho UserService::class;   // App\\Services\\UserService"
+      },
+      "related": [
+        "php-019",
+        "php-021"
+      ]
+    },
+    {
+      "id": "php-021",
+      "order": 21,
+      "question": "What are PSR standards? Which ones matter day to day?",
+      "shortAnswer": "PSRs are PHP Standard Recommendations published by PHP-FIG so that frameworks and libraries interoperate. The ones used daily are PSR-4 (autoloading) and PSR-12 (coding style).",
+      "interviewAnswer": "PSR stands for PHP Standard Recommendation. They are published by the PHP Framework Interop Group so that code from different vendors works together. PSR-4 is the autoloading standard that maps namespaces to directories, and PSR-12 is the coding style standard, which has been succeeded by PER Coding Style. Others I know are PSR-3 for the logger interface, PSR-7 for HTTP messages, PSR-11 for containers and PSR-15 for middleware.",
+      "answer": "| PSR | Covers |\n|---|---|\n| PSR-1 | Basic coding standard: tags, naming, one class per file |\n| PSR-3 | Logger interface (`LoggerInterface`) |\n| PSR-4 | Autoloading: namespace prefix to directory |\n| PSR-6 / PSR-16 | Caching interfaces |\n| PSR-7 | HTTP request and response message interfaces |\n| PSR-11 | Container interface |\n| PSR-12 | Extended coding style (now continued as PER Coding Style) |\n| PSR-15 | HTTP middleware and request handlers |\n\nIn practice you follow PSR-4 through Composer and enforce style with a tool such as Laravel Pint or PHP-CS-Fixer rather than by hand. Laravel's logger implements PSR-3 and its container implements PSR-11.",
+      "topic": "Interview Questions",
+      "difficulty": "Intermediate",
+      "type": "Interview",
+      "tags": [
+        "php",
+        "psr",
+        "standards"
+      ],
+      "related": [
+        "php-019",
+        "php-020"
+      ]
+    },
+    {
+      "id": "php-022",
+      "order": 22,
+      "question": "Which PHP 8 features have you used?",
+      "shortAnswer": "Constructor property promotion, named arguments, the `match` expression, the nullsafe operator, union types, enums, readonly properties, attributes and first-class callable syntax.",
+      "interviewAnswer": "The ones I use most are constructor property promotion, which removes boilerplate in DTOs and services; the match expression, which is a strict, value-returning replacement for switch; the nullsafe operator; and named arguments. From 8.1 I use enums instead of class constants for statuses, and readonly properties for immutable objects. PHP 8 also added union types, attributes and str_contains, and made the engine stricter about type errors.",
+      "answer": "**PHP 8.0**: named arguments, constructor property promotion, union types, `match`, nullsafe `?->`, attributes, `str_contains` / `str_starts_with` / `str_ends_with`, `throw` as an expression, the JIT compiler.\n\n**PHP 8.1**: enums, `readonly` properties, first-class callable syntax (`strlen(...)`), `never` return type, `new` in initialisers, fibers, pure intersection types.\n\n**PHP 8.2**: `readonly` classes, standalone `true`/`false`/`null` types, dynamic properties deprecated.\n\n**PHP 8.3**: typed class constants, `#[\\Override]`, `json_validate()`.\n\n`match` versus `switch`: `match` compares with `===`, returns a value, has no fall-through, and throws `UnhandledMatchError` when nothing matches.",
+      "topic": "Modern PHP",
+      "difficulty": "Intermediate",
+      "type": "Interview",
+      "tags": [
+        "php",
+        "php8",
+        "enums",
+        "match",
+        "modern-php"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "enum OrderStatus: string\n{\n    case Pending = 'pending';\n    case Paid = 'paid';\n    case Cancelled = 'cancelled';\n\n    public function label(): string\n    {\n        return match ($this) {\n            self::Pending => 'Awaiting payment',\n            self::Paid => 'Paid',\n            self::Cancelled => 'Cancelled',\n        };\n    }\n}\n\nfinal class Money\n{\n    public function __construct(\n        public readonly int $amount,\n        public readonly string $currency = 'INR',\n    ) {}\n}\n\n$price = new Money(amount: 49900);\necho OrderStatus::from('paid')->label();   // Paid"
+      },
+      "related": [
+        "php-011",
+        "php-004"
+      ]
+    },
+    {
+      "id": "php-023",
+      "order": 23,
+      "question": "This loop modifies an array by reference, and the last element is wrong afterwards. Why?",
+      "shortAnswer": "After `foreach ($arr as &$v)`, `$v` is still a reference to the last element. A later loop that reuses `$v` overwrites that element. Call `unset($v)` after the first loop.",
+      "interviewAnswer": "When you iterate by reference, the loop variable remains bound to the last array element after the loop ends. If a second foreach reuses the same variable name by value, each iteration assigns into that reference, so the last element is overwritten again and again and ends up equal to the second-to-last. The fix is to unset the variable straight after the by-reference loop, or avoid references and use array_map.",
+      "answer": "Step by step with `[1, 2, 3]`:\n\n1. The first loop doubles each value: `[2, 4, 6]`. `$v` still references index 2.\n2. The second loop assigns each element to `$v`, which writes to index 2: after the first pass the array is `[2, 4, 2]`, after the second `[2, 4, 4]`, and on the third pass it copies index 2 onto itself.\n3. Result: `[2, 4, 4]`.\n\nFixes, in order of preference:\n\n- Use `array_map()` and avoid the reference altogether.\n- Modify through the key: `foreach ($arr as $k => $v) { $arr[$k] = $v * 2; }`.\n- Keep the reference but `unset($v);` immediately after the loop.\n\nThis is a favourite \"what does this print\" question because it tests whether you understand that references are aliases to a variable slot.",
+      "topic": "Loops",
+      "difficulty": "Advanced",
+      "type": "Debugging",
+      "tags": [
+        "php",
+        "loops",
+        "references",
+        "debugging"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "php",
+        "content": "$arr = [1, 2, 3];\n\nforeach ($arr as &$v) {\n    $v *= 2;\n}\n// unset($v);   // <- the fix\n\nforeach ($arr as $v) {\n    // $v still points at $arr[2]\n}\n\nprint_r($arr);  // [2, 4, 4]  instead of [2, 4, 6]"
+      },
+      "related": [
+        "php-009",
+        "php-007"
+      ]
+    },
+    {
+      "id": "php-024",
+      "order": 24,
+      "question": "How do you handle a file upload securely in PHP?",
+      "shortAnswer": "Check the upload error code, validate size and real MIME type, generate a new file name, and move the file with `move_uploaded_file()` to a directory outside the web root.",
+      "interviewAnswer": "I read the file from the $_FILES array and first check the error code. Then I validate the size and detect the real MIME type from the content with finfo, because the client-supplied type and extension can be faked. I generate a random file name, never trust the original name, and move the file with move_uploaded_file into a storage directory that is not directly executable or public. Files are then served through a controller or a storage URL.",
+      "answer": "Checklist:\n\n1. The form needs `method=\"post\"` and `enctype=\"multipart/form-data\"`.\n2. `$_FILES['doc']['error']` must equal `UPLOAD_ERR_OK`.\n3. Enforce a size limit in code as well as through `upload_max_filesize` and `post_max_size` in `php.ini`.\n4. Detect the MIME type from the content: `(new finfo(FILEINFO_MIME_TYPE))->file($tmp)` and compare against an allow-list.\n5. Create your own name, for example `bin2hex(random_bytes(16)) . '.pdf'`. The original name can contain `../` or a `.php` extension.\n6. `move_uploaded_file()` verifies that the file really came from an HTTP upload.\n7. Store outside the web root, or in a location where scripts cannot execute.\n\nIn Laravel the same steps are `$request->validate(['doc' => 'required|file|mimes:pdf|max:2048'])` followed by `$request->file('doc')->store('documents')`.",
+      "topic": "File Handling",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "php",
+        "files",
+        "uploads",
+        "security"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "php",
+        "content": "$file = $_FILES['doc'] ?? null;\n\nif (! $file || $file['error'] !== UPLOAD_ERR_OK) {\n    exit('Upload failed');\n}\nif ($file['size'] > 2 * 1024 * 1024) {\n    exit('File is larger than 2 MB');\n}\n\n$mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);\n$allowed = ['application/pdf' => 'pdf', 'image/png' => 'png', 'image/jpeg' => 'jpg'];\n\nif (! isset($allowed[$mime])) {\n    exit('File type not allowed');\n}\n\n$name = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];\nmove_uploaded_file($file['tmp_name'], __DIR__ . '/../storage/uploads/' . $name);"
+      },
+      "related": [
+        "php-018",
+        "laravel-031"
+      ]
+    },
+    {
+      "id": "php-025",
+      "order": 25,
+      "question": "What are generators and when would you use yield?",
+      "shortAnswer": "A generator is a function that uses `yield` to return values one at a time, pausing between them. It lets you iterate over large data without loading it all into memory.",
+      "interviewAnswer": "A generator looks like a function but uses yield instead of return. Each time the loop asks for the next value, the function resumes where it stopped, so only one item is in memory at a time. I use generators for reading large files line by line or streaming a big export. In Laravel the same idea appears as lazy collections and the cursor method on queries.",
+      "answer": "- Calling a generator function returns a `Generator` object; no code in the body runs until iteration starts.\n- `yield $value;` produces a value; `yield $key => $value;` produces a pair.\n- `yield from $otherGenerator;` delegates to another generator or array.\n- A generator can be iterated only once.\n- Memory use stays flat: reading a 1 GB file with `file()` loads all of it, while a generator around `fgets()` holds one line.\n\nTrade-off: you cannot count, sort or random-access a generator without consuming it.\n\nLaravel equivalents: `Model::cursor()` and `LazyCollection` use generators; `chunk()` and `chunkById()` take a different approach by running several limited queries.",
+      "topic": "Modern PHP",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "generators",
+        "memory",
+        "performance"
+      ],
+      "code": {
+        "language": "php",
+        "content": "function readLines(string $path): Generator\n{\n    $handle = fopen($path, 'r');\n    try {\n        while (($line = fgets($handle)) !== false) {\n            yield rtrim($line, \"\\r\\n\");\n        }\n    } finally {\n        fclose($handle);\n    }\n}\n\nforeach (readLines('orders.csv') as $n => $line) {\n    // one line in memory at a time\n}\n\nfunction ids(int $from, int $to): Generator\n{\n    for ($i = $from; $i <= $to; $i++) {\n        yield $i;\n    }\n}\necho array_sum(iterator_to_array(ids(1, 5)));  // 15"
+      },
+      "related": [
+        "laravel-036",
+        "laravel-037"
+      ]
+    },
+    {
+      "id": "php-026",
+      "order": 26,
+      "question": "What is dependency injection? Show it in plain PHP.",
+      "shortAnswer": "Dependency injection means a class receives the objects it needs from outside, usually through its constructor, instead of creating them itself.",
+      "interviewAnswer": "Dependency injection is a design technique where an object's dependencies are provided from outside instead of the object creating them itself. The most common form is constructor injection. It makes the class easier to test, because I can pass a fake implementation, and easier to change, because the class depends on an interface, not a concrete class. In Laravel the service container resolves these constructor dependencies automatically from the type hints.",
+      "answer": "Without DI, a class that does `new SmtpMailer()` inside a method is tied to that implementation and cannot be tested without sending real email.\n\nWith DI:\n\n- The dependency is declared in the constructor, ideally as an interface.\n- Whoever creates the object decides which implementation to pass.\n- Tests pass a fake or a mock.\n\nForms of injection: **constructor** (preferred, the object is always valid), **setter** (optional dependencies) and **method** (a dependency needed by one method only, as with Laravel controller actions).\n\nA **DI container** is a tool that builds objects and their dependencies for you. DI is the pattern; the container is a convenience. Do not confuse DI with the service locator pattern, where a class pulls dependencies from a global container itself, which hides what it needs.",
+      "topic": "OOP",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "php",
+        "oop",
+        "dependency-injection",
+        "testing"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "interface Mailer\n{\n    public function send(string $to, string $subject): void;\n}\n\nfinal class OrderService\n{\n    public function __construct(private Mailer $mailer) {}\n\n    public function place(string $email): void\n    {\n        // ... save the order\n        $this->mailer->send($email, 'Order confirmed');\n    }\n}\n\n// Production\n$service = new OrderService(new SmtpMailer());\n\n// Test\n$fake = new class implements Mailer {\n    public array $sent = [];\n    public function send(string $to, string $subject): void { $this->sent[] = $to; }\n};\n(new OrderService($fake))->place('a@example.com');\nassert($fake->sent === ['a@example.com']);"
+      },
+      "related": [
+        "laravel-023",
+        "laravel-026",
+        "oop-013"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,666 @@
+{
+  "skill": "mysql",
+  "questions": [
+    {
+      "id": "mysql-001",
+      "order": 1,
+      "question": "What are DDL, DML, DCL and TCL commands?",
+      "shortAnswer": "DDL defines structure (CREATE, ALTER, DROP), DML changes data (INSERT, UPDATE, DELETE), DCL controls permissions (GRANT, REVOKE), and TCL controls transactions (COMMIT, ROLLBACK). SELECT is sometimes called DQL.",
+      "interviewAnswer": "SQL commands fall into groups. Data Definition Language changes the schema: create, alter, drop and truncate. Data Manipulation Language changes rows: insert, update and delete, with select usually grouped here or called DQL. Data Control Language manages permissions with grant and revoke. Transaction Control Language is commit, rollback and savepoint. A practical difference is that in MySQL, DDL statements commit implicitly and cannot be rolled back.",
+      "answer": "| Group | Purpose | Commands |\n|---|---|---|\n| DDL | Structure | `CREATE`, `ALTER`, `DROP`, `TRUNCATE`, `RENAME` |\n| DML | Data | `INSERT`, `UPDATE`, `DELETE` |\n| DQL | Reading | `SELECT` |\n| DCL | Permissions | `GRANT`, `REVOKE` |\n| TCL | Transactions | `START TRANSACTION`, `COMMIT`, `ROLLBACK`, `SAVEPOINT` |\n\nIn MySQL, DDL causes an implicit commit, so a failed migration cannot be rolled back as a unit. That is why each Laravel migration should do one small thing.",
+      "topic": "SQL Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "basics",
+        "ddl",
+        "dml"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- DDL\nCREATE TABLE customers (\n    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    name VARCHAR(100) NOT NULL,\n    email VARCHAR(150) NOT NULL UNIQUE,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);\nALTER TABLE customers ADD COLUMN city VARCHAR(60) NULL;\n\n-- DML\nINSERT INTO customers (name, email) VALUES ('Asha', 'asha@example.com');\nUPDATE customers SET city = 'Pune' WHERE id = 1;\nDELETE FROM customers WHERE id = 1;\n\n-- DCL\nGRANT SELECT, INSERT ON shop.* TO 'app'@'localhost';"
+      },
+      "related": [
+        "mysql-016",
+        "mysql-014"
+      ]
+    },
+    {
+      "id": "mysql-002",
+      "order": 2,
+      "question": "What is the difference between WHERE and HAVING?",
+      "shortAnswer": "`WHERE` filters individual rows before grouping and cannot use aggregate functions. `HAVING` filters groups after `GROUP BY` and can use aggregates such as `COUNT()` and `SUM()`.",
+      "interviewAnswer": "WHERE filters rows before they are grouped, so it cannot refer to aggregate results. HAVING filters after GROUP BY has formed the groups, so it can use aggregates like COUNT or SUM. For example, WHERE status equals paid removes unpaid orders first, and HAVING COUNT greater than five keeps only customers with more than five of those orders. Conditions that do not need an aggregate belong in WHERE, because filtering early is faster and can use indexes.",
+      "answer": "Order of evaluation: `FROM` → `WHERE` → `GROUP BY` → `HAVING` → `SELECT` → `ORDER BY` → `LIMIT`.\n\n- `WHERE` works on rows and can use indexes.\n- `HAVING` works on groups and is evaluated after aggregation.\n- Both can appear in the same query.\n- MySQL lets `HAVING` reference a column alias from `SELECT`; `WHERE` cannot.\n- `HAVING` without `GROUP BY` treats the whole result as one group.\n\nA common mistake is putting a plain column condition in `HAVING`. It works, but MySQL aggregates rows it could have discarded earlier.",
+      "topic": "HAVING",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "where",
+        "having",
+        "group-by"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- Customers with more than 5 paid orders worth over 10,000 in total\nSELECT customer_id,\n       COUNT(*)   AS orders,\n       SUM(total) AS revenue\nFROM orders\nWHERE status = 'paid'              -- row filter, before grouping\nGROUP BY customer_id\nHAVING COUNT(*) > 5                -- group filter, after grouping\n   AND SUM(total) > 10000\nORDER BY revenue DESC;"
+      },
+      "related": [
+        "mysql-005",
+        "mysql-006"
+      ]
+    },
+    {
+      "id": "mysql-003",
+      "order": 3,
+      "question": "Explain the different types of JOIN.",
+      "shortAnswer": "`INNER JOIN` returns rows that match in both tables. `LEFT JOIN` returns all rows from the left table plus matches from the right (NULL where none). `RIGHT JOIN` is the mirror image. `CROSS JOIN` returns every combination. A self join joins a table to itself.",
+      "interviewAnswer": "A join combines rows from two tables based on a related column. INNER JOIN returns only the rows that have a match on both sides. LEFT JOIN returns every row from the left table and fills the right side with NULL where there is no match, which is how I find things like customers without orders. RIGHT JOIN is the same from the other side. CROSS JOIN gives the Cartesian product. MySQL has no FULL OUTER JOIN, so I emulate it with a UNION of a left and a right join. A self join joins a table to itself, for example employees to their managers.",
+      "answer": "| Join | Returns |\n|---|---|\n| `INNER JOIN` | Only matching rows |\n| `LEFT JOIN` | All left rows, matched right rows or NULL |\n| `RIGHT JOIN` | All right rows, matched left rows or NULL |\n| `CROSS JOIN` | Every left row paired with every right row |\n| Self join | A table joined to itself with aliases |\n| Full outer | Not in MySQL: `LEFT JOIN ... UNION ... RIGHT JOIN` |\n\nPoints interviewers probe:\n\n- **`ON` vs `WHERE` with a LEFT JOIN**: a condition on the right table placed in `WHERE` removes the NULL rows and turns the query into an inner join. Put it in `ON` to keep unmatched left rows.\n- Joining a one-to-many relationship multiplies rows, which inflates `SUM` and `COUNT`. Aggregate in a subquery first, or use `COUNT(DISTINCT ...)`.\n- Join columns should be indexed and of the same type and collation.",
+      "topic": "JOIN",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "joins",
+        "inner-join",
+        "left-join"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- INNER: only customers who have orders\nSELECT c.name, o.id, o.total\nFROM customers c\nINNER JOIN orders o ON o.customer_id = c.id;\n\n-- LEFT: every customer, with order count (0 when none)\nSELECT c.name, COUNT(o.id) AS orders\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'paid'\nGROUP BY c.id, c.name;\n\n-- Self join: employee and manager\nSELECT e.name AS employee, m.name AS manager\nFROM employees e\nLEFT JOIN employees m ON m.id = e.manager_id;"
+      },
+      "related": [
+        "mysql-004",
+        "mysql-007",
+        "mysql-011"
+      ]
+    },
+    {
+      "id": "mysql-004",
+      "order": 4,
+      "question": "Write a query to find customers who have never placed an order.",
+      "shortAnswer": "`LEFT JOIN` orders and keep the rows where the order side is NULL, or use `NOT EXISTS`.",
+      "interviewAnswer": "There are two standard ways. The first is a LEFT JOIN from customers to orders with a WHERE clause that keeps rows where the order's ID is NULL, meaning no match was found. The second is NOT EXISTS with a correlated subquery. Both perform well with an index on orders.customer_id. I avoid NOT IN here because if the subquery returns a NULL, NOT IN returns no rows at all.",
+      "answer": "This pattern is called an **anti-join**.\n\n- `LEFT JOIN ... WHERE o.id IS NULL`: test a column from the right table that can never be NULL in a real match, normally its primary key.\n- `NOT EXISTS (SELECT 1 ...)`: reads naturally and stops at the first match.\n- `NOT IN (SELECT customer_id FROM orders)`: returns nothing if any `customer_id` is NULL, because `x NOT IN (..., NULL)` evaluates to unknown.\n\nIn Eloquent the same query is `Customer::doesntHave('orders')->get()`, which generates `NOT EXISTS`.",
+      "topic": "LEFT JOIN",
+      "difficulty": "Intermediate",
+      "type": "SQL",
+      "tags": [
+        "mysql",
+        "sql",
+        "left-join",
+        "anti-join",
+        "not-exists"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- Anti-join with LEFT JOIN\nSELECT c.id, c.name\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE o.id IS NULL;\n\n-- Same result with NOT EXISTS\nSELECT c.id, c.name\nFROM customers c\nWHERE NOT EXISTS (\n    SELECT 1 FROM orders o WHERE o.customer_id = c.id\n);"
+      },
+      "related": [
+        "mysql-003",
+        "mysql-007"
+      ]
+    },
+    {
+      "id": "mysql-005",
+      "order": 5,
+      "question": "How does GROUP BY work, and which aggregate functions do you use?",
+      "shortAnswer": "`GROUP BY` collapses rows that share the same values in the listed columns into one row per group, and aggregate functions such as `COUNT`, `SUM`, `AVG`, `MIN` and `MAX` compute a value for each group.",
+      "interviewAnswer": "GROUP BY puts rows with the same value in the grouping columns into one group, and aggregate functions then return one value per group: COUNT, SUM, AVG, MIN and MAX. Every column in the SELECT list must either be in the GROUP BY or be inside an aggregate; MySQL enforces that with the ONLY_FULL_GROUP_BY mode. I filter rows before grouping with WHERE and filter groups afterwards with HAVING.",
+      "answer": "- `COUNT(*)` counts rows; `COUNT(column)` counts non-NULL values; `COUNT(DISTINCT column)` counts unique non-NULL values.\n- `SUM` and `AVG` ignore NULLs. `AVG` of no rows is NULL, so wrap it in `COALESCE(..., 0)` when you need a number.\n- `GROUP_CONCAT(name ORDER BY name SEPARATOR ', ')` joins values into one string.\n- `WITH ROLLUP` adds subtotal and grand-total rows.\n- Grouping by an expression is allowed: `GROUP BY DATE(created_at)` or `DATE_FORMAT(created_at, '%Y-%m')`.\n- **ONLY_FULL_GROUP_BY** (default since MySQL 5.7) rejects selecting a non-aggregated column that is not functionally dependent on the grouping columns, because its value would be arbitrary.",
+      "topic": "GROUP BY",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "group-by",
+        "aggregate"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- Monthly revenue\nSELECT DATE_FORMAT(created_at, '%Y-%m') AS month,\n       COUNT(*)                         AS orders,\n       SUM(total)                       AS revenue,\n       ROUND(AVG(total), 2)             AS avg_order\nFROM orders\nWHERE status = 'paid'\nGROUP BY month\nORDER BY month;\n\n-- COUNT variants\nSELECT COUNT(*)              AS all_rows,\n       COUNT(coupon_code)    AS with_coupon,\n       COUNT(DISTINCT city)  AS cities\nFROM orders;"
+      },
+      "related": [
+        "mysql-002",
+        "mysql-006"
+      ]
+    },
+    {
+      "id": "mysql-006",
+      "order": 6,
+      "question": "In what order does MySQL logically execute the clauses of a SELECT statement?",
+      "shortAnswer": "FROM and JOIN, then WHERE, GROUP BY, HAVING, SELECT, DISTINCT, ORDER BY, and finally LIMIT.",
+      "interviewAnswer": "Although we write SELECT first, logically the database starts with FROM and the joins to build the row set, applies WHERE, groups with GROUP BY, filters groups with HAVING, then evaluates the SELECT list, applies DISTINCT, sorts with ORDER BY and finally applies LIMIT. This explains why a column alias cannot be used in WHERE but can be used in ORDER BY, and why aggregates are allowed in HAVING but not in WHERE.",
+      "answer": "1. `FROM` / `JOIN` / `ON`\n2. `WHERE`\n3. `GROUP BY`\n4. `HAVING`\n5. `SELECT` (expressions, window functions)\n6. `DISTINCT`\n7. `ORDER BY`\n8. `LIMIT` / `OFFSET`\n\nConsequences:\n\n- An alias defined in `SELECT` is not visible in `WHERE`. Repeat the expression or use a subquery.\n- `ORDER BY` can use aliases, because it runs after `SELECT`.\n- `LIMIT` is last, so without an index that provides the order, MySQL must sort all matching rows before returning the first ten.\n- This is the logical order. The optimizer is free to reorder the physical work as long as the result is the same.",
+      "topic": "SELECT",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "select",
+        "execution-order"
+      ],
+      "priority": "medium",
+      "code": {
+        "language": "sql",
+        "content": "SELECT c.city,\n       SUM(o.total) AS revenue          -- 5\nFROM customers c                        -- 1\nJOIN orders o ON o.customer_id = c.id   -- 1\nWHERE o.status = 'paid'                 -- 2\nGROUP BY c.city                         -- 3\nHAVING SUM(o.total) > 50000             -- 4\nORDER BY revenue DESC                   -- 7 (alias allowed here)\nLIMIT 5;                                -- 8"
+      },
+      "related": [
+        "mysql-002",
+        "mysql-005"
+      ]
+    },
+    {
+      "id": "mysql-007",
+      "order": 7,
+      "question": "What is a subquery? When would you use a subquery instead of a JOIN, and EXISTS instead of IN?",
+      "shortAnswer": "A subquery is a query nested inside another. Use a join when you need columns from both tables; use a subquery or `EXISTS` when you only need to test for existence or compare against an aggregate.",
+      "interviewAnswer": "A subquery is a SELECT inside another statement. A non-correlated subquery runs once; a correlated one refers to the outer row and is logically evaluated per row. If I need columns from both tables I use a join. If I only need to check whether related rows exist, EXISTS is clearer and stops at the first match, and it does not duplicate outer rows the way a join can. IN is fine for small lists. For NOT conditions I prefer NOT EXISTS because NOT IN misbehaves with NULLs.",
+      "answer": "**Where subqueries appear**\n\n- In `WHERE`: `price > (SELECT AVG(price) FROM products)`\n- In `FROM` as a derived table: aggregate first, then join.\n- In `SELECT` as a scalar value per row.\n\n**Correlated subquery**: references the outer query, for example \"orders above that customer's own average\".\n\n**Join vs subquery**\n\n- A join to a one-to-many table repeats the parent row; `EXISTS` does not.\n- Modern MySQL (8.0) rewrites many `IN` and `EXISTS` subqueries as semi-joins, so performance is often the same. Check with `EXPLAIN`.\n\n**CTEs** (`WITH name AS (...)`) in MySQL 8 give a subquery a name and make long queries readable; recursive CTEs handle trees such as categories.",
+      "topic": "Subqueries",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "subqueries",
+        "exists",
+        "joins"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- Scalar subquery: products priced above average\nSELECT name, price\nFROM products\nWHERE price > (SELECT AVG(price) FROM products);\n\n-- EXISTS: customers with at least one paid order (no duplicates)\nSELECT c.id, c.name\nFROM customers c\nWHERE EXISTS (\n    SELECT 1 FROM orders o\n    WHERE o.customer_id = c.id AND o.status = 'paid'\n);\n\n-- Derived table: aggregate first, then join\nSELECT c.name, t.revenue\nFROM customers c\nJOIN (\n    SELECT customer_id, SUM(total) AS revenue\n    FROM orders\n    WHERE status = 'paid'\n    GROUP BY customer_id\n) t ON t.customer_id = c.id\nORDER BY t.revenue DESC;"
+      },
+      "related": [
+        "mysql-003",
+        "mysql-004",
+        "mysql-023"
+      ]
+    },
+    {
+      "id": "mysql-008",
+      "order": 8,
+      "question": "What is an index and how does it make queries faster?",
+      "shortAnswer": "An index is a sorted data structure (a B-tree in InnoDB) that lets MySQL find rows without scanning the whole table. It speeds up reads on the indexed columns and slows down writes slightly.",
+      "interviewAnswer": "An index is like the index of a book: a sorted structure that points to rows, so MySQL can jump to matching rows instead of reading the whole table. InnoDB uses B-tree indexes. They speed up WHERE lookups, joins, ORDER BY and GROUP BY on the indexed columns. The cost is extra storage and slower inserts, updates and deletes, because every index must be maintained. So I index columns used for filtering, joining and sorting, especially foreign keys, and avoid indexing everything.",
+      "answer": "**Types**\n\n- **Primary key**: in InnoDB this is the clustered index; the table's rows are stored in primary key order.\n- **Secondary index**: stores the indexed columns plus the primary key, which is then used to fetch the row.\n- **Unique index**: also enforces uniqueness.\n- **Composite index**: several columns in a defined order.\n- **Full-text index**: for `MATCH ... AGAINST` searches.\n- **Covering index**: an index that contains every column the query needs, so the table is not read at all (`Using index` in `EXPLAIN`).\n\n**When an index is not used**\n\n- A function or calculation on the column: `WHERE YEAR(created_at) = 2025`. Rewrite as a range.\n- A leading wildcard: `LIKE '%phone'`.\n- Type mismatch: comparing a string column to a number.\n- `OR` across different columns, or `!=` / `NOT IN` on low-selectivity data.\n- The optimizer estimates a full scan is cheaper because most rows match.\n\n**What to index**: foreign keys, columns in frequent `WHERE`/`JOIN`/`ORDER BY`, and columns with many distinct values. A boolean column alone is rarely worth it.",
+      "topic": "Indexes",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "indexes",
+        "performance",
+        "b-tree"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "CREATE INDEX idx_orders_customer ON orders (customer_id);\nCREATE UNIQUE INDEX uq_users_email ON users (email);\nCREATE INDEX idx_orders_status_created ON orders (status, created_at);\n\nSHOW INDEX FROM orders;\n\n-- Not sargable: function on the column prevents index use\nSELECT * FROM orders WHERE YEAR(created_at) = 2025;\n\n-- Sargable: range on the bare column\nSELECT * FROM orders\nWHERE created_at >= '2025-01-01' AND created_at < '2026-01-01';"
+      },
+      "related": [
+        "mysql-009",
+        "mysql-019",
+        "mysql-020"
+      ]
+    },
+    {
+      "id": "mysql-009",
+      "order": 9,
+      "question": "How does a composite index work? What is the leftmost prefix rule?",
+      "shortAnswer": "A composite index on `(a, b, c)` is sorted by `a`, then `b`, then `c`. MySQL can use it for conditions on `a`, on `a, b`, or on `a, b, c`, but not for `b` or `c` alone.",
+      "interviewAnswer": "A composite index covers several columns in a fixed order, sorted by the first column, then the second within it, like a phone book sorted by surname and then first name. MySQL can use the index only from the left: a query filtering on the first column, or the first two, can use it, but one filtering only on the second column cannot. Also, once a range condition is applied to a column, the columns after it cannot be used for further narrowing. So I put equality columns first, then the range or sort column.",
+      "answer": "For `INDEX (status, customer_id, created_at)`:\n\n| Query condition | Uses the index? |\n|---|---|\n| `status = ?` | Yes |\n| `status = ? AND customer_id = ?` | Yes |\n| `status = ? AND customer_id = ? AND created_at > ?` | Yes, all three |\n| `customer_id = ?` | No (skips the first column) |\n| `status = ? AND created_at > ?` | Partly: `status` only for seeking |\n| `status = ? ORDER BY customer_id` | Yes, and avoids a sort |\n\n**Design rules**\n\n1. Equality columns first.\n2. Then the column used for sorting or a range.\n3. Add selected columns at the end if you want a covering index.\n\nOne good composite index usually beats several single-column indexes, because MySQL normally uses one index per table in a query. An index on `(a, b)` makes a separate index on `(a)` redundant.",
+      "topic": "Indexes",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "indexes",
+        "composite-index",
+        "performance"
+      ],
+      "priority": "high",
+      "code": {
+        "language": "sql",
+        "content": "CREATE INDEX idx_orders_lookup ON orders (customer_id, status, created_at);\n\n-- Uses all three parts, and returns rows already sorted\nSELECT id, total\nFROM orders\nWHERE customer_id = 42 AND status = 'paid'\nORDER BY created_at DESC\nLIMIT 10;\n\n-- Cannot seek with this index: leftmost column missing\nSELECT id FROM orders WHERE status = 'paid';"
+      },
+      "related": [
+        "mysql-008",
+        "mysql-019"
+      ]
+    },
+    {
+      "id": "mysql-010",
+      "order": 10,
+      "question": "What is the difference between a primary key and a unique key?",
+      "shortAnswer": "Both enforce uniqueness. A table has one primary key, which cannot contain NULL and is the clustered index in InnoDB. A table can have many unique keys, and they allow NULL values.",
+      "interviewAnswer": "A primary key uniquely identifies each row. There can be only one per table, it cannot be NULL, and in InnoDB the table data is physically organised by it. A unique key also prevents duplicates, but a table can have several, and a unique column may contain NULLs, in fact multiple NULLs in MySQL. I use an auto-increment or UUID primary key for identity and unique keys for business rules such as one account per email.",
+      "answer": "| | Primary key | Unique key |\n|---|---|---|\n| Per table | One | Many |\n| NULL allowed | No | Yes (multiple NULLs in MySQL) |\n| Index type in InnoDB | Clustered | Secondary |\n| Purpose | Row identity, target of foreign keys | Business uniqueness rule |\n\nRelated terms:\n\n- **Candidate key**: any column set that could serve as the primary key.\n- **Composite key**: a key made of several columns, common on pivot tables: `PRIMARY KEY (user_id, role_id)`.\n- **Surrogate key** (`id`) versus **natural key** (email, SKU). Surrogate keys are stable when business data changes.\n\n**Auto-increment vs UUID**: integers are small and insert in order. Random UUIDs make the clustered index fragment; ordered variants such as UUIDv7 or ULID avoid that.",
+      "topic": "Primary Keys",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "primary-key",
+        "unique-key",
+        "constraints"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "CREATE TABLE users (\n    id       BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    email    VARCHAR(150) NOT NULL,\n    phone    VARCHAR(20)  NULL,\n    UNIQUE KEY uq_users_email (email),\n    UNIQUE KEY uq_users_phone (phone)   -- many rows may have NULL phone\n);\n\nCREATE TABLE role_user (\n    user_id BIGINT UNSIGNED NOT NULL,\n    role_id BIGINT UNSIGNED NOT NULL,\n    PRIMARY KEY (user_id, role_id)\n);"
+      },
+      "related": [
+        "mysql-011",
+        "mysql-012",
+        "mysql-008"
+      ]
+    },
+    {
+      "id": "mysql-011",
+      "order": 11,
+      "question": "What is a foreign key? Explain ON DELETE CASCADE, SET NULL and RESTRICT.",
+      "shortAnswer": "A foreign key is a column that references the primary key of another table and guarantees the referenced row exists. The `ON DELETE` rule decides what happens to child rows when the parent is deleted.",
+      "interviewAnswer": "A foreign key links a child table to a parent table and enforces referential integrity: I cannot insert an order for a customer that does not exist. The ON DELETE and ON UPDATE actions define what happens when the parent row changes. CASCADE deletes the child rows too, SET NULL keeps them but clears the reference, and RESTRICT, the default, blocks the delete while children exist. I choose per relationship: cascade for dependent data like order items, restrict for things that must not disappear, like a customer with invoices.",
+      "answer": "| Action | When the parent row is deleted |\n|---|---|\n| `RESTRICT` / `NO ACTION` (default) | The delete fails while child rows exist |\n| `CASCADE` | Child rows are deleted too |\n| `SET NULL` | The child's foreign key becomes NULL (column must be nullable) |\n\nRequirements and facts:\n\n- Both columns must have the same data type, signedness and, for strings, collation.\n- The referenced column must be indexed (a primary or unique key). InnoDB also indexes the referencing column.\n- Foreign keys need InnoDB.\n- Cascades happen inside the database, so Eloquent `deleting` events do **not** fire for the child rows.\n- Soft deletes do not trigger cascades, because the row is updated, not deleted.\n\nIn a Laravel migration: `$table->foreignId('customer_id')->constrained()->cascadeOnDelete();` or `->nullOnDelete()` / `->restrictOnDelete()`.",
+      "topic": "Foreign Keys",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "foreign-key",
+        "constraints",
+        "referential-integrity"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "CREATE TABLE orders (\n    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    customer_id BIGINT UNSIGNED NOT NULL,\n    coupon_id   BIGINT UNSIGNED NULL,\n    total       INT UNSIGNED NOT NULL,\n    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id)\n        REFERENCES customers (id) ON DELETE RESTRICT,\n    CONSTRAINT fk_orders_coupon FOREIGN KEY (coupon_id)\n        REFERENCES coupons (id) ON DELETE SET NULL\n);\n\nCREATE TABLE order_items (\n    id       BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    order_id BIGINT UNSIGNED NOT NULL,\n    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE\n);"
+      },
+      "related": [
+        "mysql-010",
+        "laravel-013",
+        "laravel-016"
+      ]
+    },
+    {
+      "id": "mysql-012",
+      "order": 12,
+      "question": "What constraints does MySQL support?",
+      "shortAnswer": "`NOT NULL`, `UNIQUE`, `PRIMARY KEY`, `FOREIGN KEY`, `CHECK` and `DEFAULT`. They make the database itself reject invalid data.",
+      "interviewAnswer": "Constraints are rules enforced by the database. NOT NULL requires a value. UNIQUE prevents duplicates. PRIMARY KEY combines both to identify a row. FOREIGN KEY ensures a referenced row exists. CHECK validates a condition, and MySQL enforces it from version 8.0.16. DEFAULT supplies a value when none is given. I validate in the application for good error messages, and still add constraints, because the database is the last line of defence against bugs and race conditions.",
+      "answer": "| Constraint | Guarantees |\n|---|---|\n| `NOT NULL` | The column always has a value |\n| `UNIQUE` | No two rows share the value |\n| `PRIMARY KEY` | Unique, not null row identity |\n| `FOREIGN KEY` | The referenced parent row exists |\n| `CHECK (expr)` | The expression is true for every row (enforced since 8.0.16) |\n| `DEFAULT value` | A value is filled in when omitted |\n\nWhy application validation alone is not enough: two simultaneous requests can both pass a \"unique email\" check in PHP and both insert. Only a unique index stops the second one. Catch the duplicate-key error and show a friendly message.\n\n`ENUM` restricts a column to listed values, but changing the list needs an `ALTER TABLE`; a lookup table or a string column with a `CHECK` is easier to evolve.",
+      "topic": "Constraints",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "constraints",
+        "data-integrity"
+      ],
+      "code": {
+        "language": "sql",
+        "content": "CREATE TABLE products (\n    id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    sku        VARCHAR(40)  NOT NULL UNIQUE,\n    name       VARCHAR(150) NOT NULL,\n    price      INT UNSIGNED NOT NULL,\n    stock      INT          NOT NULL DEFAULT 0,\n    status     VARCHAR(20)  NOT NULL DEFAULT 'draft',\n    CONSTRAINT chk_products_stock  CHECK (stock >= 0),\n    CONSTRAINT chk_products_status CHECK (status IN ('draft', 'active', 'archived'))\n);"
+      },
+      "related": [
+        "mysql-010",
+        "mysql-011"
+      ]
+    },
+    {
+      "id": "mysql-013",
+      "order": 13,
+      "question": "What is normalization? Explain 1NF, 2NF and 3NF.",
+      "shortAnswer": "Normalization organises tables to remove redundant data and update anomalies. 1NF: atomic values, no repeating groups. 2NF: no column depends on only part of a composite key. 3NF: no column depends on another non-key column.",
+      "interviewAnswer": "Normalization is structuring a database so each fact is stored once, which avoids inconsistencies when data is inserted, updated or deleted. First normal form means every column holds a single value and there are no repeating groups. Second normal form adds that every non-key column depends on the whole primary key, which matters for composite keys. Third normal form adds that non-key columns do not depend on other non-key columns. In practice I design to third normal form and denormalise deliberately where read performance needs it.",
+      "answer": "Start with one wide table: `orders(order_id, customer_name, customer_city, product_names, product_prices)`.\n\n- **1NF**: no lists in a cell and no `product1`, `product2` columns. Split into one row per order item.\n- **2NF**: with the key `(order_id, product_id)`, `product_name` depends only on `product_id`. Move product details to a `products` table.\n- **3NF**: `customer_city` depends on the customer, not on the order. Move customer details to a `customers` table.\n\nResult: `customers`, `products`, `orders`, `order_items`.\n\n**Denormalisation** is the deliberate opposite: storing a copy or a computed value to avoid joins, for example `orders.total` or a `comments_count` column. It speeds up reads and makes writes responsible for keeping copies in sync.\n\nNot every copy is a violation: `order_items.price` stores the price **at the time of purchase**, which is a different fact from the product's current price.",
+      "topic": "Normalization",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "normalization",
+        "database-design"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- After normalisation to 3NF\nCREATE TABLE customers  (id BIGINT UNSIGNED PRIMARY KEY, name VARCHAR(100), city VARCHAR(60));\nCREATE TABLE products   (id BIGINT UNSIGNED PRIMARY KEY, name VARCHAR(150), price INT UNSIGNED);\nCREATE TABLE orders     (id BIGINT UNSIGNED PRIMARY KEY, customer_id BIGINT UNSIGNED, created_at DATETIME);\nCREATE TABLE order_items (\n    order_id   BIGINT UNSIGNED,\n    product_id BIGINT UNSIGNED,\n    qty        INT UNSIGNED,\n    price      INT UNSIGNED,          -- price when ordered (a snapshot, not redundancy)\n    PRIMARY KEY (order_id, product_id)\n);"
+      },
+      "related": [
+        "mysql-021",
+        "mysql-010"
+      ]
+    },
+    {
+      "id": "mysql-014",
+      "order": 14,
+      "question": "What is a transaction?",
+      "shortAnswer": "A transaction is a group of SQL statements treated as one unit: either all of them are committed or none are. It is started with `START TRANSACTION` and ended with `COMMIT` or `ROLLBACK`.",
+      "interviewAnswer": "A transaction groups several statements into one all-or-nothing unit of work. The classic example is a bank transfer: debit one account and credit another. If the second statement fails, the first must be undone. I start a transaction, run the statements, and commit if everything succeeds or roll back on error. Transactions also isolate concurrent users from each other's half-finished changes. In MySQL they need the InnoDB engine.",
+      "answer": "- `START TRANSACTION` (or `BEGIN`) → statements → `COMMIT` or `ROLLBACK`.\n- `SAVEPOINT name` and `ROLLBACK TO name` undo part of a transaction.\n- By default MySQL runs in **autocommit** mode: each statement is its own transaction.\n- **Row locks**: `SELECT ... FOR UPDATE` locks the selected rows until the transaction ends, preventing two requests from both reading the same stock and overselling.\n- **Deadlock**: two transactions each wait for a lock the other holds. InnoDB detects it and rolls one back with error 1213; the application should retry. Reduce deadlocks by locking rows in a consistent order and keeping transactions short.\n- DDL statements commit implicitly.",
+      "topic": "Transactions",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "transactions",
+        "locking",
+        "concurrency"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "START TRANSACTION;\n\nSELECT balance FROM accounts WHERE id = 1 FOR UPDATE;   -- lock the row\n\nUPDATE accounts SET balance = balance - 500 WHERE id = 1;\nUPDATE accounts SET balance = balance + 500 WHERE id = 2;\n\nINSERT INTO transfers (from_id, to_id, amount) VALUES (1, 2, 500);\n\nCOMMIT;      -- or ROLLBACK; if anything failed"
+      },
+      "related": [
+        "mysql-015",
+        "laravel-032",
+        "mysql-022"
+      ]
+    },
+    {
+      "id": "mysql-015",
+      "order": 15,
+      "question": "What does ACID mean? What are the transaction isolation levels?",
+      "shortAnswer": "Atomicity (all or nothing), Consistency (rules always hold), Isolation (concurrent transactions do not interfere) and Durability (committed data survives a crash). Isolation levels trade strictness for concurrency; InnoDB's default is REPEATABLE READ.",
+      "interviewAnswer": "ACID describes the guarantees of a transaction. Atomicity: all statements succeed or none do. Consistency: the database moves from one valid state to another, with constraints intact. Isolation: concurrent transactions do not see each other's uncommitted work. Durability: once committed, changes survive a crash. Isolation comes in four levels, from read uncommitted to serializable, each preventing more anomalies at the cost of concurrency. MySQL's InnoDB defaults to repeatable read.",
+      "answer": "| Level | Dirty read | Non-repeatable read | Phantom read |\n|---|---|---|---|\n| READ UNCOMMITTED | possible | possible | possible |\n| READ COMMITTED | prevented | possible | possible |\n| REPEATABLE READ (InnoDB default) | prevented | prevented | largely prevented in InnoDB |\n| SERIALIZABLE | prevented | prevented | prevented |\n\n- **Dirty read**: reading another transaction's uncommitted change.\n- **Non-repeatable read**: the same row returns different values within one transaction.\n- **Phantom read**: the same query returns extra rows that another transaction inserted.\n\nHow InnoDB delivers this: undo logs give atomicity and multi-version concurrency control (MVCC), so readers do not block writers; the redo log gives durability; row and gap locks give isolation.\n\nA **lost update** (two requests read a value, both write back) is still possible at the default level with plain `SELECT`. Prevent it with `SELECT ... FOR UPDATE`, an atomic `UPDATE ... SET stock = stock - 1 WHERE stock > 0`, or optimistic locking with a version column.",
+      "topic": "ACID",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "acid",
+        "transactions",
+        "isolation-levels",
+        "concurrency"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "SELECT @@transaction_isolation;                       -- REPEATABLE-READ\n\nSET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;\n\n-- Atomic decrement: no read-then-write gap\nUPDATE products\nSET stock = stock - 1\nWHERE id = 10 AND stock > 0;\n-- affected rows = 0 means it was out of stock\n\n-- Optimistic locking with a version column\nUPDATE products\nSET price = 499, version = version + 1\nWHERE id = 10 AND version = 7;"
+      },
+      "related": [
+        "mysql-014",
+        "laravel-032"
+      ]
+    },
+    {
+      "id": "mysql-016",
+      "order": 16,
+      "question": "What is the difference between DELETE, TRUNCATE and DROP?",
+      "shortAnswer": "`DELETE` removes selected rows and can be rolled back. `TRUNCATE` removes all rows quickly, resets auto-increment and cannot be rolled back. `DROP` removes the table itself.",
+      "interviewAnswer": "DELETE is a DML statement that removes rows one by one, optionally with a WHERE clause; it fires triggers and can be rolled back inside a transaction. TRUNCATE is DDL: it empties the whole table by recreating it, so it is much faster, resets the auto-increment counter, does not fire delete triggers and commits implicitly. DROP removes the table completely, including its structure, indexes and data.",
+      "answer": "| | DELETE | TRUNCATE | DROP |\n|---|---|---|---|\n| Type | DML | DDL | DDL |\n| `WHERE` clause | Yes | No | No |\n| Rollback | Yes | No (implicit commit) | No |\n| Triggers | Fire | Do not fire | Do not fire |\n| Auto-increment | Unchanged | Reset | Gone |\n| Structure | Kept | Kept | Removed |\n| Speed on large tables | Slow | Fast | Fast |\n\n- `TRUNCATE` fails on a table that is referenced by a foreign key from another table.\n- `DELETE` without `WHERE` removes every row. Run the matching `SELECT` first, and work inside a transaction on production data.\n- Deleting millions of rows in one statement holds locks for a long time; delete in batches with `LIMIT`.",
+      "topic": "DELETE",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "delete",
+        "truncate",
+        "drop"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "DELETE FROM sessions WHERE last_activity < NOW() - INTERVAL 30 DAY;   -- some rows\nDELETE FROM logs WHERE created_at < '2025-01-01' LIMIT 10000;         -- in batches\n\nTRUNCATE TABLE cache;      -- all rows, resets AUTO_INCREMENT\n\nDROP TABLE IF EXISTS temp_import;   -- the table itself"
+      },
+      "related": [
+        "mysql-001"
+      ]
+    },
+    {
+      "id": "mysql-017",
+      "order": 17,
+      "question": "What is the difference between CHAR and VARCHAR? How do you choose column types?",
+      "shortAnswer": "`CHAR(n)` is fixed length and padded with spaces; `VARCHAR(n)` stores only the characters used plus a length prefix. Use CHAR for values that are always the same length and VARCHAR for everything else.",
+      "interviewAnswer": "CHAR is fixed length: CHAR(10) always occupies ten characters and is right-padded with spaces. VARCHAR is variable length and stores the actual text plus one or two bytes for the length. I use CHAR for fixed-size codes like a country code or a hash, and VARCHAR for names and emails. More generally I choose the smallest type that fits: correct integer sizes, DECIMAL or integer minor units for money, never FLOAT, and DATETIME or TIMESTAMP for time.",
+      "answer": "**Strings**: `CHAR(n)` up to 255; `VARCHAR(n)` up to 65,535 bytes per row; `TEXT` types for long content (cannot have a full default index, only a prefix or full-text index).\n\n**Numbers**: `TINYINT` (1 byte), `SMALLINT`, `INT` (4 bytes), `BIGINT` (8 bytes); add `UNSIGNED` when negatives are impossible. Foreign keys must match the referenced type exactly.\n\n**Money**: `DECIMAL(10,2)` or an integer number of paise or cents. `FLOAT` and `DOUBLE` are approximate and cause rounding errors.\n\n**Dates**: `DATE`, `DATETIME` (no time zone, range to year 9999), `TIMESTAMP` (stored as UTC, converted to the session time zone, range to 2038).\n\n**Other**: `BOOLEAN` is `TINYINT(1)`; `JSON` validates and allows path queries; `ENUM` is compact but hard to change.\n\nUse `utf8mb4` as the character set. MySQL's `utf8` is a three-byte subset that cannot store emoji.",
+      "topic": "SQL Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "data-types",
+        "char",
+        "varchar",
+        "schema"
+      ],
+      "code": {
+        "language": "sql",
+        "content": "CREATE TABLE payments (\n    id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    order_id      BIGINT UNSIGNED NOT NULL,\n    currency      CHAR(3)        NOT NULL,          -- always 3 letters\n    amount        DECIMAL(12, 2) NOT NULL,          -- exact\n    gateway_ref   VARCHAR(80)    NULL,\n    is_refunded   BOOLEAN        NOT NULL DEFAULT FALSE,\n    payload       JSON           NULL,\n    paid_at       DATETIME       NULL,\n    created_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP\n) DEFAULT CHARSET = utf8mb4;"
+      },
+      "related": [
+        "mysql-021",
+        "mysql-012"
+      ]
+    },
+    {
+      "id": "mysql-018",
+      "order": 18,
+      "question": "What is the difference between UNION and UNION ALL?",
+      "shortAnswer": "Both combine the results of two SELECT statements. `UNION` removes duplicate rows; `UNION ALL` keeps them and is faster because it skips the de-duplication step.",
+      "interviewAnswer": "UNION stacks the results of two or more SELECT statements and removes duplicates, which requires extra work. UNION ALL returns everything, including duplicates, and is faster. The queries must return the same number of columns with compatible types, and the column names come from the first query. I use UNION ALL unless I specifically need duplicates removed. It differs from a join: a union adds rows, a join adds columns.",
+      "answer": "- Same number of columns in each `SELECT`, in the same order, with compatible types.\n- Column names are taken from the first `SELECT`.\n- One `ORDER BY` and `LIMIT` at the end applies to the combined result.\n- `UNION` is equivalent to `UNION DISTINCT`.\n- MySQL 8.0.31 added `INTERSECT` and `EXCEPT`.\n- A common use is emulating a full outer join, or building an activity feed from several tables with a literal column that says where each row came from.",
+      "topic": "SQL Basics",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "sql",
+        "union"
+      ],
+      "code": {
+        "language": "sql",
+        "content": "-- All contact emails, no duplicates\nSELECT email FROM customers\nUNION\nSELECT email FROM newsletter_subscribers;\n\n-- Activity feed: keep everything, tag the source\nSELECT id, 'order'  AS type, created_at FROM orders   WHERE customer_id = 7\nUNION ALL\nSELECT id, 'ticket' AS type, created_at FROM tickets  WHERE customer_id = 7\nORDER BY created_at DESC\nLIMIT 20;"
+      },
+      "related": [
+        "mysql-003"
+      ]
+    },
+    {
+      "id": "mysql-019",
+      "order": 19,
+      "question": "How do you read the output of EXPLAIN?",
+      "shortAnswer": "`EXPLAIN` shows how MySQL plans to run a query: the access type per table, which index it will use, and roughly how many rows it will examine. Look for `type: ALL`, a NULL `key`, large `rows`, and \"Using filesort\" or \"Using temporary\".",
+      "interviewAnswer": "I put EXPLAIN in front of a SELECT to see the execution plan. The columns I read first are type, which is the access method, where ALL means a full table scan and ref, eq_ref or const mean indexed lookups; key, which is the index actually chosen; rows, the estimated number of rows examined; and Extra, where Using filesort and Using temporary signal expensive sorting or grouping, and Using index means a covering index. EXPLAIN ANALYZE in MySQL 8 runs the query and shows real timings.",
+      "answer": "| Column | What to look for |\n|---|---|\n| `type` | Best to worst: `const`, `eq_ref`, `ref`, `range`, `index`, `ALL` |\n| `possible_keys` | Indexes MySQL considered |\n| `key` | The index chosen; `NULL` means none |\n| `key_len` | How much of a composite index is used |\n| `rows` | Estimated rows examined; multiply across joined tables |\n| `filtered` | Estimated percentage remaining after conditions |\n| `Extra` | `Using index` (covering), `Using where`, `Using filesort`, `Using temporary`, `Using index condition` |\n\nWorkflow:\n\n1. Get the real SQL (from the slow query log, Telescope or `toRawSql()`).\n2. Run `EXPLAIN`.\n3. Fix the worst line: add or reorder an index, rewrite a non-sargable condition, or reduce the rows joined.\n4. Run `EXPLAIN` again and time the query.\n\n`EXPLAIN FORMAT=TREE` and `EXPLAIN ANALYZE` (8.0.18+) are easier to read for joins and show actual row counts and time.",
+      "topic": "Query Optimization",
+      "difficulty": "Advanced",
+      "type": "Practical",
+      "tags": [
+        "mysql",
+        "explain",
+        "query-optimization",
+        "indexes",
+        "performance"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "EXPLAIN\nSELECT o.id, o.total, c.name\nFROM orders o\nJOIN customers c ON c.id = o.customer_id\nWHERE o.status = 'paid'\nORDER BY o.created_at DESC\nLIMIT 20;\n\n-- Before: orders -> type ALL, key NULL, rows 480000, Extra \"Using where; Using filesort\"\n\nCREATE INDEX idx_orders_status_created ON orders (status, created_at);\n\n-- After:  orders -> type ref, key idx_orders_status_created, rows 20, no filesort\n--         customers -> type eq_ref, key PRIMARY, rows 1"
+      },
+      "related": [
+        "mysql-020",
+        "mysql-008",
+        "mysql-009"
+      ]
+    },
+    {
+      "id": "mysql-020",
+      "order": 20,
+      "question": "How would you optimize a slow MySQL query?",
+      "shortAnswer": "Find the exact query, run `EXPLAIN`, add or fix indexes for the WHERE, JOIN and ORDER BY columns, select fewer columns and rows, rewrite conditions that block index use, and only then consider caching or schema changes.",
+      "interviewAnswer": "First I capture the exact query and how long it takes, from the slow query log or the application profiler. Then I run EXPLAIN to see whether it scans the whole table, which index it uses, and whether it sorts on disk. The most common fix is the right index, often a composite one matching the WHERE and ORDER BY. Next I reduce the work: select only needed columns, add a LIMIT, avoid functions on indexed columns and replace deep OFFSET pagination with keyset pagination. If it is still slow I look at denormalising, summary tables or caching.",
+      "answer": "**Measure**\n\n- Enable the slow query log (`long_query_time`), or find the query in Telescope or an APM.\n- `EXPLAIN` / `EXPLAIN ANALYZE`.\n\n**Indexes**\n\n- Index columns used in `WHERE`, `JOIN ... ON`, `ORDER BY` and `GROUP BY`.\n- Prefer one composite index in the right order over several single-column ones.\n- Consider a covering index for hot queries.\n- Drop unused and duplicate indexes; they slow writes.\n\n**Rewrite**\n\n- `SELECT *` → named columns.\n- `WHERE DATE(created_at) = '2025-06-01'` → a range on `created_at`.\n- `LIKE '%term%'` → full-text index or a search engine.\n- `OR` on different columns → `UNION ALL` of two indexed queries.\n- Large `OFFSET` → keyset pagination: `WHERE id < ? ORDER BY id DESC LIMIT 20`.\n- Aggregate in a derived table before joining to avoid multiplying rows.\n- `COUNT(*)` on huge filtered sets: cache it or keep a counter.\n\n**Structure**\n\n- Correct data types and matching types on join columns.\n- Summary tables or denormalised counters for dashboards.\n- Archive or partition very large historical tables.\n\n**Outside the query**: cache results, add a read replica for reporting, check `innodb_buffer_pool_size`.\n\nAlways confirm with a second measurement.",
+      "topic": "Query Optimization",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "mysql",
+        "query-optimization",
+        "indexes",
+        "performance",
+        "pagination"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- Slow: function on column, SELECT *, deep offset\nSELECT * FROM orders\nWHERE DATE(created_at) = '2025-06-01' AND status = 'paid'\nORDER BY id DESC\nLIMIT 20 OFFSET 100000;\n\n-- Faster: sargable range, named columns, keyset pagination, supporting index\nCREATE INDEX idx_orders_status_created_id ON orders (status, created_at, id);\n\nSELECT id, customer_id, total, created_at\nFROM orders\nWHERE status = 'paid'\n  AND created_at >= '2025-06-01' AND created_at < '2025-06-02'\n  AND id < 880412                      -- last id from the previous page\nORDER BY id DESC\nLIMIT 20;"
+      },
+      "related": [
+        "mysql-019",
+        "mysql-008",
+        "laravel-035"
+      ]
+    },
+    {
+      "id": "mysql-021",
+      "order": 21,
+      "question": "Design the database tables for a simple e-commerce order system.",
+      "shortAnswer": "Users, products, orders and order_items at the core, with order_items storing the price and quantity at purchase time. Add addresses, payments and categories as separate tables linked by foreign keys.",
+      "interviewAnswer": "I would start from the entities and their relationships. A user has many orders. An order has many order items, and each item refers to a product, so orders and products are many-to-many through order_items, which also stores the quantity and the unit price at the time of purchase. Payments are separate from orders because an order can have several attempts. Addresses are copied onto the order so later edits do not change history. Every foreign key is indexed, money is stored as integers or decimals, and status columns are constrained.",
+      "answer": "**Tables**\n\n- `users` (id, name, email unique, password)\n- `addresses` (id, user_id, line1, city, pincode)\n- `categories` (id, parent_id, name) and `category_product` pivot\n- `products` (id, sku unique, name, price, stock, status)\n- `orders` (id, user_id, status, subtotal, discount, total, shipping_address snapshot, placed_at)\n- `order_items` (id, order_id, product_id, product_name, unit_price, qty)\n- `payments` (id, order_id, gateway, gateway_ref unique, amount, status, paid_at)\n\n**Decisions to explain**\n\n- **Snapshots**: item price, product name and shipping address are copied at order time. History must not change when the catalogue does.\n- **Totals** are stored, not recomputed, so invoices stay stable.\n- **Stock** is decremented in a transaction with a row lock or an atomic conditional update.\n- **Status** as a constrained string or enum, with an `order_status_history` table if an audit trail is needed.\n- **Indexes**: all foreign keys, `orders (user_id, placed_at)`, `orders (status, placed_at)`, unique `payments.gateway_ref` for idempotent webhooks.\n- **Deletes**: restrict deleting users with orders; soft delete products.\n\nMentioning what you would leave for later (coupons, variants, multi-warehouse inventory) shows you can scope.",
+      "topic": "Database Design",
+      "difficulty": "Advanced",
+      "type": "Architecture",
+      "tags": [
+        "mysql",
+        "database-design",
+        "schema",
+        "e-commerce",
+        "architecture"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "CREATE TABLE orders (\n    id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    user_id     BIGINT UNSIGNED NOT NULL,\n    status      VARCHAR(20) NOT NULL DEFAULT 'pending',\n    total       INT UNSIGNED NOT NULL,\n    shipping_address JSON NOT NULL,\n    placed_at   DATETIME NOT NULL,\n    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE RESTRICT,\n    INDEX idx_orders_user_placed (user_id, placed_at),\n    INDEX idx_orders_status_placed (status, placed_at)\n);\n\nCREATE TABLE order_items (\n    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n    order_id     BIGINT UNSIGNED NOT NULL,\n    product_id   BIGINT UNSIGNED NOT NULL,\n    product_name VARCHAR(150) NOT NULL,     -- snapshot\n    unit_price   INT UNSIGNED NOT NULL,     -- snapshot\n    qty          SMALLINT UNSIGNED NOT NULL,\n    FOREIGN KEY (order_id)   REFERENCES orders (id)   ON DELETE CASCADE,\n    FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT,\n    UNIQUE KEY uq_order_product (order_id, product_id)\n);"
+      },
+      "related": [
+        "mysql-013",
+        "mysql-011",
+        "laravel-013"
+      ]
+    },
+    {
+      "id": "mysql-022",
+      "order": 22,
+      "question": "What is the difference between InnoDB and MyISAM?",
+      "shortAnswer": "InnoDB supports transactions, row-level locking, foreign keys and crash recovery, and is the default engine. MyISAM has none of those and locks the whole table on writes.",
+      "interviewAnswer": "InnoDB is MySQL's default storage engine. It supports ACID transactions, row-level locking, foreign keys and automatic crash recovery, and stores rows in primary key order. MyISAM is the older engine: no transactions, no foreign keys, and table-level locking, so one write blocks every other write and read. For any application with concurrent writes or data that matters, I use InnoDB. MyISAM survives mostly in legacy databases.",
+      "answer": "| | InnoDB | MyISAM |\n|---|---|---|\n| Transactions | Yes | No |\n| Locking | Row level | Table level |\n| Foreign keys | Yes | No |\n| Crash recovery | Automatic (redo log) | Manual repair |\n| Storage | Clustered by primary key | Heap with separate indexes |\n| Full-text search | Yes (since 5.6) | Yes |\n\nCheck with `SHOW TABLE STATUS` or `information_schema.TABLES`, and convert with `ALTER TABLE t ENGINE = InnoDB`.\n\nOther engines you may hear about: `MEMORY` (in-RAM, lost on restart) and `ARCHIVE` (compressed, append-only).",
+      "topic": "SQL Basics",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "mysql",
+        "innodb",
+        "myisam",
+        "storage-engines"
+      ],
+      "code": {
+        "language": "sql",
+        "content": "SELECT table_name, engine\nFROM information_schema.tables\nWHERE table_schema = DATABASE();\n\nALTER TABLE legacy_logs ENGINE = InnoDB;"
+      },
+      "related": [
+        "mysql-014",
+        "mysql-015"
+      ]
+    },
+    {
+      "id": "mysql-023",
+      "order": 23,
+      "question": "Write a query to find the second highest salary.",
+      "shortAnswer": "Take the maximum salary that is less than the overall maximum, or order the distinct salaries descending and skip one with `LIMIT 1 OFFSET 1`. For the Nth highest, use `DENSE_RANK()`.",
+      "interviewAnswer": "There are three common answers. One: select the MAX salary where salary is less than the overall MAX, which handles ties and returns NULL if there is no second value. Two: select distinct salaries ordered descending with LIMIT 1 OFFSET 1. Three, in MySQL 8: use the DENSE_RANK window function and filter where the rank is two, which generalises to the Nth highest and to per-department rankings with PARTITION BY.",
+      "answer": "Things the interviewer checks:\n\n- **Ties**: if two people share the top salary, the second highest is the next distinct value. Use `DISTINCT` or `DENSE_RANK`, not `ROW_NUMBER`.\n- **No second value**: the subquery version returns `NULL`; the `LIMIT/OFFSET` version returns no row unless wrapped in a subquery.\n- **Generalising**: `LIMIT 1 OFFSET N-1`, or `WHERE rnk = N`.\n\nWindow function differences: `ROW_NUMBER` gives 1, 2, 3, 4 regardless of ties; `RANK` gives 1, 1, 3; `DENSE_RANK` gives 1, 1, 2.",
+      "topic": "Common SQL Interview Questions",
+      "difficulty": "Intermediate",
+      "type": "SQL",
+      "tags": [
+        "mysql",
+        "sql",
+        "interview",
+        "window-functions",
+        "subqueries"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- 1. Subquery\nSELECT MAX(salary) AS second_highest\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);\n\n-- 2. LIMIT / OFFSET\nSELECT DISTINCT salary\nFROM employees\nORDER BY salary DESC\nLIMIT 1 OFFSET 1;\n\n-- 3. Window function (MySQL 8): Nth highest, here per department\nSELECT department_id, name, salary\nFROM (\n    SELECT department_id, name, salary,\n           DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rnk\n    FROM employees\n) ranked\nWHERE rnk = 2;"
+      },
+      "related": [
+        "mysql-007",
+        "mysql-024"
+      ]
+    },
+    {
+      "id": "mysql-024",
+      "order": 24,
+      "question": "Write a query to find duplicate rows, and one to delete the duplicates but keep one.",
+      "shortAnswer": "Group by the columns that define a duplicate and keep groups with `HAVING COUNT(*) > 1`. To delete, self-join the table and remove the rows with the higher id.",
+      "interviewAnswer": "To find duplicates I group by the column or columns that should be unique, like email, and use HAVING COUNT greater than one. To remove them while keeping one copy, I delete with a self join: for each pair of rows with the same email, delete the one with the larger ID, so the oldest row survives. Afterwards I add a unique index so duplicates cannot come back.",
+      "answer": "Steps on production data:\n\n1. Find and review the duplicates.\n2. Decide which row to keep (lowest id, latest update, most complete).\n3. Repoint or merge child rows that reference the rows to be deleted.\n4. Delete inside a transaction, in batches if the table is large.\n5. Add a `UNIQUE` index to enforce the rule.\n\nAlternative with MySQL 8: number the rows with `ROW_NUMBER() OVER (PARTITION BY email ORDER BY id)` and delete those with a number greater than 1.\n\nBe careful with case and whitespace: `'A@x.com'` and `'a@x.com '` may be the same email logically. Normalise first.",
+      "topic": "Common SQL Interview Questions",
+      "difficulty": "Intermediate",
+      "type": "SQL",
+      "tags": [
+        "mysql",
+        "sql",
+        "interview",
+        "duplicates",
+        "group-by"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "sql",
+        "content": "-- Find duplicates\nSELECT email, COUNT(*) AS copies, MIN(id) AS keep_id\nFROM users\nGROUP BY email\nHAVING COUNT(*) > 1;\n\n-- Delete duplicates, keep the lowest id\nDELETE u1\nFROM users u1\nJOIN users u2\n  ON u1.email = u2.email\n AND u1.id > u2.id;\n\n-- Stop it happening again\nALTER TABLE users ADD UNIQUE KEY uq_users_email (email);"
+      },
+      "related": [
+        "mysql-005",
+        "mysql-023",
+        "mysql-010"
+      ]
+    }
+  ]
+}

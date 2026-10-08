@@ -1,0 +1,491 @@
+{
+  "skill": "javascript",
+  "questions": [
+    {
+      "id": "js-001",
+      "order": 1,
+      "question": "What is the difference between var, let and const?",
+      "shortAnswer": "`var` is function scoped, hoisted and can be redeclared. `let` and `const` are block scoped and cannot be used before their declaration. `const` cannot be reassigned.",
+      "interviewAnswer": "var is function scoped and hoisted with the value undefined, so it can be read before the line that declares it, and it can be redeclared. let and const are block scoped and sit in the temporal dead zone until their declaration, so using them early throws a ReferenceError. const must be initialised and cannot be reassigned, although an object or array held in a const can still be mutated. I use const by default, let when the value changes, and avoid var.",
+      "answer": "| | `var` | `let` | `const` |\n|---|---|---|---|\n| Scope | Function | Block | Block |\n| Hoisted | Yes, as `undefined` | Yes, but in the TDZ | Yes, but in the TDZ |\n| Redeclare in same scope | Yes | No | No |\n| Reassign | Yes | Yes | No |\n| Creates `window` property at top level | Yes | No | No |\n\n`const` protects the binding, not the value: `const list = []; list.push(1)` is fine. Use `Object.freeze()` for a shallow immutable object.\n\nThe classic loop question: with `var`, all callbacks share one variable; with `let`, each iteration gets its own.",
+      "topic": "Variables",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "variables",
+        "scope",
+        "es6"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log('var', i), 0);   // 3, 3, 3\n}\n\nfor (let j = 0; j < 3; j++) {\n  setTimeout(() => console.log('let', j), 0);   // 0, 1, 2\n}\n\nconst user = { name: 'Asha' };\nuser.name = 'Ravi';      // allowed: mutation\n// user = {};            // TypeError: assignment to constant variable"
+      },
+      "related": [
+        "js-004",
+        "js-005"
+      ]
+    },
+    {
+      "id": "js-002",
+      "order": 2,
+      "question": "What are the data types in JavaScript? What is the difference between primitive and reference types?",
+      "shortAnswer": "Seven primitives (string, number, bigint, boolean, undefined, null, symbol) and objects. Primitives are copied by value; objects, arrays and functions are copied by reference.",
+      "interviewAnswer": "JavaScript has seven primitive types: string, number, bigint, boolean, undefined, null and symbol. Everything else is an object, including arrays and functions. Primitives are immutable and copied by value. Objects are held by reference, so assigning one to another variable makes both point to the same object, and comparing two objects compares references, not contents. Two quirks to know: typeof null returns \"object\", and NaN is not equal to itself.",
+      "answer": "- `typeof` returns `\"string\"`, `\"number\"`, `\"bigint\"`, `\"boolean\"`, `\"undefined\"`, `\"symbol\"`, `\"function\"` or `\"object\"`.\n- `typeof null === \"object\"` is a historical bug. Test with `value === null`.\n- Arrays: `Array.isArray(value)`.\n- `NaN !== NaN`; use `Number.isNaN()`.\n- `undefined` means not assigned; `null` is an intentional \"no value\".\n- `0.1 + 0.2 !== 0.3` because numbers are IEEE 754 doubles. Work in integer minor units for money.\n- **Falsy values**: `false`, `0`, `-0`, `0n`, `\"\"`, `null`, `undefined`, `NaN`. Everything else is truthy, including `[]`, `{}` and `\"0\"` (unlike PHP, where `\"0\"` and `[]` are falsy).",
+      "topic": "Data Types",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "data-types",
+        "primitives",
+        "references"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "let a = 10;\nlet b = a;       // copy of the value\nb = 20;\nconsole.log(a);  // 10\n\nconst x = { n: 1 };\nconst y = x;     // same object\ny.n = 2;\nconsole.log(x.n);          // 2\n\nconsole.log({} === {});    // false (different references)\nconsole.log(typeof null);  // \"object\"\nconsole.log(typeof []);    // \"object\"\nconsole.log(Array.isArray([])); // true\nconsole.log(Boolean('0'), Boolean([])); // true true"
+      },
+      "related": [
+        "js-010",
+        "js-003"
+      ]
+    },
+    {
+      "id": "js-003",
+      "order": 3,
+      "question": "What is the difference between == and === in JavaScript?",
+      "shortAnswer": "`==` converts the operands to a common type before comparing; `===` compares type and value without conversion. Use `===`.",
+      "interviewAnswer": "Double equals performs type coercion before comparing, so the string \"5\" equals the number 5 and null equals undefined. Triple equals is strict equality: it returns true only if both type and value are the same. I always use triple equals to avoid surprises. The one accepted shortcut is comparing with double-equals null, which is true for both null and undefined.",
+      "answer": "Coercion surprises with `==`:\n\n- `0 == ''` → `true`\n- `0 == '0'` → `true`, but `'' == '0'` → `false`\n- `null == undefined` → `true`, and neither equals `0`\n- `[] == false` → `true`\n- `NaN == NaN` → `false`\n\n`Object.is(a, b)` is like `===` except that `Object.is(NaN, NaN)` is `true` and `Object.is(0, -0)` is `false`.\n\nObjects are compared by reference in both forms. To compare contents, compare fields, or serialise simple data with `JSON.stringify`.",
+      "topic": "Data Types",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "comparison",
+        "coercion"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "console.log(5 == '5');            // true\nconsole.log(5 === '5');           // false\nconsole.log(null == undefined);   // true\nconsole.log(null === undefined);  // false\nconsole.log(0 == '');             // true\nconsole.log([1, 2] === [1, 2]);   // false (two different arrays)\n\n// Accepted idiom: null or undefined\nif (value == null) { /* ... */ }"
+      },
+      "related": [
+        "js-002",
+        "php-001"
+      ]
+    },
+    {
+      "id": "js-004",
+      "order": 4,
+      "question": "What is hoisting?",
+      "shortAnswer": "Hoisting is JavaScript registering declarations before running the code. Function declarations are fully available early, `var` variables exist as `undefined`, and `let`, `const` and classes exist but cannot be accessed until their declaration line.",
+      "interviewAnswer": "Before executing a scope, the JavaScript engine registers its declarations, which makes them appear to move to the top. A function declaration is hoisted with its body, so I can call it before it is defined. A var declaration is hoisted but initialised to undefined; the assignment stays where it is. let, const and class declarations are hoisted too, but they are in the temporal dead zone until the declaration runs, and touching them earlier throws a ReferenceError.",
+      "answer": "- **Function declaration** `function f() {}`: callable anywhere in its scope.\n- **Function expression** `var f = function () {}`: only the variable is hoisted, so calling it early gives \"f is not a function\".\n- **Arrow function in `const`**: in the TDZ until defined.\n- **`var`**: hoisted and `undefined`.\n- **`let` / `const` / `class`**: hoisted but uninitialised (TDZ).\n\nThe TDZ exists to catch bugs: reading a variable before it has a value is almost always a mistake.",
+      "topic": "Hoisting",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "hoisting",
+        "tdz",
+        "scope"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "sayHi();                        // works: function declaration is hoisted\nfunction sayHi() { console.log('hi'); }\n\nconsole.log(count);             // undefined (var is hoisted, assignment is not)\nvar count = 5;\n\nconsole.log(total);             // ReferenceError: cannot access before initialization\nlet total = 10;\n\ngreet();                        // TypeError: greet is not a function\nvar greet = function () {};"
+      },
+      "related": [
+        "js-001",
+        "js-005"
+      ]
+    },
+    {
+      "id": "js-005",
+      "order": 5,
+      "question": "Explain scope and the scope chain in JavaScript.",
+      "shortAnswer": "Scope decides where a variable is visible: global, module, function or block. JavaScript uses lexical scope, so an inner function can read variables from the scopes it was written inside, following the scope chain outward.",
+      "interviewAnswer": "Scope is the region of code where a variable can be accessed. JavaScript has global scope, module scope, function scope and block scope for let and const. It is lexically scoped: what a function can see is determined by where it is written, not where it is called. When a variable is used, the engine looks in the current scope, then the enclosing one, and so on up to the global scope. That lookup path is the scope chain, and it is what makes closures possible.",
+      "answer": "- **Global**: visible everywhere; avoid adding to it.\n- **Module**: top-level variables in an ES module are private to that file unless exported.\n- **Function**: parameters and variables declared inside.\n- **Block**: `let` and `const` inside `{ }`, including `if` and `for`.\n\n**Shadowing**: an inner variable with the same name hides the outer one.\n\n**Lexical vs dynamic**: `this` is the exception that depends on how a function is called; ordinary variables never do.\n\nUnlike PHP, an inner function in JavaScript sees outer variables automatically. PHP closures need `use (...)`.",
+      "topic": "Scope",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "scope",
+        "lexical-scope",
+        "scope-chain"
+      ],
+      "code": {
+        "language": "js",
+        "content": "const app = 'DevPrep';            // module / global scope\n\nfunction outer() {\n  const a = 1;                    // function scope\n\n  function inner() {\n    const b = 2;\n    console.log(app, a, b);       // looks outward through the scope chain\n  }\n\n  if (true) {\n    const c = 3;                  // block scope\n  }\n  // console.log(c);              // ReferenceError\n  inner();\n}\nouter();"
+      },
+      "related": [
+        "js-006",
+        "js-001",
+        "php-010"
+      ]
+    },
+    {
+      "id": "js-006",
+      "order": 6,
+      "question": "What is a closure? Give a practical example.",
+      "shortAnswer": "A closure is a function together with the variables from the scope where it was created. The function keeps access to those variables even after the outer function has returned.",
+      "interviewAnswer": "A closure is created when a function remembers the variables from its surrounding scope and can use them later, even after that outer function has finished. It works because functions in JavaScript carry a reference to their lexical environment. Practical uses are private state, like a counter that cannot be changed from outside, function factories, event handlers and callbacks that need to remember data, and utilities like debounce and memoize.",
+      "answer": "Why it matters:\n\n- **Data privacy**: variables inside the outer function cannot be reached except through the returned functions.\n- **State between calls** without globals.\n- **Partial application**: `const add5 = add(5)`.\n- Every callback you pass to `setTimeout`, `addEventListener` or `.then()` that uses an outer variable is a closure.\n\nCaveats:\n\n- A closure keeps its outer variables alive, so holding large objects in long-lived closures can leak memory.\n- Closures capture **variables**, not values. The `var` loop problem comes from every callback closing over the same variable.",
+      "topic": "Closures",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "closures",
+        "scope",
+        "functions"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "function createCounter() {\n  let count = 0;                 // private\n  return {\n    increment: () => ++count,\n    reset: () => { count = 0; },\n    get value() { return count; },\n  };\n}\n\nconst counter = createCounter();\ncounter.increment();\ncounter.increment();\nconsole.log(counter.value);      // 2\nconsole.log(counter.count);      // undefined: not reachable from outside\n\n// Function factory\nconst multiplyBy = (factor) => (n) => n * factor;\nconst withGst = multiplyBy(1.18);\nconsole.log(withGst(100));       // 118"
+      },
+      "related": [
+        "js-005",
+        "js-017",
+        "js-001"
+      ]
+    },
+    {
+      "id": "js-007",
+      "order": 7,
+      "question": "How does this work? What is the difference between arrow functions and regular functions?",
+      "shortAnswer": "In a regular function, `this` depends on how the function is called. An arrow function has no `this` of its own and uses the one from the scope where it was defined.",
+      "interviewAnswer": "In a regular function, this is decided at call time. Called as a method, it is the object before the dot. Called on its own, it is undefined in strict mode. With new, it is the new object, and call, apply and bind set it explicitly. Arrow functions do not have their own this; they capture it from the surrounding code, which makes them good for callbacks inside methods. Arrow functions also have no arguments object and cannot be used as constructors.",
+      "answer": "| Call form | `this` |\n|---|---|\n| `obj.method()` | `obj` |\n| `fn()` | `undefined` (strict mode) or `window` |\n| `new Fn()` | The new instance |\n| `fn.call(x)`, `fn.apply(x)`, `fn.bind(x)()` | `x` |\n| DOM handler `el.addEventListener('click', function () {})` | The element |\n| Arrow function | `this` of the enclosing scope |\n\nArrow function differences: lexical `this`, no `arguments`, no `prototype`, cannot be called with `new`, implicit return for a single expression.\n\nCommon bug: passing `obj.method` as a callback loses `this`. Fix with an arrow wrapper or `.bind(obj)`.\n\nDo not use an arrow function for an object method or a DOM handler when you need `this` to be the object or element.",
+      "topic": "Functions",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "this",
+        "arrow-functions",
+        "functions"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "const cart = {\n  items: [100, 250],\n  tax: 0.18,\n  totals() {\n    // arrow: `this` is still `cart`\n    return this.items.map((price) => price * (1 + this.tax));\n  },\n  broken() {\n    return this.items.map(function (price) {\n      return price * (1 + this.tax);   // `this` is not `cart` here (undefined in strict mode)\n    });\n  },\n};\n\nconst fn = cart.totals;\n// fn();                       // fails: `this` is lost\nconst bound = cart.totals.bind(cart);\nconsole.log(bound());          // [118, 295]"
+      },
+      "related": [
+        "js-006"
+      ]
+    },
+    {
+      "id": "js-008",
+      "order": 8,
+      "question": "What is the difference between map, filter, reduce and forEach?",
+      "shortAnswer": "`map` returns a new array of transformed items, `filter` returns the items that pass a test, `reduce` combines items into one value, and `forEach` just runs a function for each item and returns nothing.",
+      "interviewAnswer": "map transforms each element and returns a new array of the same length. filter returns a new array with only the elements for which the callback returns true. reduce walks the array with an accumulator and returns a single value, such as a sum or a grouped object. forEach runs a callback for side effects and returns undefined, so it cannot be chained. None of them change the original array, and map, filter and reduce chain together well.",
+      "answer": "Other array methods worth knowing:\n\n- `find` / `findIndex`: first match or `undefined` / `-1`.\n- `some` / `every`: boolean tests.\n- `includes`, `indexOf`.\n- `flat`, `flatMap`.\n- `slice` copies a portion; `splice` **mutates**.\n- `sort` and `reverse` **mutate** and `sort` compares as strings by default, so pass a comparator: `(a, b) => a - b`. `toSorted()` and `toReversed()` return copies.\n- `Array.from`, spread `[...arr]` to copy.\n- `Object.entries(obj)` to iterate an object.\n- `Object.groupBy(items, fn)` in current runtimes.\n\nYou cannot `break` out of `forEach`; use `for...of` when you need early exit or `await` inside the loop.",
+      "topic": "Arrays",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "javascript",
+        "arrays",
+        "map",
+        "filter",
+        "reduce"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "const orders = [\n  { id: 1, total: 1200, status: 'paid' },\n  { id: 2, total: 450,  status: 'pending' },\n  { id: 3, total: 3100, status: 'paid' },\n];\n\nconst ids     = orders.map((o) => o.id);                         // [1, 2, 3]\nconst paid    = orders.filter((o) => o.status === 'paid');       // 2 items\nconst revenue = paid.reduce((sum, o) => sum + o.total, 0);       // 4300\n\nconst byStatus = orders.reduce((groups, o) => {\n  (groups[o.status] ||= []).push(o);\n  return groups;\n}, {});\n\nconsole.log([10, 9, 1].sort());                 // [1, 10, 9]  (string order!)\nconsole.log([10, 9, 1].sort((a, b) => a - b));  // [1, 9, 10]"
+      },
+      "related": [
+        "php-007"
+      ]
+    },
+    {
+      "id": "js-009",
+      "order": 9,
+      "question": "Which ES6+ features do you use most?",
+      "shortAnswer": "`let`/`const`, arrow functions, template literals, destructuring, spread and rest, default parameters, modules, classes, promises and `async`/`await`, optional chaining and nullish coalescing.",
+      "interviewAnswer": "Daily I use let and const, arrow functions, template literals and destructuring for objects and arrays. The spread operator copies or merges arrays and objects, and rest parameters collect arguments. I organise code with ES modules using import and export. For asynchronous code I use promises with async and await. Optional chaining and the nullish coalescing operator make it safe and short to read nested data that may be missing.",
+      "answer": "- **Destructuring**: `const { name, role = 'user' } = user;` and `const [first, ...rest] = list;`\n- **Spread / rest**: `{ ...defaults, ...options }`, `[...a, ...b]`, `function sum(...nums) {}`\n- **Template literals**: backtick strings with `${name}` placeholders, which can span several lines.\n- **Optional chaining**: `user?.address?.city`, `callback?.()`.\n- **Nullish coalescing**: `value ?? 'default'` falls back only for `null` and `undefined`; `||` also replaces `0`, `''` and `false`.\n- **Modules**: `export`, `export default`, `import { x } from './x.js'`.\n- **Classes**: `class A extends B { #private = 1; static create() {} }`.\n- **Map / Set**: keyed collections and unique values. `[...new Set(arr)]` removes duplicates.\n- Shorthand properties, computed keys, default parameters.",
+      "topic": "ES6+",
+      "difficulty": "Intermediate",
+      "type": "Interview",
+      "tags": [
+        "javascript",
+        "es6",
+        "destructuring",
+        "spread",
+        "optional-chaining"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "const response = { data: { user: { name: 'Meera', settings: { perPage: 0 } } } };\n\nconst { data: { user } } = response;\nconst perPage = user.settings?.perPage ?? 20;   // 0  (?? keeps 0)\nconst wrong   = user.settings?.perPage || 20;   // 20 (|| replaces 0)\n\nconst defaults = { theme: 'light', perPage: 20 };\nconst options  = { ...defaults, theme: 'dark' };\n\nconst unique = [...new Set([1, 2, 2, 3])];      // [1, 2, 3]\n\nconst label = `${user.name} sees ${perPage} rows`;"
+      },
+      "related": [
+        "js-001",
+        "js-012"
+      ]
+    },
+    {
+      "id": "js-010",
+      "order": 10,
+      "question": "What is the difference between a shallow copy and a deep copy?",
+      "shortAnswer": "A shallow copy duplicates the top level only, so nested objects are still shared. A deep copy duplicates every level, so the copy is fully independent.",
+      "interviewAnswer": "A shallow copy creates a new object but copies nested objects by reference, so changing a nested value in the copy also changes the original. Spread syntax and Object.assign make shallow copies. A deep copy clones every level. The modern way is structuredClone, which handles dates, maps, sets and circular references. JSON.parse of JSON.stringify also works for plain data but drops functions and undefined and turns dates into strings.",
+      "answer": "| Method | Depth | Notes |\n|---|---|---|\n| `{ ...obj }`, `Object.assign({}, obj)` | Shallow | Fast, fine for flat objects |\n| `[...arr]`, `arr.slice()` | Shallow | Nested items are shared |\n| `structuredClone(obj)` | Deep | Handles `Date`, `Map`, `Set`, cycles; cannot clone functions or DOM nodes |\n| `JSON.parse(JSON.stringify(obj))` | Deep | Loses `undefined`, functions, `Date` type, `Map`/`Set`; fails on cycles |\n\nThis matters for state management: frameworks detect changes by reference, so you create a new object instead of mutating, copying each level you change.",
+      "topic": "Objects",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "objects",
+        "copy",
+        "immutability"
+      ],
+      "code": {
+        "language": "js",
+        "content": "const original = { name: 'Asha', address: { city: 'Pune' } };\n\nconst shallow = { ...original };\nshallow.name = 'Ravi';                 // independent\nshallow.address.city = 'Delhi';        // shared!\nconsole.log(original.address.city);    // \"Delhi\"\n\nconst deep = structuredClone(original);\ndeep.address.city = 'Mumbai';\nconsole.log(original.address.city);    // \"Delhi\" (unchanged)\n\n// Immutable update of a nested field\nconst updated = { ...original, address: { ...original.address, city: 'Goa' } };"
+      },
+      "related": [
+        "js-002"
+      ]
+    },
+    {
+      "id": "js-011",
+      "order": 11,
+      "question": "What is a Promise?",
+      "shortAnswer": "A Promise is an object that represents the eventual result of an asynchronous operation. It is pending, then either fulfilled with a value or rejected with an error.",
+      "interviewAnswer": "A promise represents a value that will be available later. It starts as pending and settles once, either fulfilled with a result or rejected with an error. I attach handlers with then, catch and finally, and because then returns a new promise, steps can be chained instead of nesting callbacks. For several promises at once there is Promise.all, which fails fast if any rejects, allSettled, which waits for every result, race and any.",
+      "answer": "- **States**: pending → fulfilled or rejected. Settled promises never change.\n- `.then(onFulfilled)` returns a new promise; returning a value passes it on, returning a promise waits for it, throwing rejects.\n- `.catch()` handles a rejection from any earlier step; `.finally()` runs either way.\n- **Combinators**:\n- `Promise.all([...])`: resolves with all values; rejects on the first rejection.\n- `Promise.allSettled([...])`: never rejects; gives each outcome.\n- `Promise.race([...])`: settles with the first to settle.\n- `Promise.any([...])`: first to fulfil.\n- An unhandled rejection is reported as an error, so always end a chain with `.catch()` or use `try/catch` with `await`.\n- Promise callbacks run as microtasks, before timers.",
+      "topic": "Promises",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "promises",
+        "async"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "function wait(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\n\nfetch('/api/orders')\n  .then((res) => {\n    if (!res.ok) throw new Error(`HTTP ${res.status}`);\n    return res.json();\n  })\n  .then((orders) => console.log(orders.length))\n  .catch((err) => console.error('Failed:', err.message))\n  .finally(() => console.log('done'));\n\n// Run in parallel\nconst [users, products] = await Promise.all([\n  fetch('/api/users').then((r) => r.json()),\n  fetch('/api/products').then((r) => r.json()),\n]);"
+      },
+      "related": [
+        "js-012",
+        "js-013",
+        "js-014"
+      ]
+    },
+    {
+      "id": "js-012",
+      "order": 12,
+      "question": "How does async/await work?",
+      "shortAnswer": "`async` makes a function return a promise, and `await` pauses that function until a promise settles, giving its value or throwing its error. It is promise-based code written in a synchronous style.",
+      "interviewAnswer": "async and await are syntax on top of promises. An async function always returns a promise. Inside it, await pauses the function until the awaited promise settles, then gives me the value, or throws if it was rejected, so I handle errors with a normal try and catch. It does not block the main thread; the rest of the program keeps running. The main thing to watch is awaiting independent calls one after another when they could run in parallel with Promise.all.",
+      "answer": "- `await` works inside `async` functions and at the top level of ES modules.\n- A returned value becomes the promise's fulfilment value; a thrown error becomes its rejection.\n- **Sequential vs parallel**: two `await`s in a row take the sum of both times. Start both, then `await Promise.all([...])`, to take the longer of the two.\n- `await` inside `forEach` does not wait. Use `for...of` for sequential work or `Promise.all(items.map(...))` for parallel.\n- Forgetting `await` gives you a pending promise instead of the value, and errors escape your `try/catch`.\n- Cancel requests with `AbortController`.",
+      "topic": "Async/Await",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "async-await",
+        "promises"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "async function loadDashboard() {\n  try {\n    // Parallel: total time = slowest request\n    const [user, orders] = await Promise.all([\n      getJson('/api/user'),\n      getJson('/api/orders'),\n    ]);\n    render(user, orders);\n  } catch (err) {\n    showError(err.message);\n  } finally {\n    hideSpinner();\n  }\n}\n\nasync function getJson(url) {\n  const res = await fetch(url, { headers: { Accept: 'application/json' } });\n  if (!res.ok) throw new Error(`Request failed with ${res.status}`);\n  return res.json();\n}\n\n// Sequential on purpose\nfor (const id of ids) {\n  await sendReminder(id);\n}"
+      },
+      "related": [
+        "js-011",
+        "js-014",
+        "js-013"
+      ]
+    },
+    {
+      "id": "js-013",
+      "order": 13,
+      "question": "Explain the event loop. What does this code print, and why?",
+      "shortAnswer": "JavaScript runs one task at a time on a single thread. Synchronous code runs first, then all queued microtasks (promise callbacks), then one macrotask (timers, events), and the cycle repeats. The snippet prints 1, 4, 3, 2.",
+      "interviewAnswer": "JavaScript has a single call stack. Asynchronous work is handed to the browser or Node, and when it completes, its callback is placed in a queue. The event loop takes a callback from a queue only when the stack is empty. There are two kinds of queue: microtasks, which hold promise callbacks and run completely after each task, and macrotasks, such as timers and events, which run one per loop. So synchronous logs come first, then the promise callback, then the setTimeout callback, even with a delay of zero.",
+      "answer": "Order for the snippet:\n\n1. `console.log(1)`: synchronous.\n2. `setTimeout` callback → macrotask queue.\n3. `Promise.then` callback → microtask queue.\n4. `console.log(4)`: synchronous.\n5. Stack is empty: run all microtasks → `3`.\n6. Next macrotask → `2`.\n\nOutput: `1, 4, 3, 2`.\n\nFacts to remember:\n\n- **Microtasks**: `promise.then/catch/finally`, code after `await`, `queueMicrotask`, `MutationObserver`.\n- **Macrotasks**: `setTimeout`, `setInterval`, I/O, UI events.\n- `setTimeout(fn, 0)` means \"after the current task and all microtasks\", not \"immediately\".\n- A long synchronous loop blocks everything, including rendering and clicks. Split heavy work into chunks or move it to a Web Worker.\n- Code inside `new Promise((resolve) => { ... })` runs synchronously; only the `then` callbacks are deferred.",
+      "topic": "Event Loop",
+      "difficulty": "Advanced",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "event-loop",
+        "microtasks",
+        "async",
+        "output"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "console.log(1);\n\nsetTimeout(() => console.log(2), 0);\n\nPromise.resolve().then(() => console.log(3));\n\nconsole.log(4);\n\n// Output: 1, 4, 3, 2"
+      },
+      "related": [
+        "js-011",
+        "js-012"
+      ]
+    },
+    {
+      "id": "js-014",
+      "order": 14,
+      "question": "How do you send a POST request with the Fetch API, for example to a Laravel backend?",
+      "shortAnswer": "Call `fetch(url, { method: 'POST', headers, body: JSON.stringify(data) })`, check `response.ok` yourself because fetch does not reject on 4xx or 5xx, and parse the JSON. For Laravel web routes include the CSRF token header.",
+      "interviewAnswer": "I call fetch with the URL and an options object: method POST, a Content-Type of application/json, an Accept header so Laravel returns JSON errors, and the body as a JSON string. fetch returns a promise for a Response and only rejects on network failure, so I check response.ok and handle 422 validation errors explicitly. For session-authenticated Laravel routes I send the CSRF token from the meta tag in the X-CSRF-TOKEN header, and for a Sanctum token API I send an Authorization Bearer header instead.",
+      "answer": "- `fetch` resolves for any HTTP status. Check `res.ok` or `res.status`.\n- `res.json()`, `res.text()` and `res.blob()` return promises, and the body can be read once.\n- **Headers**: `Content-Type: application/json` for a JSON body; `Accept: application/json` so Laravel answers with JSON instead of a redirect.\n- **CSRF**: `<meta name=\"csrf-token\" content=\"{{ csrf_token() }}\">` and the `X-CSRF-TOKEN` header. Without it Laravel returns 419.\n- **File upload**: pass a `FormData` object as the body and do **not** set `Content-Type`; the browser adds the multipart boundary.\n- **Cookies cross-origin**: `credentials: 'include'`, with CORS configured to allow credentials.\n- **Timeout / cancel**: `AbortController` or `AbortSignal.timeout(8000)`.\n- `PUT`, `PATCH` and `DELETE` work the same way.",
+      "topic": "Fetch API",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "javascript",
+        "fetch",
+        "ajax",
+        "laravel",
+        "csrf"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "async function createPost(data) {\n  const res = await fetch('/posts', {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'Accept': 'application/json',\n      'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content,\n    },\n    body: JSON.stringify(data),\n    signal: AbortSignal.timeout(8000),\n  });\n\n  if (res.status === 422) {\n    const { errors } = await res.json();     // { title: [\"The title field is required.\"] }\n    return { ok: false, errors };\n  }\n  if (!res.ok) {\n    throw new Error(`Request failed with ${res.status}`);\n  }\n  return { ok: true, post: await res.json() };\n}"
+      },
+      "related": [
+        "js-012",
+        "api-002",
+        "api-004"
+      ]
+    },
+    {
+      "id": "js-015",
+      "order": 15,
+      "question": "What is the DOM, and how do you select and change elements?",
+      "shortAnswer": "The DOM is the browser's tree of objects representing the page. Select elements with `querySelector` / `querySelectorAll`, then change text, attributes, classes or structure through their properties and methods.",
+      "interviewAnswer": "The Document Object Model is a tree representation of the HTML document that JavaScript can read and modify. I select elements with querySelector and querySelectorAll using CSS selectors, change content with textContent, toggle classes with classList, read data attributes through dataset, and create or remove nodes with createElement, append and remove. I use textContent for user-supplied text, because innerHTML parses HTML and can introduce cross-site scripting.",
+      "answer": "- **Select**: `document.querySelector('.card')`, `querySelectorAll('li')` (a static NodeList), `getElementById`, `element.closest('.row')`, `element.matches('.active')`.\n- **Content**: `textContent` (safe, plain text) vs `innerHTML` (parses HTML; never with untrusted input).\n- **Classes**: `classList.add / remove / toggle / contains`.\n- **Attributes**: `getAttribute`, `setAttribute`, `dataset.id` for `data-id`.\n- **Create**: `createElement`, `append`, `prepend`, `before`, `after`, `remove`, `replaceWith`.\n- **Performance**: build many nodes in a `DocumentFragment` or one HTML string and insert once; reading layout (`offsetHeight`) between writes forces reflow.\n- Run scripts after the DOM is ready: `<script type=\"module\">` or `defer` scripts run after parsing, or listen for `DOMContentLoaded`.",
+      "topic": "DOM",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "javascript",
+        "dom",
+        "selectors",
+        "xss"
+      ],
+      "code": {
+        "language": "js",
+        "content": "const list = document.querySelector('#todo-list');\n\nfunction addTodo(text) {\n  const li = document.createElement('li');\n  li.className = 'todo';\n  li.dataset.id = crypto.randomUUID();\n  li.textContent = text;              // safe for user input\n  list.append(li);\n}\n\ndocument.querySelectorAll('.todo').forEach((el) => {\n  el.classList.toggle('done', el.dataset.done === '1');\n});\n\ndocument.querySelector('#count').textContent = `${list.children.length} items`;"
+      },
+      "related": [
+        "js-016"
+      ]
+    },
+    {
+      "id": "js-016",
+      "order": 16,
+      "question": "What are event bubbling, capturing and delegation?",
+      "shortAnswer": "An event travels down from the document to the target (capturing) and then back up (bubbling). Delegation uses bubbling: one listener on a parent handles events from all its children, including ones added later.",
+      "interviewAnswer": "When an event fires, it goes through three phases: capturing from the window down to the target, the target itself, and bubbling back up through the ancestors. Listeners run in the bubbling phase by default. Event delegation takes advantage of bubbling: instead of attaching a listener to every row or button, I attach one to a common parent and use event.target with closest to find which child was clicked. That uses less memory and works for elements added dynamically.",
+      "answer": "- `event.target`: the element where the event started. `event.currentTarget`: the element whose listener is running.\n- `event.preventDefault()`: stops the browser's default action (submitting a form, following a link). The event still bubbles.\n- `event.stopPropagation()`: stops the event travelling further. The default action still happens.\n- `addEventListener(type, fn, { capture: true })` listens in the capturing phase; `{ once: true }` removes the listener after one call; `{ passive: true }` promises not to call `preventDefault`, which helps scroll performance.\n- Some events do not bubble: `focus`, `blur`, `mouseenter`, `mouseleave`. Use `focusin` / `focusout` for delegation.\n- Remove listeners you add in long-lived pages to avoid leaks, or use an `AbortController` signal.",
+      "topic": "Events",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "events",
+        "bubbling",
+        "delegation",
+        "dom"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "// One listener for every current and future row\ndocument.querySelector('#orders').addEventListener('click', (event) => {\n  const button = event.target.closest('[data-action]');\n  if (!button) return;\n\n  const row = button.closest('tr');\n  if (button.dataset.action === 'delete') {\n    row.remove();\n  }\n});\n\ndocument.querySelector('form').addEventListener('submit', (event) => {\n  event.preventDefault();               // stop the full-page submit\n  const data = Object.fromEntries(new FormData(event.currentTarget));\n  save(data);\n});"
+      },
+      "related": [
+        "js-015"
+      ]
+    },
+    {
+      "id": "js-017",
+      "order": 17,
+      "question": "What is the difference between debounce and throttle? Implement debounce.",
+      "shortAnswer": "Debounce runs a function only after calls have stopped for a set time. Throttle runs it at most once per interval while calls continue.",
+      "interviewAnswer": "Both limit how often a function runs. Debounce waits until the events have stopped for a given delay and then runs once, which suits search-as-you-type and auto-save. Throttle guarantees at most one call per interval during a stream of events, which suits scroll and resize handlers. Debounce is implemented with a closure that holds a timer ID: every call clears the previous timer and starts a new one.",
+      "answer": "- **Debounce**: \"wait until they finish\". Typing ten characters quickly triggers one search.\n- **Throttle**: \"no more than once every N milliseconds\". Scrolling for two seconds with a 200 ms throttle triggers about ten calls.\n\nImplementation notes:\n\n- The returned function closes over `timer`, so each debounced function has its own.\n- Use a regular function (not an arrow) for the wrapper if you need to forward `this`.\n- Around 200 to 300 ms feels responsive for search input.\n- On the server side, the same idea is rate limiting.",
+      "topic": "Common Interview Questions",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "javascript",
+        "debounce",
+        "throttle",
+        "closures",
+        "performance"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "function debounce(fn, delay = 250) {\n  let timer;\n  return function (...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn.apply(this, args), delay);\n  };\n}\n\nfunction throttle(fn, interval = 200) {\n  let last = 0;\n  return function (...args) {\n    const now = Date.now();\n    if (now - last >= interval) {\n      last = now;\n      fn.apply(this, args);\n    }\n  };\n}\n\nconst search = debounce((term) => console.log('Searching for', term), 300);\nsearch('l'); search('la'); search('laravel');   // logs once: \"Searching for laravel\""
+      },
+      "related": [
+        "js-006"
+      ]
+    },
+    {
+      "id": "js-018",
+      "order": 18,
+      "question": "What is the difference between localStorage, sessionStorage and cookies?",
+      "shortAnswer": "`localStorage` persists until cleared, `sessionStorage` lasts for one tab session, and cookies are small, can expire, and are sent to the server with every request.",
+      "interviewAnswer": "All three store data in the browser. localStorage keeps about five megabytes per origin with no expiry. sessionStorage is the same API but scoped to one tab and cleared when it closes. Cookies are limited to about four kilobytes, can have an expiry date, and are automatically sent to the server on every request, which is why they are used for sessions. Web storage is readable by any script on the page, so I never put tokens or sensitive data there; an HttpOnly cookie is safer for authentication.",
+      "answer": "| | localStorage | sessionStorage | Cookie |\n|---|---|---|---|\n| Lifetime | Until cleared | Until the tab closes | Expiry date or session |\n| Size | About 5 MB | About 5 MB | About 4 KB |\n| Sent to server | No | No | Yes, every request |\n| Readable by JavaScript | Yes | Yes | Yes, unless `HttpOnly` |\n| Scope | Origin | Origin and tab | Domain and path |\n\n- Values are strings: store objects with `JSON.stringify` and read with `JSON.parse` inside `try/catch`.\n- Storage can be full, disabled or cleared, so code should work without it.\n- The `storage` event fires in other tabs when localStorage changes.\n- For larger or structured data use IndexedDB.",
+      "topic": "Common Interview Questions",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "javascript",
+        "storage",
+        "localstorage",
+        "cookies",
+        "security"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "function save(key, value) {\n  try {\n    localStorage.setItem(key, JSON.stringify(value));\n    return true;\n  } catch (err) {\n    return false;            // quota exceeded or storage blocked\n  }\n}\n\nfunction load(key, fallback) {\n  try {\n    const raw = localStorage.getItem(key);\n    return raw === null ? fallback : JSON.parse(raw);\n  } catch (err) {\n    return fallback;         // corrupted JSON\n  }\n}\n\nsave('settings', { theme: 'dark' });\nconsole.log(load('settings', {}).theme);   // \"dark\""
+      },
+      "related": [
+        "php-017"
+      ]
+    }
+  ]
+}

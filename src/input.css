@@ -1,0 +1,421 @@
+/* Source for css/styles.css. Edit here, then run `npm run build`.
+   Every colour in the app comes from the tokens below — change a value
+   here and the whole interface follows. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../assets/fonts/geist-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('../assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --canvas: 246 247 249;
+    --surface: 255 255 255;
+    --raised: 239 241 245;
+    --line: 227 230 236;
+    --line-strong: 203 208 217;
+    --ink: 20 23 31;
+    --muted: 84 92 107;
+    --faint: 94 102 117;
+    --accent: 43 89 224;
+    --accent-ink: 255 255 255;
+    --mark: 255 225 77;
+    --ok: 21 128 76;
+    --warn: 176 96 6;
+    --bad: 196 44 44;
+    --info: 12 113 141;
+    --plum: 117 70 196;
+    --code: 247 248 251;
+    --tok-kw: #7a3fc4;
+    --tok-str: #1a7a4c;
+    --tok-num: #b2540a;
+    --tok-com: #667085;
+    --tok-fn: #1f55d0;
+    --tok-var: #a8324a;
+    --tok-tag: #1f55d0;
+    --tok-attr: #b2540a;
+    --answer-bg: 255 246 196;
+    --answer-ink: 46 38 4;
+  }
+  [data-theme='dark'] {
+    color-scheme: dark;
+    --canvas: 15 17 22;
+    --surface: 22 25 32;
+    --raised: 32 36 46;
+    --line: 39 44 55;
+    --line-strong: 62 68 83;
+    --ink: 232 235 241;
+    --muted: 163 170 184;
+    --faint: 145 153 168;
+    --accent: 124 160 255;
+    --accent-ink: 12 16 28;
+    --mark: 255 221 87;
+    --ok: 78 203 138;
+    --warn: 240 172 74;
+    --bad: 246 120 120;
+    --info: 96 202 226;
+    --plum: 184 156 252;
+    --code: 12 14 19;
+    --tok-kw: #c4a1ff;
+    --tok-str: #8fd9a8;
+    --tok-num: #f2b56b;
+    --tok-com: #8b93a5;
+    --tok-fn: #8fb4ff;
+    --tok-var: #ff9db0;
+    --tok-tag: #8fb4ff;
+    --tok-attr: #f2b56b;
+    --answer-bg: 52 46 16;
+    --answer-ink: 250 240 196;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  h1, h2, h3, h4 {
+    @apply font-semibold tracking-tight text-ink;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: rgb(var(--mark) / 0.55);
+    color: rgb(20 23 31);
+  }
+  mark {
+    background: rgb(var(--mark) / 0.6);
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 1px;
+  }
+  [data-theme='dark'] mark {
+    background: rgb(var(--mark) / 0.28);
+    color: rgb(var(--mark));
+  }
+  code, pre, kbd {
+    @apply font-mono;
+  }
+  /* Show -> and => as typed, not as arrow glyphs. */
+  code, pre, kbd, textarea {
+    font-variant-ligatures: none;
+    font-feature-settings: 'liga' 0, 'calt' 0;
+  }
+  input[type='search']::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--line-strong)) transparent;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex min-h-[2.5rem] select-none items-center justify-center gap-2 whitespace-nowrap rounded-ctl border border-line bg-surface px-3.5 text-sm font-medium text-ink transition-colors duration-100 hover:border-line-strong hover:bg-raised active:translate-y-px disabled:pointer-events-none disabled:opacity-50 sm:min-h-[2.25rem];
+  }
+  .btn-primary {
+    @apply border-ink bg-ink text-canvas hover:border-ink hover:bg-ink hover:opacity-90;
+  }
+  .btn-accent {
+    @apply border-accent bg-accent text-accent-ink hover:border-accent hover:bg-accent hover:opacity-90;
+  }
+  .btn-ghost {
+    @apply border-transparent bg-transparent text-muted hover:border-transparent hover:bg-raised hover:text-ink;
+  }
+  .btn-danger {
+    @apply border-bad/40 text-bad hover:border-bad hover:bg-bad/10;
+  }
+  .btn-sm {
+    @apply min-h-[2rem] gap-1.5 px-2.5 text-[0.8125rem] sm:min-h-[1.875rem];
+  }
+  .btn-icon {
+    @apply w-10 px-0 sm:w-9;
+  }
+  .btn-icon.btn-sm {
+    @apply w-8 sm:w-[1.875rem];
+  }
+  .btn[aria-pressed='true'] {
+    @apply border-line-strong bg-raised text-ink;
+  }
+  .btn-ghost[aria-pressed='true'] {
+    @apply border-transparent bg-transparent;
+  }
+
+  /* Surfaces */
+  .card {
+    @apply rounded-card border border-line bg-surface;
+  }
+  .card-pad {
+    @apply p-4 sm:p-5;
+  }
+  .card-link {
+    @apply transition-colors duration-100 hover:border-line-strong;
+  }
+
+  /* Badges and chips */
+  .badge {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-chip border border-line bg-surface px-1.5 py-px text-xs font-medium text-muted;
+  }
+  .badge-ok { @apply border-ok/30 bg-ok/10 text-ok; }
+  .badge-warn { @apply border-warn/30 bg-warn/10 text-warn; }
+  .badge-bad { @apply border-bad/30 bg-bad/10 text-bad; }
+  .badge-info { @apply border-info/30 bg-info/10 text-info; }
+  .badge-plum { @apply border-plum/30 bg-plum/10 text-plum; }
+  .badge-accent { @apply border-accent/30 bg-accent/10 text-accent; }
+  .dot {
+    @apply inline-block h-2 w-2 shrink-0 rounded-full;
+  }
+  .chip {
+    @apply inline-flex min-h-[2.25rem] cursor-pointer select-none items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[0.8125rem] font-medium text-muted transition-colors duration-100 hover:border-line-strong hover:text-ink sm:min-h-[1.875rem];
+  }
+  .chip[aria-pressed='true'] {
+    @apply border-ink bg-ink text-canvas;
+  }
+  .tag {
+    @apply inline-flex items-center rounded-chip bg-raised px-1.5 py-px text-xs text-muted transition-colors hover:text-ink;
+  }
+
+  /* Forms */
+  .label {
+    @apply mb-1.5 block text-[0.8125rem] font-medium text-ink;
+  }
+  .hint {
+    @apply mt-1 text-xs text-faint;
+  }
+  .field-error {
+    @apply mt-1 text-xs font-medium text-bad;
+  }
+  .input {
+    @apply block min-h-[2.5rem] w-full rounded-ctl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint hover:border-line-strong focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 sm:min-h-[2.25rem];
+  }
+  .input[aria-invalid='true'] {
+    @apply border-bad focus:border-bad focus:ring-bad/25;
+  }
+  textarea.input {
+    @apply min-h-[5.5rem] resize-y leading-relaxed;
+  }
+  select.input {
+    @apply appearance-none bg-no-repeat pr-8;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23808898' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.6rem center;
+  }
+  .check {
+    @apply h-4 w-4 shrink-0 cursor-pointer rounded border-line-strong accent-[rgb(var(--accent))];
+  }
+
+  /* Navigation */
+  .nav-link {
+    @apply flex min-h-[2.25rem] items-center gap-2.5 rounded-ctl px-2.5 text-sm text-muted transition-colors duration-100 hover:bg-raised hover:text-ink;
+  }
+  .nav-link[aria-current='page'] {
+    @apply bg-raised font-medium text-ink;
+  }
+  .nav-count {
+    @apply ml-auto text-xs tabular-nums text-faint;
+  }
+  .tabbar-link {
+    @apply flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 text-2xs font-medium text-faint;
+  }
+  .tabbar-link[aria-current='page'] {
+    @apply text-ink;
+  }
+  .kbd {
+    @apply inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-line bg-raised px-1 font-sans text-2xs font-medium text-muted;
+  }
+  .link {
+    @apply font-medium text-accent underline-offset-2 hover:underline;
+  }
+
+  /* Progress */
+  .progress {
+    @apply h-1.5 w-full overflow-hidden rounded-full bg-raised;
+  }
+  .progress > span {
+    @apply block h-full rounded-full bg-ink transition-[width] duration-300;
+  }
+
+  /* The spoken answer: highlighter on a page of notes */
+  .answer {
+    background: rgb(var(--answer-bg));
+    color: rgb(var(--answer-ink));
+    @apply rounded-card px-4 py-4 text-[1.0625rem] leading-relaxed sm:px-5;
+  }
+  .answer > * + * {
+    @apply mt-3;
+  }
+  .answer ol { @apply list-decimal space-y-1 pl-5; }
+  .answer ul { @apply list-disc space-y-1 pl-5; }
+  .answer h3 { @apply text-base; color: inherit; }
+  .answer strong { @apply font-semibold; }
+  .answer code {
+    @apply rounded bg-black/10 px-1 py-px text-[0.9em];
+  }
+  [data-theme='dark'] .answer {
+    box-shadow: inset 3px 0 0 rgb(var(--mark));
+  }
+  [data-theme='dark'] .answer code {
+    @apply bg-white/10;
+  }
+
+  /* Long-form answer text */
+  .prose-dp {
+    @apply max-w-read text-[0.96875rem] leading-[1.7] text-ink;
+  }
+  .prose-dp > * + * { @apply mt-3.5; }
+  .prose-dp h3 { @apply mt-6 text-base; }
+  .prose-dp ul { @apply list-disc space-y-1.5 pl-5 marker:text-faint; }
+  .prose-dp ol { @apply list-decimal space-y-1.5 pl-5 marker:text-faint; }
+  .prose-dp strong { @apply font-semibold; }
+  .prose-dp a { @apply link; }
+  .prose-dp :not(pre) > code {
+    @apply rounded bg-raised px-1 py-px text-[0.875em];
+  }
+  .prose-dp table { @apply w-full border-collapse text-sm; }
+  .prose-dp th { @apply border-b border-line-strong px-2.5 py-2 text-left font-semibold; }
+  .prose-dp td { @apply border-b border-line px-2.5 py-2 align-top; }
+  .table-wrap { @apply -mx-1 overflow-x-auto px-1; }
+
+  /* Code */
+  .codeblock {
+    @apply max-w-full overflow-hidden rounded-card border border-line bg-code;
+  }
+  .codeblock-bar {
+    @apply flex items-center justify-between gap-2 border-b border-line py-1 pl-3.5 pr-1.5 text-xs text-faint;
+  }
+  .codeblock pre {
+    @apply overflow-x-auto p-3.5 text-[0.8125rem] leading-[1.65];
+    tab-size: 4;
+  }
+  /* Editor: a transparent textarea laid exactly over highlighted code */
+  .editor {
+    @apply relative h-full min-h-[14rem] overflow-hidden bg-code;
+  }
+  .editor pre,
+  .editor textarea {
+    @apply absolute inset-0 m-0 overflow-auto whitespace-pre border-0 p-3.5 font-mono text-[0.8125rem] leading-[1.65];
+    tab-size: 4;
+  }
+  .editor pre { @apply pointer-events-none; }
+  .editor textarea {
+    @apply resize-none bg-transparent text-transparent outline-none;
+    caret-color: rgb(var(--ink));
+  }
+
+  /* Overlays */
+  .overlay {
+    @apply fixed inset-0 z-50 flex bg-black/45;
+    animation: fade 120ms ease-out;
+  }
+  .dialog {
+    @apply flex max-h-[88dvh] w-full flex-col overflow-hidden border border-line bg-surface shadow-2xl;
+    animation: rise 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .toast {
+    @apply pointer-events-auto flex items-center gap-2.5 rounded-ctl border border-line-strong bg-ink px-3.5 py-2.5 text-sm font-medium text-canvas shadow-lg;
+    animation: rise 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .pop { animation: pop 220ms ease-out; }
+
+  /* Flashcard flip */
+  .flip { perspective: 1400px; }
+  .flip-inner {
+    @apply relative h-full w-full;
+    transform-style: preserve-3d;
+    transition: transform 320ms cubic-bezier(0.3, 0.7, 0.2, 1);
+  }
+  .flip[data-flipped='true'] .flip-inner { transform: rotateY(180deg); }
+  .flip-face {
+    @apply absolute inset-0 overflow-y-auto;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .flip-back { transform: rotateY(180deg); }
+
+  .skeleton {
+    @apply animate-pulse rounded-ctl bg-raised;
+  }
+}
+
+@layer utilities {
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Grid children may shrink below their content width, so long unbroken
+   content (code, file names) scrolls inside its card instead of widening the page. */
+.grid > * {
+  min-width: 0;
+}
+
+/* Syntax colours. Kept outside @layer: the class names are assembled in JS,
+   so Tailwind's scanner would not see them and would drop the rules. */
+.tok-kw { color: var(--tok-kw); }
+.tok-str { color: var(--tok-str); }
+.tok-num { color: var(--tok-num); }
+.tok-com { color: var(--tok-com); font-style: italic; }
+.tok-fn { color: var(--tok-fn); }
+.tok-var { color: var(--tok-var); }
+.tok-tag { color: var(--tok-tag); }
+.tok-attr { color: var(--tok-attr); }
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes pop { 40% { transform: scale(1.3); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+[data-motion='reduced'] *,
+[data-motion='reduced'] *::before,
+[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* A file input hidden inside a button-styled label still shows keyboard focus. */
+.btn:focus-within:has(input:focus-visible) {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}

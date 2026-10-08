@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found — DevPrep</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #f6f7f9; color: #14171f; }
+    main { padding: 2rem; text-align: center; }
+    a { color: #2b59e0; font-weight: 600; }
+    @media (prefers-color-scheme: dark) { body { background: #0f1116; color: #e8ebf1; } a { color: #7ca0ff; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Page not found</h1>
+    <p>DevPrep keeps every page under one address. <a id="home" href="./">Open the dashboard</a></p>
+  </main>
+  <script>
+    // On GitHub Pages a project site lives at /repo-name/, so link to the first path segment.
+    (function () {
+      var parts = location.pathname.split('/').filter(Boolean);
+      var base = location.hostname.endsWith('github.io') && parts.length ? '/' + parts[0] + '/' : '/';
+      document.getElementById('home').href = base;
+    })();
+  </script>
+</body>
+</html>

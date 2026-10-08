@@ -1,0 +1,449 @@
+{
+  "skill": "rest-api",
+  "questions": [
+    {
+      "id": "api-001",
+      "order": 1,
+      "question": "What is a REST API? What are the REST principles?",
+      "shortAnswer": "REST is an architectural style for APIs over HTTP: resources are identified by URLs, manipulated with standard HTTP methods, represented usually as JSON, and each request is stateless.",
+      "interviewAnswer": "REST stands for Representational State Transfer. A REST API exposes resources, such as users or orders, at URLs, and clients act on them with standard HTTP methods: GET to read, POST to create, PUT or PATCH to update and DELETE to remove. Responses use HTTP status codes and usually JSON. The key constraint is statelessness: every request carries everything the server needs, such as the auth token, so the server keeps no client session between requests. That makes the API easy to cache and scale.",
+      "answer": "**Constraints**\n\n1. **Client-server**: the UI and the data store evolve independently.\n2. **Stateless**: no client context is stored on the server between requests.\n3. **Cacheable**: responses say whether they can be cached.\n4. **Uniform interface**: resources identified by URLs, standard methods, self-descriptive messages.\n5. **Layered system**: proxies, gateways and load balancers can sit in between.\n6. Code on demand (optional).\n\n**Design conventions**\n\n- Nouns, plural, lowercase: `/orders`, `/orders/15`, `/orders/15/items`.\n- No verbs in paths: `POST /orders`, not `/createOrder`. Non-CRUD actions become sub-resources: `POST /orders/15/refunds`.\n- Filtering, sorting and pagination go in the query string: `/orders?status=paid&sort=-created_at&page=2`.\n- Use the right status code and a consistent error format.\n- Version the API.\n\nREST versus alternatives: **SOAP** is an XML protocol with strict contracts; **GraphQL** exposes one endpoint where the client specifies the fields it wants.",
+      "topic": "REST principles",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "http",
+        "architecture"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "text",
+        "content": "GET    /api/v1/orders            -> 200  list (paginated)\nGET    /api/v1/orders/15         -> 200  one order, 404 if missing\nPOST   /api/v1/orders            -> 201  created, Location: /api/v1/orders/16\nPUT    /api/v1/orders/15         -> 200  full replace\nPATCH  /api/v1/orders/15         -> 200  partial update\nDELETE /api/v1/orders/15         -> 204  no content\n\nGET    /api/v1/orders/15/items   -> 200  nested resource\nPOST   /api/v1/orders/15/refunds -> 201  an action modelled as a resource"
+      },
+      "related": [
+        "api-002",
+        "api-004",
+        "laravel-007",
+        "laravel-022"
+      ]
+    },
+    {
+      "id": "api-002",
+      "order": 2,
+      "question": "What are the HTTP methods? Which are safe and which are idempotent?",
+      "shortAnswer": "GET reads, POST creates, PUT replaces, PATCH partially updates, DELETE removes. Safe methods (GET, HEAD, OPTIONS) do not change data. Idempotent methods (GET, PUT, DELETE, HEAD, OPTIONS) give the same result when repeated.",
+      "interviewAnswer": "The main methods are GET to retrieve, POST to create or trigger an action, PUT to replace a resource, PATCH to update part of it and DELETE to remove it. A safe method does not modify server state: GET, HEAD and OPTIONS. An idempotent method can be repeated with the same effect as calling it once: GET, PUT and DELETE. POST is neither, which is why a retried POST can create duplicates. To make POST safe to retry, for payments for example, the client sends an idempotency key.",
+      "answer": "| Method | Purpose | Safe | Idempotent | Body |\n|---|---|---|---|---|\n| GET | Read | Yes | Yes | No |\n| HEAD | Headers only | Yes | Yes | No |\n| OPTIONS | Supported methods, CORS preflight | Yes | Yes | No |\n| POST | Create, or run an action | No | No | Yes |\n| PUT | Replace entirely (or create at a known URL) | No | Yes | Yes |\n| PATCH | Partial update | No | Not guaranteed | Yes |\n| DELETE | Remove | No | Yes | Usually no |\n\n- **Idempotent** refers to the state on the server, not the response: the second `DELETE` may return 404, but the resource is still gone.\n- Never change data in a GET handler. Crawlers, prefetching and caches call GET freely.\n- GET requests must not carry secrets in the query string, because URLs are logged.\n- **Idempotency key**: the client sends a unique `Idempotency-Key` header; the server stores the first result and returns it for repeats.",
+      "topic": "HTTP",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "http",
+        "methods",
+        "idempotency"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "text",
+        "content": "POST /api/payments HTTP/1.1\nHost: api.example.com\nAuthorization: Bearer 3|kH2...\nContent-Type: application/json\nAccept: application/json\nIdempotency-Key: 7c1f0c0e-9a0b-4d6a-8f5e-2b1a6d3e9f10\n\n{\"order_id\": 15, \"amount\": 49900}"
+      },
+      "related": [
+        "api-003",
+        "api-001",
+        "web-003"
+      ]
+    },
+    {
+      "id": "api-003",
+      "order": 3,
+      "question": "What is the difference between PUT and PATCH?",
+      "shortAnswer": "PUT replaces the whole resource with the payload you send. PATCH changes only the fields you send.",
+      "interviewAnswer": "PUT is a full replacement: the client sends the complete representation, and any field left out should be reset or treated as missing. It is idempotent. PATCH is a partial update: only the fields included in the request are changed, and the rest stay as they are. In practice many APIs, including typical Laravel ones, accept both and treat them as partial updates, but the correct distinction matters for validation: PUT rules are required, while PATCH rules use sometimes.",
+      "answer": "Example resource: `{ \"name\": \"Asha\", \"email\": \"a@x.com\", \"city\": \"Pune\" }`\n\n- `PUT /users/1` with `{ \"name\": \"Asha K\" }`: strictly, `email` and `city` are now empty or the request is invalid because required fields are missing.\n- `PATCH /users/1` with `{ \"name\": \"Asha K\" }`: only the name changes.\n\nValidation in Laravel:\n\n- PUT: `'email' => ['required', 'email']`\n- PATCH: `'email' => ['sometimes', 'required', 'email']`, which validates the field only if present.\n\nIdempotency: PUT is idempotent by definition. PATCH usually is when it sets values, but an operation like \"increment by 1\" is not.\n\n`Route::resource` registers `update` for both `PUT` and `PATCH`.",
+      "topic": "PUT",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "http",
+        "put",
+        "patch"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "public function rules(): array\n{\n    $partial = $this->isMethod('patch');\n\n    return [\n        'name'  => [$partial ? 'sometimes' : 'required', 'string', 'max:100'],\n        'email' => [$partial ? 'sometimes' : 'required', 'email', Rule::unique('users')->ignore($this->route('user'))],\n        'city'  => ['nullable', 'string', 'max:60'],\n    ];\n}"
+      },
+      "related": [
+        "api-002",
+        "api-009"
+      ]
+    },
+    {
+      "id": "api-004",
+      "order": 4,
+      "question": "Which HTTP status codes do you use most, and what do they mean?",
+      "shortAnswer": "2xx success (200, 201, 204), 3xx redirection (301, 302, 304), 4xx client errors (400, 401, 403, 404, 405, 409, 419, 422, 429) and 5xx server errors (500, 502, 503).",
+      "interviewAnswer": "Status codes are grouped by their first digit. Two hundreds mean success: 200 OK, 201 Created after a POST, and 204 No Content after a delete. Three hundreds are redirects. Four hundreds are client errors: 400 for a malformed request, 401 when not authenticated, 403 when authenticated but not allowed, 404 not found, 422 for validation errors and 429 for too many requests. Five hundreds are server faults: 500 for an unhandled error and 503 when the service is unavailable. Returning the correct code lets clients react without parsing the body.",
+      "answer": "| Code | Meaning | Typical use |\n|---|---|---|\n| 200 | OK | Successful GET, PUT, PATCH |\n| 201 | Created | Successful POST; include a `Location` header |\n| 202 | Accepted | Work queued for later |\n| 204 | No Content | Successful DELETE |\n| 301 / 308 | Moved permanently | URL changed for good (308 keeps the method) |\n| 302 / 307 | Found / temporary redirect | Redirect after a form post |\n| 304 | Not Modified | Cached copy is still valid |\n| 400 | Bad Request | Malformed JSON, wrong parameters |\n| 401 | Unauthorized | Missing or invalid credentials |\n| 403 | Forbidden | Authenticated but not permitted |\n| 404 | Not Found | No such resource |\n| 405 | Method Not Allowed | Wrong HTTP verb for the route |\n| 409 | Conflict | State conflict, duplicate, stale version |\n| 419 | Page Expired (Laravel) | CSRF token missing or expired |\n| 422 | Unprocessable Content | Validation failed |\n| 429 | Too Many Requests | Rate limit hit; see `Retry-After` |\n| 500 | Internal Server Error | Unhandled exception |\n| 502 / 504 | Bad Gateway / Gateway Timeout | Upstream failed or timed out |\n| 503 | Service Unavailable | Maintenance or overload |\n\nDo not return 200 with `{\"error\": ...}` in the body: monitoring, caches and clients all rely on the status code.",
+      "topic": "Status Codes",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "http",
+        "status-codes"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "return response()->json($order, 201)->header('Location', route('orders.show', $order));\nreturn response()->noContent();                      // 204\nabort(403, 'You cannot refund this order.');\nabort_if($order->isShipped(), 409, 'A shipped order cannot be cancelled.');\n\n// Validation failure, generated by Laravel (422)\n// {\n//   \"message\": \"The email field is required.\",\n//   \"errors\": { \"email\": [\"The email field is required.\"] }\n// }"
+      },
+      "related": [
+        "api-005",
+        "api-001",
+        "laravel-040"
+      ]
+    },
+    {
+      "id": "api-005",
+      "order": 5,
+      "question": "What is the difference between 401 and 403?",
+      "shortAnswer": "401 means the request is not authenticated: no credentials or invalid ones. 403 means the user is authenticated but does not have permission.",
+      "interviewAnswer": "401 Unauthorized really means unauthenticated: the server does not know who you are, because the token is missing, expired or wrong. The client should log in again. 403 Forbidden means the server knows who you are, but you are not allowed to do this, so logging in again will not help. In Laravel, the auth middleware produces a 401 and a failed policy or gate produces a 403. Sometimes an API returns 404 instead of 403 to avoid revealing that a resource exists.",
+      "answer": "| | 401 | 403 |\n|---|---|---|\n| Question | Who are you? | Are you allowed? |\n| Cause | Missing, invalid or expired credentials | Insufficient permissions |\n| Client action | Authenticate, refresh the token | Nothing; ask for access |\n| Laravel source | `auth` middleware (`AuthenticationException`) | Policy, gate, `authorize()` (`AuthorizationException`) |\n\nA 401 response should include a `WWW-Authenticate` header describing how to authenticate.\n\nOn the front end: a 401 typically redirects to login or triggers a token refresh; a 403 shows a \"no access\" message.",
+      "topic": "Status Codes",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "http",
+        "status-codes",
+        "authentication",
+        "authorization"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "related": [
+        "api-004",
+        "api-006"
+      ]
+    },
+    {
+      "id": "api-006",
+      "order": 6,
+      "question": "What is the difference between authentication and authorization?",
+      "shortAnswer": "Authentication verifies who the user is. Authorization decides what that user is allowed to do. Authentication always comes first.",
+      "interviewAnswer": "Authentication answers \"who are you?\": verifying identity with a password, a token or a social login. Authorization answers \"what are you allowed to do?\": checking permissions after identity is known. For example, logging in is authentication; checking whether this user may delete that post is authorization. In Laravel, authentication is handled by guards, the auth middleware and Sanctum, and authorization by gates and policies. A failed authentication returns 401 and a failed authorization returns 403.",
+      "answer": "**Authentication methods**: session cookie, API token, JWT, OAuth2, API key, multi-factor.\n\n**Authorization models**\n\n- **Role-based (RBAC)**: users have roles, roles have permissions (admin, editor).\n- **Permission-based**: fine-grained abilities such as `orders.refund`.\n- **Ownership / resource-based**: \"users may edit their own posts\". This is what policies express.\n- **Attribute-based (ABAC)**: rules over attributes of the user, the resource and the context.\n\nAuthorize on the server for every request. Hiding a button in the UI is not security.\n\nToken **scopes** or **abilities** limit what a token can do, which is authorization applied to the credential itself.",
+      "topic": "Authorization",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "authentication",
+        "authorization",
+        "security"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Authentication: is there a valid user?\nRoute::middleware('auth:sanctum')->group(function () {\n\n    // Authorization: may this user do this to this post?\n    Route::delete('/posts/{post}', function (Request $request, Post $post) {\n        Gate::authorize('delete', $post);          // 403 if not allowed\n        $post->delete();\n\n        return response()->noContent();\n    });\n});"
+      },
+      "related": [
+        "laravel-020",
+        "api-007",
+        "api-005"
+      ]
+    },
+    {
+      "id": "api-007",
+      "order": 7,
+      "question": "How would you design authentication for a REST API?",
+      "shortAnswer": "Pick the mechanism by client type: cookie-based sessions for a first-party SPA, opaque bearer tokens for mobile apps, OAuth2 for third-party access. Send credentials only over HTTPS, keep tokens short-lived and revocable, and rate limit the login endpoint.",
+      "interviewAnswer": "I start with who the clients are. For my own single-page app on the same domain, I use cookie-based session authentication with CSRF protection, because an HttpOnly cookie cannot be stolen by JavaScript. For mobile apps I issue an opaque access token after login, sent in the Authorization header, stored hashed on the server, with an expiry and the ability to revoke it. For third-party integrations I use OAuth2. In Laravel that maps to Sanctum for the first two and Passport for OAuth. Around that I add HTTPS, hashed passwords, login throttling and logout that actually revokes the token.",
+      "answer": "**Options**\n\n| Mechanism | Good for | Notes |\n|---|---|---|\n| Session cookie | First-party web app or SPA | HttpOnly + Secure + SameSite; needs CSRF protection |\n| Opaque token (Sanctum) | Mobile apps, simple APIs | Stored hashed; easy to revoke; one DB lookup per request |\n| JWT | Stateless verification across services | Hard to revoke; keep short-lived, pair with refresh tokens |\n| OAuth2 / OpenID Connect | Third-party clients, \"Login with Google\" | Authorization code flow with PKCE |\n| API key | Server-to-server | Identifies an application, not a user |\n\n**Flow for token auth**\n\n1. `POST /login` with credentials over HTTPS.\n2. Verify the password hash; issue a token with limited abilities and an expiry.\n3. Client stores it securely (Keychain / Keystore on mobile) and sends `Authorization: Bearer <token>`.\n4. Middleware validates the token on every request.\n5. `POST /logout` deletes the token. Password change revokes all tokens.\n\n**Hardening**: throttle login and reset endpoints, generic error messages (\"credentials do not match\"), optional two-factor, rotate refresh tokens, log sign-ins, never put tokens in URLs.\n\n**Browser storage**: a token in `localStorage` is readable by any injected script. Prefer HttpOnly cookies for browser clients.",
+      "topic": "Authentication",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "rest",
+        "api",
+        "authentication",
+        "tokens",
+        "sanctum",
+        "oauth",
+        "security"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// Login: issue a short-lived, limited token\n$token = $user->createToken(\n    name: $request->device_name,\n    abilities: ['orders:read', 'orders:create'],\n    expiresAt: now()->addDays(7),\n);\n\nreturn response()->json(['token' => $token->plainTextToken], 201);\n\n// Every request\n// Authorization: Bearer 12|x9ZpQ...\n\n// Protected route with an ability check\nRoute::middleware(['auth:sanctum', 'abilities:orders:create'])->post('/orders', StoreOrderController::class);\n\n// Logout\n$request->user()->currentAccessToken()->delete();"
+      },
+      "related": [
+        "laravel-021",
+        "api-008",
+        "api-006",
+        "php-017",
+        "laravel-019"
+      ]
+    },
+    {
+      "id": "api-008",
+      "order": 8,
+      "question": "What is a JWT and how does it work?",
+      "shortAnswer": "A JSON Web Token is a signed, self-contained token with three Base64URL parts: header, payload (claims) and signature. The server verifies the signature instead of looking the token up in a database.",
+      "interviewAnswer": "A JWT has three parts separated by dots: a header naming the algorithm, a payload with claims like the user ID and expiry, and a signature made with a secret or private key. After login the server issues the token, the client sends it in the Authorization header, and the server verifies the signature and expiry without a database lookup, which makes it stateless. The payload is only encoded, not encrypted, so it must not contain secrets. The main drawback is revocation: a token is valid until it expires, so I keep access tokens short-lived and use refresh tokens.",
+      "answer": "**Structure**: `base64url(header).base64url(payload).signature`\n\n**Standard claims**: `iss` (issuer), `sub` (subject, usually the user ID), `aud` (audience), `exp` (expiry), `iat` (issued at), `jti` (token ID).\n\n**Signing**: HS256 uses one shared secret; RS256 / ES256 use a private key to sign and a public key to verify, which suits several services.\n\n**Strengths**: no session storage, verifiable by any service that has the key, carries claims.\n\n**Weaknesses**\n\n- Cannot be revoked before `exp` without a server-side denylist, which removes the stateless benefit.\n- Larger than an opaque token and sent on every request.\n- Easy to misuse: accepting `alg: none`, weak secrets, long lifetimes, storing in `localStorage`.\n\n**JWT vs opaque token (Sanctum)**: an opaque token is a random string looked up in the database, so it is trivially revocable and reveals nothing. For a single Laravel application, that is usually the simpler and safer choice.",
+      "topic": "Authentication",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "jwt",
+        "authentication",
+        "tokens"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "// Header\n{ \"alg\": \"HS256\", \"typ\": \"JWT\" }\n\n// Payload (readable by anyone who has the token)\n{\n  \"sub\": \"42\",\n  \"role\": \"editor\",\n  \"iat\": 1767225600,\n  \"exp\": 1767226500\n}\n\n// Signature\nHMACSHA256(base64url(header) + \".\" + base64url(payload), secret)\n\n// Sent as\nAuthorization: Bearer eyJhbGciOiJIUzI1NiIs...<payload>...<signature>"
+      },
+      "related": [
+        "api-007",
+        "laravel-021"
+      ]
+    },
+    {
+      "id": "api-009",
+      "order": 9,
+      "question": "How should an API validate input and report errors?",
+      "shortAnswer": "Validate every field on the server, reject invalid requests with 422 and a consistent JSON body that maps each field to its messages, and never trust client-side validation.",
+      "interviewAnswer": "Every request is validated on the server, regardless of what the client checks. In Laravel I use a Form Request per endpoint; when validation fails and the client sends an Accept header of application/json, Laravel returns a 422 with a message and an errors object keyed by field. I keep the error format consistent across the whole API, including for 401, 403, 404 and 500, so clients can handle errors generically. Only validated data reaches the model, and business-rule failures use 409 or 422 with a clear message.",
+      "answer": "**What to validate**: presence, type, format, length and range, allowed values, existence of referenced IDs, uniqueness, and ownership of referenced resources (\"is this address yours?\").\n\n**Error format**: choose one and use it everywhere. Laravel's default for validation:\n\n- `message`: a summary.\n- `errors`: `{ field: [messages] }`.\n\nA good extension is a machine-readable `code` per error, because messages get translated. RFC 9457 \"Problem Details\" (`application/problem+json`) is a standard format.\n\n**Details**\n\n- Send `Accept: application/json`, or the API may answer with an HTML redirect.\n- Unknown fields: ignore them or reject them, but never save them (`validated()` ensures this).\n- Whitelist values for `sort`, `filter` and `include` parameters.\n- Limit page size: `per_page` between 1 and 100.\n- Never include stack traces or SQL in error responses.",
+      "topic": "API validation",
+      "difficulty": "Intermediate",
+      "type": "Practical",
+      "tags": [
+        "rest",
+        "api",
+        "validation",
+        "errors",
+        "json"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "js",
+        "content": "// POST /api/orders   { \"items\": [{ \"product_id\": 999, \"qty\": 0 }] }\n\n// 422 Unprocessable Content\n{\n  \"message\": \"The selected items.0.product_id is invalid. (and 1 more error)\",\n  \"errors\": {\n    \"items.0.product_id\": [\"The selected items.0.product_id is invalid.\"],\n    \"items.0.qty\": [\"The items.0.qty field must be at least 1.\"]\n  }\n}\n\n// Consistent shape for other errors (bootstrap/app.php, withExceptions)\n// { \"message\": \"Order not found.\", \"code\": \"order_not_found\" }"
+      },
+      "related": [
+        "laravel-008",
+        "laravel-009",
+        "api-004",
+        "api-003"
+      ]
+    },
+    {
+      "id": "api-010",
+      "order": 10,
+      "question": "What are the most important security measures for a REST API?",
+      "shortAnswer": "HTTPS only, authentication on every private endpoint, object-level authorization, strict input validation, rate limiting, least-privilege tokens, safe error messages, correct CORS, and logging.",
+      "interviewAnswer": "I would go through the OWASP API risks. The most common is broken object-level authorization, where changing an ID in the URL exposes another user's data, so every endpoint checks ownership. Then broken authentication: strong token handling, expiry and throttled logins. Then excessive data exposure: return only whitelisted fields. Add rate limiting and pagination limits against abuse, validate and whitelist all input, use HTTPS, restrict CORS to known origins, keep errors generic, and log security events. Finally keep dependencies patched and secrets out of the code.",
+      "answer": "| Risk | Defence |\n|---|---|\n| Broken object-level authorization (IDOR) | Policy check or user-scoped query on every resource |\n| Broken authentication | Hashed passwords, short-lived revocable tokens, throttled login, MFA |\n| Excessive data exposure | API Resources, explicit field lists, hidden attributes |\n| Mass assignment | Validated input only, `$fillable` |\n| Lack of rate limiting | Per-user and per-IP limits, max page size, payload size limits |\n| Injection | Parameter binding, whitelisted sort and filter columns |\n| Security misconfiguration | Debug off, restrictive CORS, security headers, no default credentials |\n| Improper inventory | Versioned, documented endpoints; remove old ones |\n| SSRF | Validate and restrict URLs the server fetches |\n\n**Transport**: TLS everywhere, HSTS.\n\n**Webhooks**: verify the signature and make the handler idempotent.\n\n**Monitoring**: log authentication failures, permission denials and unusual volumes; alert on them. Never log passwords, tokens or full card numbers.",
+      "topic": "API security",
+      "difficulty": "Advanced",
+      "type": "Scenario",
+      "tags": [
+        "rest",
+        "api",
+        "security",
+        "owasp",
+        "rate-limiting",
+        "authorization"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// IDOR: vulnerable\npublic function show(int $id)\n{\n    return Order::findOrFail($id);                 // any logged-in user can read any order\n}\n\n// Fixed: scope to the user and authorize\npublic function show(Request $request, int $id)\n{\n    $order = $request->user()->orders()->findOrFail($id);   // 404 for other users' orders\n\n    return new OrderResource($order);\n}\n\n// Rate limiting (AppServiceProvider::boot)\nRateLimiter::for('login', fn (Request $request) => [\n    Limit::perMinute(5)->by($request->input('email') . '|' . $request->ip()),\n]);"
+      },
+      "related": [
+        "laravel-034",
+        "php-018",
+        "api-011",
+        "api-007"
+      ]
+    },
+    {
+      "id": "api-011",
+      "order": 11,
+      "question": "What is CORS?",
+      "shortAnswer": "Cross-Origin Resource Sharing is a browser mechanism that lets a server say which other origins may read its responses. Without the right CORS headers, the browser blocks JavaScript from reading a cross-origin response.",
+      "interviewAnswer": "Browsers enforce the same-origin policy: a script on one origin cannot read responses from another origin, where origin means scheme, host and port. CORS is how a server relaxes that. The server responds with Access-Control-Allow-Origin naming the allowed origin. For requests that are not simple, such as those with a JSON content type or custom headers, the browser first sends an OPTIONS preflight request to ask permission. CORS is enforced by the browser only; it does not protect the API from curl or other servers, so it is not a substitute for authentication.",
+      "answer": "- **Origin** = scheme + host + port. `https://app.example.com` and `https://api.example.com` are different origins.\n- **Simple requests** (GET, HEAD, or POST with form content types and no custom headers) are sent directly; the browser then checks the response headers.\n- **Preflight**: for other requests the browser sends `OPTIONS` with `Access-Control-Request-Method` and `Access-Control-Request-Headers`. The server answers with:\n- `Access-Control-Allow-Origin`\n- `Access-Control-Allow-Methods`\n- `Access-Control-Allow-Headers`\n- `Access-Control-Max-Age` (cache the preflight)\n- **Credentials** (cookies): the request needs `credentials: 'include'`, and the response needs `Access-Control-Allow-Credentials: true` with a **specific** origin, not `*`.\n\nIn Laravel, CORS is handled by built-in middleware configured in `config/cors.php` (`paths`, `allowed_origins`, `supports_credentials`).\n\nA CORS error in the console usually means the server did not send the headers, often because the request failed earlier with a 500 or a redirect.",
+      "topic": "API security",
+      "difficulty": "Intermediate",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "cors",
+        "security",
+        "browser"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "// config/cors.php\nreturn [\n    'paths' => ['api/*', 'sanctum/csrf-cookie'],\n    'allowed_methods' => ['*'],\n    'allowed_origins' => ['https://app.example.com'],\n    'allowed_headers' => ['*'],\n    'max_age' => 3600,\n    'supports_credentials' => true,\n];"
+      },
+      "related": [
+        "api-010",
+        "js-014"
+      ]
+    },
+    {
+      "id": "api-012",
+      "order": 12,
+      "question": "What is JSON, and how do you work with it in PHP and JavaScript?",
+      "shortAnswer": "JSON is a lightweight text format for structured data: objects, arrays, strings, numbers, booleans and null. PHP uses `json_encode()` / `json_decode()`, and JavaScript uses `JSON.stringify()` / `JSON.parse()`.",
+      "interviewAnswer": "JSON, JavaScript Object Notation, is a text format for exchanging data. It supports objects with double-quoted string keys, arrays, strings, numbers, booleans and null. In PHP I encode with json_encode and decode with json_decode, passing true to get associative arrays, and I use the JSON_THROW_ON_ERROR flag so failures raise exceptions. In JavaScript I use JSON.stringify and JSON.parse. Compared with XML it is smaller, easier to read and maps directly to native data structures, which is why most REST APIs use it.",
+      "answer": "**Rules**: keys and strings in double quotes, no trailing commas, no comments, no `undefined`, no functions, no dates (use ISO 8601 strings).\n\n**PHP**\n\n- `json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)`\n- `json_decode($json, true, flags: JSON_THROW_ON_ERROR)`: `true` returns arrays instead of `stdClass` objects.\n- An empty PHP array encodes as `[]`; cast to `(object)` when you need `{}`.\n- `json_validate()` from PHP 8.3.\n- In Laravel, returning an array or model from a route returns JSON automatically; `response()->json()` sets the status and headers.\n\n**JavaScript**\n\n- `JSON.parse()` throws on invalid input, so wrap it in `try/catch`.\n- `JSON.stringify(obj, null, 2)` pretty-prints.\n\n**API conventions**: `Content-Type: application/json`, consistent key casing (snake_case or camelCase), ISO 8601 dates in UTC, money as integers in minor units or strings, and large IDs as strings because JavaScript numbers lose precision above 2^53.",
+      "topic": "JSON",
+      "difficulty": "Beginner",
+      "type": "Concept",
+      "tags": [
+        "rest",
+        "api",
+        "json",
+        "php",
+        "javascript"
+      ],
+      "priority": "medium",
+      "commonInterviewQuestion": true,
+      "code": [
+        {
+          "language": "php",
+          "content": "$payload = ['id' => 15, 'tags' => ['php', 'laravel'], 'paid' => true, 'note' => null];\n\n$json = json_encode($payload, JSON_THROW_ON_ERROR);\n// {\"id\":15,\"tags\":[\"php\",\"laravel\"],\"paid\":true,\"note\":null}\n\ntry {\n    $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);\n    echo $data['tags'][1];   // laravel\n} catch (JsonException $e) {\n    // invalid JSON\n}",
+          "title": "PHP"
+        },
+        {
+          "language": "js",
+          "content": "const json = JSON.stringify({ id: 15, tags: ['php', 'laravel'] });\n\ntry {\n  const data = JSON.parse(json);\n  console.log(data.tags[1]);   // \"laravel\"\n} catch (err) {\n  console.error('Invalid JSON');\n}",
+          "title": "JavaScript"
+        }
+      ],
+      "related": [
+        "laravel-022",
+        "api-009"
+      ]
+    },
+    {
+      "id": "api-013",
+      "order": 13,
+      "question": "How do you handle versioning, pagination and filtering in an API?",
+      "shortAnswer": "Version in the URL (`/api/v1`) or a header so breaking changes do not affect existing clients. Paginate every list with page or cursor parameters and return metadata. Filter and sort through whitelisted query parameters.",
+      "interviewAnswer": "For versioning I usually put the version in the path, like /api/v1, because it is explicit and easy to route and cache; a new version is created only for breaking changes, and additive changes go into the current one. Every list endpoint is paginated: page-based for normal lists, cursor-based for large or fast-changing data, with links and totals in the response. Filtering and sorting use query parameters that are validated against a whitelist of allowed fields, and I cap the page size.",
+      "answer": "**Versioning**\n\n- URL path: `/api/v1/orders`. Simple and visible.\n- Header: `Accept: application/vnd.example.v2+json`. Cleaner URLs, harder to test.\n- Breaking changes: removing or renaming a field, changing a type, changing meaning. Adding an optional field is not breaking.\n- Deprecate with notice: `Deprecation` and `Sunset` headers, documentation, a migration period.\n\n**Pagination**\n\n| Type | Request | Pros / cons |\n|---|---|---|\n| Offset | `?page=3&per_page=20` | Simple, can jump to a page; slow on deep pages, items shift when data changes |\n| Cursor | `?cursor=eyJpZCI6...&per_page=20` | Fast and stable; no page numbers or total |\n\nLaravel: `paginate()`, `simplePaginate()`, `cursorPaginate()`. Resource collections add `data`, `links` and `meta`.\n\n**Filtering, sorting, shaping**\n\n- `?status=paid&created_after=2025-01-01`\n- `?sort=-created_at,total` (minus for descending)\n- `?include=customer,items` for related data\n- `?fields=id,total` for sparse fields\n\nValidate every one of these against an allow-list. An unchecked `sort` parameter is an injection and performance risk.\n\n**Also**: consistent naming, ISO dates, documented with OpenAPI, and rate limit headers (`X-RateLimit-Remaining`, `Retry-After`).",
+      "topic": "REST principles",
+      "difficulty": "Intermediate",
+      "type": "Architecture",
+      "tags": [
+        "rest",
+        "api",
+        "versioning",
+        "pagination",
+        "filtering",
+        "design"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "php",
+        "content": "public function index(Request $request)\n{\n    $validated = $request->validate([\n        'status'   => ['nullable', Rule::in(['pending', 'paid', 'cancelled'])],\n        'sort'     => ['nullable', Rule::in(['created_at', '-created_at', 'total', '-total'])],\n        'per_page' => ['nullable', 'integer', 'between:1,100'],\n    ]);\n\n    $sort = $validated['sort'] ?? '-created_at';\n\n    $orders = $request->user()->orders()\n        ->when($validated['status'] ?? null, fn ($q, $status) => $q->where('status', $status))\n        ->orderBy(ltrim($sort, '-'), str_starts_with($sort, '-') ? 'desc' : 'asc')\n        ->paginate($validated['per_page'] ?? 20)\n        ->withQueryString();\n\n    return OrderResource::collection($orders);\n}"
+      },
+      "related": [
+        "api-001",
+        "laravel-022",
+        "mysql-020"
+      ]
+    },
+    {
+      "id": "api-014",
+      "order": 14,
+      "question": "How do you test an API with Postman?",
+      "shortAnswer": "Create a collection of requests, use environments and variables for the base URL and token, send requests with the right method, headers and body, and add test scripts that assert on the status code and response.",
+      "interviewAnswer": "In Postman I organise requests into a collection per API and use environments for local, staging and production with variables like base_url and token. For each request I set the method, URL, headers such as Accept and Authorization, and the JSON body. A script on the login request saves the returned token into a variable, so the other requests authenticate automatically. I add tests that check the status code and response fields, and the collection runner or the Newman CLI can run them all, including in CI. For automated regression tests I rely on Laravel feature tests.",
+      "answer": "**Core features**\n\n- **Collections** and folders; shareable with the team.\n- **Environments and variables**: `{{base_url}}/api/v1/orders`.\n- **Authorization tab**: Bearer token, set once at collection level.\n- **Body**: raw JSON, form-data (file uploads), x-www-form-urlencoded.\n- **Scripts**: pre-request scripts and post-response tests in JavaScript.\n- **Collection runner** and **Newman** (`newman run collection.json -e env.json`) for automation.\n- Mock servers, documentation generation, and the console for debugging raw requests.\n\n**What to test per endpoint**: happy path, validation failure (422), unauthenticated (401), forbidden (403), not found (404), and edge cases like empty lists and pagination limits.\n\n**Tip for Laravel**: always send `Accept: application/json`, or errors come back as HTML redirects.\n\nAlternatives: Insomnia, Bruno, HTTPie, `curl`, and the REST client extensions in editors.",
+      "topic": "Postman",
+      "difficulty": "Beginner",
+      "type": "Practical",
+      "tags": [
+        "rest",
+        "api",
+        "postman",
+        "testing"
+      ],
+      "code": {
+        "language": "js",
+        "content": "// Post-response script on POST {{base_url}}/api/login\npm.test('Login succeeds', () => {\n  pm.response.to.have.status(201);\n});\npm.environment.set('token', pm.response.json().token);\n\n// Tests on GET {{base_url}}/api/orders  (Authorization: Bearer {{token}})\npm.test('Returns a paginated list', () => {\n  pm.response.to.have.status(200);\n  const body = pm.response.json();\n  pm.expect(body.data).to.be.an('array');\n  pm.expect(body.meta.per_page).to.be.at.most(100);\n});"
+      },
+      "related": [
+        "api-004",
+        "api-007"
+      ]
+    },
+    {
+      "id": "api-015",
+      "order": 15,
+      "question": "What happens when you type a URL into the browser? What is the difference between HTTP and HTTPS?",
+      "shortAnswer": "The browser resolves the domain with DNS, opens a TCP connection (plus a TLS handshake for HTTPS), sends an HTTP request, and renders the response. HTTPS is HTTP inside an encrypted TLS connection.",
+      "interviewAnswer": "The browser first resolves the domain name to an IP address through DNS. It opens a TCP connection to the server and, for HTTPS, performs a TLS handshake where the server proves its identity with a certificate and both sides agree on encryption keys. Then it sends the HTTP request with a method, path and headers. The web server, say Nginx, passes it to PHP-FPM, Laravel builds a response, and it comes back with a status code, headers and body. The browser parses the HTML, fetches CSS, JavaScript and images, and renders the page. HTTPS adds encryption, integrity and authentication on top of plain HTTP.",
+      "answer": "**Steps**\n\n1. URL parsing; check the HSTS list and caches.\n2. **DNS** lookup: domain → IP.\n3. **TCP** handshake (or QUIC for HTTP/3).\n4. **TLS** handshake for HTTPS: certificate verification, key exchange.\n5. **HTTP request**: `GET /orders HTTP/1.1`, `Host`, `Cookie`, `Accept`, ...\n6. **Server**: load balancer → Nginx → PHP-FPM → Laravel (middleware, router, controller) → database, cache.\n7. **HTTP response**: status line, headers (`Content-Type`, `Set-Cookie`, `Cache-Control`), body.\n8. **Rendering**: parse HTML into the DOM, CSS into the CSSOM, run scripts, layout, paint. Further requests fetch assets.\n\n**HTTP is stateless**: each request is independent. Cookies, sessions and tokens add continuity.\n\n**HTTP vs HTTPS**\n\n| | HTTP | HTTPS |\n|---|---|---|\n| Port | 80 | 443 |\n| Encryption | None; readable in transit | TLS |\n| Integrity and identity | No | Yes, through certificates |\n| Required for | Nothing modern | Secure cookies, service workers, HTTP/2 in browsers, good SEO |\n\n**Versions**: HTTP/1.1 (one request at a time per connection), HTTP/2 (multiplexing, header compression), HTTP/3 (over QUIC/UDP).",
+      "topic": "HTTP",
+      "difficulty": "Intermediate",
+      "type": "Interview",
+      "tags": [
+        "rest",
+        "api",
+        "http",
+        "https",
+        "networking",
+        "interview"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "code": {
+        "language": "text",
+        "content": "GET /api/orders?page=2 HTTP/1.1\nHost: api.example.com\nAccept: application/json\nAuthorization: Bearer 12|x9ZpQ...\nUser-Agent: Mozilla/5.0\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nCache-Control: no-store, private\nX-RateLimit-Remaining: 58\n\n{\"data\":[...],\"meta\":{\"current_page\":2,\"per_page\":20,\"total\":143}}"
+      },
+      "related": [
+        "api-002",
+        "laravel-001",
+        "api-004"
+      ]
+    }
+  ]
+}

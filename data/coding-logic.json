@@ -1,0 +1,1061 @@
+{
+  "skill": "coding-logic",
+  "questions": [
+    {
+      "id": "logic-001",
+      "order": 1,
+      "question": "Reverse a string without using strrev()",
+      "answer": "Strings in PHP can be indexed like arrays, so `$text[$i]` gives one byte. Walking the indexes backwards and concatenating builds the reversed string.\n\nThe two-pointer version does half as many iterations and is the form interviewers ask for when they say \"in place\".",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "loops",
+        "two-pointers"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Write a function that returns the given string reversed. Do not use the built-in `strrev()` function.",
+      "hint": "A string can be read one character at a time by index. Which index should you start from?",
+      "approach": "1. Start with an empty result string.\n2. Loop from the last index (`strlen - 1`) down to 0.\n3. Append each character to the result.\n4. Return the result.\n\nAn alternative is the two-pointer swap: convert to an array, swap the first and last characters, and move both pointers towards the middle.",
+      "complexity": "Time O(n), space O(n) for the new string.",
+      "input": "INTERVIEW",
+      "output": "WEIVRETNI",
+      "mistakes": [
+        "Starting the loop at `strlen($text)` instead of `strlen($text) - 1`, which reads past the end.",
+        "Using `$i > 0` as the condition and losing the first character.",
+        "Forgetting that `strlen` and `$text[$i]` work on bytes, so multibyte text such as \"नमस्ते\" or emoji breaks."
+      ],
+      "tips": [
+        "Mention multibyte strings: use `mb_str_split($text)` and reverse the array for UTF-8 input.",
+        "Say the built-in exists (`strrev`) and that you would use it in real code."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function reverseString(string $text): string\n{\n    $reversed = '';\n    for ($i = strlen($text) - 1; $i >= 0; $i--) {\n        $reversed .= $text[$i];\n    }\n    return $reversed;\n}\n\necho reverseString('INTERVIEW');   // WEIVRETNI\n\n// Two-pointer version (in place on an array of characters)\nfunction reverseInPlace(string $text): string\n{\n    $chars = str_split($text);\n    for ($left = 0, $right = count($chars) - 1; $left < $right; $left++, $right--) {\n        [$chars[$left], $chars[$right]] = [$chars[$right], $chars[$left]];\n    }\n    return implode('', $chars);\n}"
+      },
+      "related": [
+        "logic-004",
+        "logic-008",
+        "logic-009"
+      ]
+    },
+    {
+      "id": "logic-002",
+      "order": 2,
+      "question": "Count character occurrences",
+      "answer": "This is the **frequency map** pattern, and it is the basis for many other problems: duplicates, anagrams, first unique character and majority element.\n\n`$counts[$char] ?? 0` reads the current count or 0 when the key does not exist yet, which avoids an \"undefined index\" warning.",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "arrays",
+        "frequency-map",
+        "hash-map"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "statement": "Given a string, count how many times each character appears and print the characters in the order they first appear.",
+      "hint": "You need to remember a number for each character you have seen. Which PHP data structure maps a key to a value?",
+      "approach": "1. Create an empty associative array `$counts`.\n2. Loop over each character of the string.\n3. If the character is already a key, add 1; otherwise set it to 1.\n4. Print each key with its count. PHP arrays keep insertion order, so the output follows first appearance.",
+      "complexity": "Time O(n). Space O(k), where k is the number of distinct characters.",
+      "input": "INTERVIEW",
+      "output": "I → 2\nN → 1\nT → 1\nE → 2\nR → 1\nV → 1\nW → 1",
+      "mistakes": [
+        "Using `$counts[$char]++` on a key that does not exist yet, which raises a warning.",
+        "Using nested loops to count each character, which is O(n²).",
+        "Not asking whether the count is case-sensitive or should ignore spaces."
+      ],
+      "tips": [
+        "Ask about case sensitivity and whitespace before coding; `strtolower()` and `str_replace(' ', '', ...)` handle them.",
+        "Mention `array_count_values()` and `count_chars()` after writing the manual version."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function countChars(string $text): array\n{\n    $counts = [];\n    foreach (str_split($text) as $char) {\n        $counts[$char] = ($counts[$char] ?? 0) + 1;\n    }\n    return $counts;\n}\n\nforeach (countChars('INTERVIEW') as $char => $count) {\n    echo \"{$char} → {$count}\\n\";\n}\n\n// Built-in equivalent\nprint_r(array_count_values(str_split('INTERVIEW')));"
+      },
+      "related": [
+        "logic-003",
+        "logic-005",
+        "logic-007"
+      ]
+    },
+    {
+      "id": "logic-003",
+      "order": 3,
+      "question": "Find duplicate characters in a string",
+      "answer": "Two passes: one to count, one to filter. The result follows the order in which the characters first appear, because the frequency map preserves insertion order.\n\nWith built-ins: `array_keys(array_filter(array_count_values(str_split($text)), fn ($n) => $n > 1))`.",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "frequency-map",
+        "duplicates"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Given a string, return the characters that appear more than once, each listed one time.",
+      "hint": "If you already know how many times each character appears, which ones are duplicates?",
+      "approach": "1. Build a frequency map of the characters.\n2. Keep the keys whose count is greater than 1.\n3. Return those keys.",
+      "complexity": "Time O(n), space O(k) for k distinct characters.",
+      "input": "programming",
+      "output": "r, g, m",
+      "mistakes": [
+        "Adding the character to the result every time it repeats, so \"m\" appears twice in the output.",
+        "Comparing every character with every other character in nested loops."
+      ],
+      "tips": [
+        "Reuse the frequency-map idea out loud: it shows you recognise the pattern.",
+        "Clarify whether spaces and letter case count."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function duplicateChars(string $text): array\n{\n    $counts = [];\n    foreach (str_split($text) as $char) {\n        $counts[$char] = ($counts[$char] ?? 0) + 1;\n    }\n\n    $duplicates = [];\n    foreach ($counts as $char => $count) {\n        if ($count > 1) {\n            $duplicates[] = $char;\n        }\n    }\n    return $duplicates;\n}\n\necho implode(', ', duplicateChars('programming'));   // r, g, m"
+      },
+      "related": [
+        "logic-002",
+        "logic-012"
+      ]
+    },
+    {
+      "id": "logic-004",
+      "order": 4,
+      "question": "Check whether a string is a palindrome",
+      "answer": "The two-pointer comparison stops at the first mismatch and needs no extra copy of the string.\n\nThe one-line version is `$clean === strrev($clean)`, which is fine in practice but builds a second string.\n\nAn empty string and a single character are palindromes: the loop never runs and the function returns `true`.\n\nFor a number, either convert it to a string or reverse it arithmetically with `% 10` and `intdiv`.",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "two-pointers",
+        "palindrome"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "statement": "A palindrome reads the same forwards and backwards. Write a function that returns `true` if the given string is a palindrome, ignoring letter case, spaces and punctuation.",
+      "hint": "Compare the first character with the last, the second with the second-last, and so on. When can you stop?",
+      "approach": "1. Normalise: convert to lowercase and remove everything except letters and digits.\n2. Put one pointer at the start and one at the end.\n3. While the left pointer is before the right: if the characters differ, return `false`; otherwise move both inwards.\n4. If the loop finishes, return `true`.",
+      "complexity": "Time O(n), space O(n) for the cleaned copy (O(1) extra for the comparison itself).",
+      "input": "A man, a plan, a canal: Panama",
+      "output": "true",
+      "mistakes": [
+        "Forgetting to normalise case and punctuation.",
+        "Looping over the whole string instead of stopping at the middle.",
+        "Using `==` and getting surprised by numeric-string comparison."
+      ],
+      "tips": [
+        "State the edge cases: empty string, one character, even and odd lengths.",
+        "Offer both versions: `strrev` for brevity, two pointers for the logic."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function isPalindrome(string $text): bool\n{\n    $clean = preg_replace('/[^a-z0-9]/', '', strtolower($text));\n\n    $left = 0;\n    $right = strlen($clean) - 1;\n\n    while ($left < $right) {\n        if ($clean[$left] !== $clean[$right]) {\n            return false;\n        }\n        $left++;\n        $right--;\n    }\n    return true;\n}\n\nvar_dump(isPalindrome('A man, a plan, a canal: Panama'));  // true\nvar_dump(isPalindrome('Laravel'));                         // false"
+      },
+      "related": [
+        "logic-001",
+        "logic-005"
+      ]
+    },
+    {
+      "id": "logic-005",
+      "order": 5,
+      "question": "Check whether two strings are anagrams",
+      "answer": "The length check is what makes the counting version correct: if both strings have the same length and every character of `$b` was available in `$a`, then nothing can be left over.\n\n`empty($counts[$char])` is true both when the key is missing and when the count has reached 0.\n\nBuilt-in shortcut: `count_chars($a, 1) == count_chars($b, 1)`.",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "frequency-map",
+        "sorting",
+        "anagram"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Two strings are anagrams if they contain exactly the same characters with the same frequencies, in any order. Return `true` if the two given strings are anagrams, ignoring case and spaces.",
+      "hint": "If two words are anagrams, what is true about their sorted letters? Or about their character counts?",
+      "approach": "**Sorting approach**\n\n1. Normalise both strings (lowercase, remove spaces).\n2. If the lengths differ, return `false`.\n3. Sort the characters of each and compare.\n\n**Counting approach (faster)**\n\n1. Count characters of the first string in a map.\n2. For each character of the second string, subtract 1; if a count is missing or goes below zero, return `false`.\n3. With equal lengths and no failure, they are anagrams.",
+      "complexity": "Counting: time O(n), space O(k). Sorting: time O(n log n), space O(n).",
+      "input": "\"Listen\", \"Silent\"",
+      "output": "true",
+      "mistakes": [
+        "Skipping the length check, so \"aab\" and \"ab\" pass the counting test.",
+        "Comparing only the sets of characters and ignoring how many times each appears.",
+        "Forgetting to normalise case."
+      ],
+      "tips": [
+        "Give the sorting solution first if you want something correct quickly, then improve to O(n).",
+        "Mention the trade-off between the two explicitly."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function isAnagram(string $a, string $b): bool\n{\n    $a = str_replace(' ', '', strtolower($a));\n    $b = str_replace(' ', '', strtolower($b));\n\n    if (strlen($a) !== strlen($b)) {\n        return false;\n    }\n\n    $counts = [];\n    foreach (str_split($a) as $char) {\n        $counts[$char] = ($counts[$char] ?? 0) + 1;\n    }\n\n    foreach (str_split($b) as $char) {\n        if (empty($counts[$char])) {\n            return false;          // missing, or already used up\n        }\n        $counts[$char]--;\n    }\n    return true;\n}\n\nvar_dump(isAnagram('Listen', 'Silent'));   // true\nvar_dump(isAnagram('hello', 'world'));     // false\n\n// Sorting version\nfunction isAnagramSorted(string $a, string $b): bool\n{\n    $sort = function (string $s): string {\n        $chars = str_split(str_replace(' ', '', strtolower($s)));\n        sort($chars);\n        return implode('', $chars);\n    };\n    return $sort($a) === $sort($b);\n}"
+      },
+      "related": [
+        "logic-002",
+        "logic-004"
+      ]
+    },
+    {
+      "id": "logic-006",
+      "order": 6,
+      "question": "Count vowels and consonants",
+      "answer": "The order of the checks matters: test for a vowel first, then for \"any letter\". Characters that are not letters fall through both conditions.\n\n`$char >= 'a' && $char <= 'z'` compares single characters by their byte value. `ctype_alpha($char)` does the same job.\n\nA regex alternative: `preg_match_all('/[aeiou]/i', $text)` returns the number of vowels.",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "loops",
+        "conditionals"
+      ],
+      "statement": "Given a string, count the number of vowels and the number of consonants. Ignore digits, spaces and punctuation.",
+      "hint": "Each character falls into one of three groups: vowel, other letter, or not a letter. Check them in that order.",
+      "approach": "1. Convert the string to lowercase.\n2. Loop over each character.\n3. If it is one of `a e i o u`, increase the vowel count.\n4. Otherwise, if it is a letter (`a` to `z`), increase the consonant count.\n5. Anything else is ignored.",
+      "complexity": "Time O(n), space O(1).",
+      "input": "Hello World",
+      "output": "Vowels: 3, Consonants: 7",
+      "mistakes": [
+        "Counting spaces and digits as consonants.",
+        "Forgetting uppercase vowels.",
+        "Calling `str_split` on an empty string and not handling the result (it returns `[\"\"]` before PHP 8.2)."
+      ],
+      "tips": [
+        "Ask whether \"y\" counts as a vowel; state your assumption.",
+        "Mention the regex one-liner after the loop version."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function countVowelsAndConsonants(string $text): array\n{\n    $vowels = 0;\n    $consonants = 0;\n\n    foreach (str_split(strtolower($text)) as $char) {\n        if (in_array($char, ['a', 'e', 'i', 'o', 'u'], true)) {\n            $vowels++;\n        } elseif ($char >= 'a' && $char <= 'z') {\n            $consonants++;\n        }\n    }\n\n    return ['vowels' => $vowels, 'consonants' => $consonants];\n}\n\n$result = countVowelsAndConsonants('Hello World');\necho \"Vowels: {$result['vowels']}, Consonants: {$result['consonants']}\";\n// Vowels: 3, Consonants: 7"
+      },
+      "related": [
+        "logic-002"
+      ]
+    },
+    {
+      "id": "logic-007",
+      "order": 7,
+      "question": "Find the first non-repeating character",
+      "answer": "In \"swiss\": `s` appears 3 times, `w` once, `i` once. Walking from the left, `s` is skipped and `w` is the first with a count of 1.\n\nBecause PHP arrays keep insertion order, you could also loop over `$counts` itself in the second pass and return the first key with value 1. Walking the original string is the version that works in any language.",
+      "topic": "String manipulation",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "frequency-map",
+        "hash-map"
+      ],
+      "priority": "medium",
+      "statement": "Given a string, return the first character that appears exactly once. Return `null` if every character repeats.",
+      "hint": "You cannot know a character is unique until you have seen the whole string. That suggests two passes.",
+      "approach": "1. First pass: build a frequency map of all characters.\n2. Second pass: walk the string again from the start and return the first character whose count is 1.\n3. If none is found, return `null`.",
+      "complexity": "Time O(n) with two passes, space O(k).",
+      "input": "swiss",
+      "output": "w",
+      "mistakes": [
+        "Returning the first character that has not repeated *so far* during a single pass.",
+        "Using a nested loop to check each character against the rest, which is O(n²).",
+        "Returning an empty string or `false` instead of a clear \"none\" value."
+      ],
+      "tips": [
+        "Say \"two passes, still O(n)\" out loud; interviewers want to hear that two passes is not O(n²).",
+        "Ask what to return when there is no unique character."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function firstUniqueChar(string $text): ?string\n{\n    $counts = [];\n    foreach (str_split($text) as $char) {\n        $counts[$char] = ($counts[$char] ?? 0) + 1;\n    }\n\n    foreach (str_split($text) as $char) {\n        if ($counts[$char] === 1) {\n            return $char;\n        }\n    }\n    return null;\n}\n\nvar_dump(firstUniqueChar('swiss'));    // \"w\"\nvar_dump(firstUniqueChar('aabb'));     // NULL"
+      },
+      "related": [
+        "logic-002",
+        "logic-003"
+      ]
+    },
+    {
+      "id": "logic-008",
+      "order": 8,
+      "question": "Reverse the order of words in a sentence",
+      "answer": "`preg_split('/\\s+/', ...)` splits on one or more whitespace characters, so repeated spaces do not create empty words. `explode(' ', ...)` would.\n\nA variation interviewers ask next is \"reverse each word but keep the word order\": split, reverse each word's characters, join.",
+      "topic": "String manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "arrays",
+        "words"
+      ],
+      "statement": "Given a sentence, return it with the words in reverse order. The letters inside each word stay as they are. Extra spaces between words should collapse to one.",
+      "hint": "Split the sentence into a list of words first. What do you do with the list?",
+      "approach": "1. Trim the sentence and split it into words on whitespace.\n2. Build a new list by reading the words from last to first.\n3. Join the list with single spaces.",
+      "complexity": "Time O(n), space O(n).",
+      "input": "Laravel is a PHP framework",
+      "output": "framework PHP a is Laravel",
+      "mistakes": [
+        "Using `explode(' ', $sentence)` and ending up with empty strings for double spaces.",
+        "Reversing the characters of the whole sentence instead of the word order.",
+        "Not trimming leading and trailing spaces."
+      ],
+      "tips": [
+        "Confirm which of the two variations is wanted: word order, or letters within each word.",
+        "Write the loop first, then mention `array_reverse`."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function reverseWords(string $sentence): string\n{\n    $words = preg_split('/\\s+/', trim($sentence));\n\n    $reversed = [];\n    for ($i = count($words) - 1; $i >= 0; $i--) {\n        $reversed[] = $words[$i];\n    }\n\n    return implode(' ', $reversed);\n}\n\necho reverseWords('Laravel is a PHP framework');   // framework PHP a is Laravel\n\n// With built-ins\necho implode(' ', array_reverse(preg_split('/\\s+/', trim('  hello   world  '))));   // world hello"
+      },
+      "related": [
+        "logic-001",
+        "logic-009"
+      ]
+    },
+    {
+      "id": "logic-009",
+      "order": 9,
+      "question": "Reverse an array without using array_reverse()",
+      "answer": "Only `n / 2` swaps are needed. With five elements: swap indexes 0 and 4, then 1 and 3, and index 2 is left alone.\n\nThe swap can also be written with array destructuring: `[$items[$left], $items[$right]] = [$items[$right], $items[$left]];`\n\nThis works on list arrays with keys `0..n-1`. For an associative array, collect the keys and values and rebuild it.",
+      "topic": "Array manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "two-pointers",
+        "swap"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Reverse the elements of an array in place, without using `array_reverse()`.",
+      "hint": "Swap the first element with the last. Then what? And where do you stop?",
+      "approach": "1. Set `left = 0` and `right = count - 1`.\n2. While `left < right`: swap the two elements, then move `left` up and `right` down.\n3. The middle element of an odd-length array stays where it is.",
+      "complexity": "Time O(n), space O(1) extra.",
+      "input": "[1, 2, 3, 4, 5]",
+      "output": "[5, 4, 3, 2, 1]",
+      "mistakes": [
+        "Looping to the end of the array, which swaps everything twice and returns the original order.",
+        "Using `<=` and swapping the middle element with itself (harmless, but shows unclear thinking).",
+        "Assuming associative keys behave like indexes."
+      ],
+      "tips": [
+        "Trace a five-element example aloud to show where the loop stops.",
+        "Mention that PHP arrays are passed by value, so the caller's array is untouched unless you use a reference."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function reverseArray(array $items): array\n{\n    $left = 0;\n    $right = count($items) - 1;\n\n    while ($left < $right) {\n        $temp = $items[$left];\n        $items[$left] = $items[$right];\n        $items[$right] = $temp;\n\n        $left++;\n        $right--;\n    }\n    return $items;\n}\n\nprint_r(reverseArray([1, 2, 3, 4, 5]));   // [5, 4, 3, 2, 1]"
+      },
+      "related": [
+        "logic-001"
+      ]
+    },
+    {
+      "id": "logic-010",
+      "order": 10,
+      "question": "Find the largest and smallest number in an array",
+      "answer": "Initialising with the first element is the important detail. Starting `max` at 0 gives the wrong answer for an array of negative numbers, and starting `min` at 0 gives the wrong answer for an array of positive numbers.\n\nOne pass is enough to find both values.",
+      "topic": "Array manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "loops",
+        "max",
+        "min"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Given an array of numbers, return the largest and the smallest value without using `max()`, `min()` or sorting.",
+      "hint": "Assume the first element is both the largest and the smallest you have seen so far. What do you do with each following element?",
+      "approach": "1. If the array is empty, there is no answer: throw or return `null`.\n2. Set `max` and `min` to the first element.\n3. For each remaining element: if it is greater than `max`, update `max`; if it is less than `min`, update `min`.\n4. Return both.",
+      "complexity": "Time O(n), space O(1).",
+      "input": "[12, 45, 7, 89, 23]",
+      "output": "Max: 89, Min: 7",
+      "mistakes": [
+        "Initialising `$max = 0`, which fails for `[-5, -2, -9]`.",
+        "Sorting the array first, which is O(n log n) for an O(n) problem.",
+        "Not handling an empty array."
+      ],
+      "tips": [
+        "Always mention the empty-array case.",
+        "If asked for the second largest next, you already have the structure for it."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function maxAndMin(array $numbers): array\n{\n    if ($numbers === []) {\n        throw new InvalidArgumentException('The array is empty.');\n    }\n\n    $max = $min = $numbers[0];\n\n    foreach ($numbers as $n) {\n        if ($n > $max) {\n            $max = $n;\n        }\n        if ($n < $min) {\n            $min = $n;\n        }\n    }\n    return ['max' => $max, 'min' => $min];\n}\n\n$result = maxAndMin([12, 45, 7, 89, 23]);\necho \"Max: {$result['max']}, Min: {$result['min']}\";   // Max: 89, Min: 7"
+      },
+      "related": [
+        "logic-011"
+      ]
+    },
+    {
+      "id": "logic-011",
+      "order": 11,
+      "question": "Find the second largest number in an array",
+      "answer": "Trace for `[10, 5, 20, 20, 8]`:\n\n| n | first | second |\n|---|---|---|\n| 10 | 10 | null |\n| 5 | 10 | 5 |\n| 20 | 20 | 10 |\n| 20 | 20 | 10 (equal to first, skipped) |\n| 8 | 20 | 10 |\n\nThe sorting alternative, `rsort(array_unique(...))` then index 1, is shorter but O(n log n).",
+      "topic": "Array manipulation",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "loops",
+        "single-pass"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Return the second largest **distinct** value in an array of numbers, in a single pass and without sorting. Return `null` if there is no second distinct value.",
+      "hint": "Keep track of two values while you loop: the largest and the runner-up. When a new largest arrives, what happens to the old one?",
+      "approach": "1. Set `first` and `second` to `null`.\n2. For each number:\n3. If `first` is null or the number is greater than `first`: the old `first` becomes `second`, and the number becomes `first`.\n4. Else if the number is less than `first` and (`second` is null or the number is greater than `second`): it becomes `second`.\n5. Numbers equal to `first` are skipped, which handles duplicates.\n6. Return `second`.",
+      "complexity": "Time O(n), space O(1).",
+      "input": "[10, 5, 20, 20, 8]",
+      "output": "10",
+      "mistakes": [
+        "Forgetting to move the old largest into `second` when a new largest is found.",
+        "Returning the largest again when it appears twice.",
+        "Initialising with 0 or with `PHP_INT_MIN` and returning that sentinel when no second value exists."
+      ],
+      "tips": [
+        "Ask whether duplicates count: \"second largest distinct value\" versus \"second element after sorting\".",
+        "Walk through a table like the one above; it demonstrates correctness quickly."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function secondLargest(array $numbers): ?int\n{\n    $first = null;\n    $second = null;\n\n    foreach ($numbers as $n) {\n        if ($first === null || $n > $first) {\n            $second = $first;\n            $first = $n;\n        } elseif ($n < $first && ($second === null || $n > $second)) {\n            $second = $n;\n        }\n    }\n    return $second;\n}\n\nvar_dump(secondLargest([10, 5, 20, 20, 8]));   // int(10)\nvar_dump(secondLargest([7, 7, 7]));            // NULL"
+      },
+      "related": [
+        "logic-010",
+        "mysql-023"
+      ]
+    },
+    {
+      "id": "logic-012",
+      "order": 12,
+      "question": "Find duplicate numbers in an array",
+      "answer": "Using the number as an array **key** gives a constant-time lookup with `isset()`. `in_array()` would scan the list each time and make the whole function O(n²).\n\nStoring duplicates as keys as well means a value that appears three times is still reported once. The result is in the order each duplicate was first detected.\n\nBuilt-in version: `array_keys(array_filter(array_count_values($numbers), fn ($c) => $c > 1))`.",
+      "topic": "Array manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "hash-set",
+        "duplicates"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Given an array of integers, return the values that appear more than once. Each duplicate should be listed once.",
+      "hint": "As you walk the array, you need to answer \"have I seen this before?\" quickly. Array keys can do that.",
+      "approach": "1. Keep a `seen` set and a `duplicates` set, both as associative arrays keyed by the number.\n2. For each number: if it is already in `seen`, add it to `duplicates`; otherwise add it to `seen`.\n3. Return the keys of `duplicates`.",
+      "complexity": "Time O(n), space O(n).",
+      "input": "[4, 2, 7, 2, 4, 9, 4]",
+      "output": "[2, 4]",
+      "mistakes": [
+        "Two nested loops comparing every pair.",
+        "Using `in_array()` inside the loop.",
+        "Reporting the same duplicate several times."
+      ],
+      "tips": [
+        "Explain why keys are used as a set in PHP.",
+        "If asked for O(1) space, sorting first and comparing neighbours is the usual trade-off."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function findDuplicates(array $numbers): array\n{\n    $seen = [];\n    $duplicates = [];\n\n    foreach ($numbers as $n) {\n        if (isset($seen[$n])) {\n            $duplicates[$n] = true;\n        } else {\n            $seen[$n] = true;\n        }\n    }\n    return array_keys($duplicates);\n}\n\nprint_r(findDuplicates([4, 2, 7, 2, 4, 9, 4]));   // [2, 4]"
+      },
+      "related": [
+        "logic-003",
+        "logic-013",
+        "mysql-024"
+      ]
+    },
+    {
+      "id": "logic-013",
+      "order": 13,
+      "question": "Remove duplicates from an array without array_unique()",
+      "answer": "The result list is reindexed from 0, unlike `array_unique()`, which preserves the original keys and leaves gaps.\n\nLimitation: array keys can only be integers or strings, and `\"1\"` and `1` become the same key. For mixed types or arrays of arrays, serialise each item to build the key, or fall back to a strict `in_array($item, $result, true)` check and accept O(n²).\n\nA common shortcut for scalar values is `array_keys(array_flip($items))`.",
+      "topic": "Array manipulation",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "hash-set",
+        "duplicates"
+      ],
+      "priority": "medium",
+      "statement": "Return a new array with duplicate values removed, keeping the first occurrence of each value and the original order. Do not use `array_unique()`.",
+      "hint": "Add a value to the result only the first time you meet it. How do you remember what you have met?",
+      "approach": "1. Create an empty `seen` set and an empty `result` list.\n2. For each value: if it is not in `seen`, add it to both `seen` and `result`.\n3. Return `result`.",
+      "complexity": "Time O(n), space O(n).",
+      "input": "[3, 5, 3, 8, 5, 1]",
+      "output": "[3, 5, 8, 1]",
+      "mistakes": [
+        "Using `in_array()` on the result in every iteration without noting the cost.",
+        "Sorting first, which loses the original order.",
+        "Forgetting that `\"1\"` and `1` collide as array keys."
+      ],
+      "tips": [
+        "Mention that `array_unique` keeps keys, and that `array_values` reindexes.",
+        "State the type assumption (integers or strings)."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function removeDuplicates(array $items): array\n{\n    $seen = [];\n    $result = [];\n\n    foreach ($items as $item) {\n        if (! isset($seen[$item])) {\n            $seen[$item] = true;\n            $result[] = $item;\n        }\n    }\n    return $result;\n}\n\nprint_r(removeDuplicates([3, 5, 3, 8, 5, 1]));   // [3, 5, 8, 1]"
+      },
+      "related": [
+        "logic-012"
+      ]
+    },
+    {
+      "id": "logic-014",
+      "order": 14,
+      "question": "Find the missing number in a sequence from 1 to n",
+      "answer": "For `[1, 2, 4, 5, 6]`: n is 6, the expected sum is 21, the actual sum is 18, and 21 − 18 = 3.\n\nThe array does not need to be sorted.\n\nThe XOR version relies on `x ^ x = 0`: XOR-ing every number from 1 to n with every number in the array cancels all pairs and leaves the missing one.\n\nIf several numbers may be missing, put the values in a set and loop from 1 to n checking membership.",
+      "topic": "Array manipulation",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "math",
+        "sum-formula",
+        "xor"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "An array contains `n - 1` distinct numbers taken from the range 1 to `n`. Exactly one number is missing. Find it.",
+      "hint": "What should all the numbers from 1 to n add up to? Compare that with what you actually have.",
+      "approach": "1. `n` is the array length plus 1.\n2. The expected sum of 1 to n is `n * (n + 1) / 2`.\n3. Add up the numbers in the array.\n4. The missing number is the expected sum minus the actual sum.",
+      "complexity": "Time O(n), space O(1).",
+      "input": "[1, 2, 4, 5, 6]",
+      "output": "3",
+      "mistakes": [
+        "Using the array length as `n` instead of length + 1.",
+        "Sorting and scanning for a gap, which is O(n log n).",
+        "Assuming the array is sorted and comparing each value with its index."
+      ],
+      "tips": [
+        "Name the formula (sum of the first n natural numbers).",
+        "Offer the XOR variant if asked about very large n and integer overflow."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function missingNumber(array $numbers): int\n{\n    $n = count($numbers) + 1;\n    $expected = intdiv($n * ($n + 1), 2);\n\n    $actual = 0;\n    foreach ($numbers as $number) {\n        $actual += $number;\n    }\n    return $expected - $actual;\n}\n\necho missingNumber([1, 2, 4, 5, 6]);   // 3\n\n// XOR version: no risk of overflow\nfunction missingNumberXor(array $numbers): int\n{\n    $xor = 0;\n    $n = count($numbers) + 1;\n    for ($i = 1; $i <= $n; $i++) {\n        $xor ^= $i;\n    }\n    foreach ($numbers as $number) {\n        $xor ^= $number;\n    }\n    return $xor;\n}"
+      },
+      "related": [
+        "logic-012"
+      ]
+    },
+    {
+      "id": "logic-015",
+      "order": 15,
+      "question": "Two Sum: find two numbers that add up to a target",
+      "answer": "The brute-force solution checks every pair with two nested loops, which is O(n²). The hash-map solution trades memory for time: each number is looked at once, and the lookup for its complement is constant time.\n\nChecking the map **before** inserting the current number is what prevents using the same element twice. For `[3, 3]` and target 6, the first 3 is stored at index 0 and the second finds it.\n\nIf the array is sorted and you only need the values, two pointers from both ends solve it with O(1) extra space.",
+      "topic": "Array manipulation",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "hash-map",
+        "two-sum",
+        "classic"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "statement": "Given an array of integers and a target, return the indexes of the two numbers that add up to the target. Assume exactly one solution exists and the same element cannot be used twice.",
+      "hint": "For each number `x`, you are looking for `target - x`. How can you check instantly whether you have already seen that value, and where?",
+      "approach": "1. Create an empty map from value to index.\n2. For each index `i` and number `x`: compute `need = target - x`.\n3. If `need` is in the map, return `[map[need], i]`.\n4. Otherwise store `x => i` in the map and continue.",
+      "complexity": "Time O(n), space O(n). Brute force is O(n²) time and O(1) space.",
+      "input": "numbers = [2, 7, 11, 15], target = 9",
+      "output": "[0, 1]",
+      "mistakes": [
+        "Inserting into the map before checking, which can pair an element with itself (for example 3 with target 6).",
+        "Returning the values when the question asks for indexes.",
+        "Sorting the array and losing the original indexes."
+      ],
+      "tips": [
+        "Start by describing the O(n²) solution, then improve it. Interviewers want to see the optimisation step.",
+        "Ask what to return if no pair exists."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function twoSum(array $numbers, int $target): ?array\n{\n    $seen = [];   // value => index\n\n    foreach ($numbers as $i => $x) {\n        $need = $target - $x;\n        if (isset($seen[$need])) {\n            return [$seen[$need], $i];\n        }\n        $seen[$x] = $i;\n    }\n    return null;\n}\n\nprint_r(twoSum([2, 7, 11, 15], 9));   // [0, 1]\nprint_r(twoSum([3, 2, 4], 6));        // [1, 2]"
+      },
+      "related": [
+        "logic-012",
+        "logic-002"
+      ]
+    },
+    {
+      "id": "logic-016",
+      "order": 16,
+      "question": "Flatten a nested array",
+      "answer": "This is a standard **recursion** exercise. The base case is an element that is not an array; the recursive case is an element that is.\n\n`array_merge($result, flatten($item))` inside the loop also works but copies the result array on every call. Appending value by value avoids that.\n\nIn Laravel: `Arr::flatten($array)` or `collect($array)->flatten()`.",
+      "topic": "Array manipulation",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "recursion",
+        "nested"
+      ],
+      "priority": "medium",
+      "statement": "Given an array that may contain other arrays nested to any depth, return a single flat array of all the values in order.",
+      "hint": "When an element is itself an array, the problem you need to solve for it is the same problem you are already solving.",
+      "approach": "1. Create an empty result list.\n2. For each element: if it is an array, flatten it (recursive call) and append all the returned values.\n3. Otherwise append the element.\n4. Return the result.",
+      "complexity": "Time O(n) for n total values, space O(n) for the result plus O(d) call-stack depth for nesting depth d.",
+      "input": "[1, [2, 3], [4, [5, [6]]], 7]",
+      "output": "[1, 2, 3, 4, 5, 6, 7]",
+      "mistakes": [
+        "Using `array_merge` with string keys, which overwrites values that share a key.",
+        "Handling only one level of nesting.",
+        "Forgetting a base case and recursing forever."
+      ],
+      "tips": [
+        "Name the base case and the recursive case explicitly.",
+        "Mention an iterative version with a stack if asked about very deep nesting."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function flatten(array $items): array\n{\n    $result = [];\n\n    foreach ($items as $item) {\n        if (is_array($item)) {\n            foreach (flatten($item) as $value) {\n                $result[] = $value;\n            }\n        } else {\n            $result[] = $item;\n        }\n    }\n    return $result;\n}\n\nprint_r(flatten([1, [2, 3], [4, [5, [6]]], 7]));   // [1, 2, 3, 4, 5, 6, 7]\n\n// Built-in alternative\n$flat = [];\narray_walk_recursive($nested, function ($value) use (&$flat) { $flat[] = $value; });"
+      },
+      "related": [
+        "logic-019"
+      ]
+    },
+    {
+      "id": "logic-017",
+      "order": 17,
+      "question": "Print the Fibonacci series",
+      "answer": "`[$a, $b] = [$b, $a + $b];` updates both variables at once. Written as two separate statements, you need a temporary variable, otherwise `$b` is computed from the already-changed `$a`.\n\nPlain recursion, `fib(n - 1) + fib(n - 2)`, recomputes the same values again and again and takes exponential time: `fib(40)` makes over 300 million calls. **Memoisation** stores each result the first time, bringing it back to O(n).",
+      "topic": "Numbers",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "numbers",
+        "loops",
+        "recursion",
+        "fibonacci",
+        "memoization"
+      ],
+      "priority": "critical",
+      "important": true,
+      "commonInterviewQuestion": true,
+      "statement": "Print the first `n` numbers of the Fibonacci series, where each number is the sum of the two before it, starting with 0 and 1.",
+      "hint": "You only ever need the last two numbers to produce the next one.",
+      "approach": "1. Start with `a = 0` and `b = 1`.\n2. Repeat `n` times: output `a`, then set `a` to `b` and `b` to the old `a + b`.\n\nThis iterative version keeps two variables and needs no array of previous values.",
+      "complexity": "Iterative: time O(n), space O(1) excluding the output. Plain recursion: time O(2^n). Memoised recursion: time O(n), space O(n).",
+      "input": "n = 10",
+      "output": "0, 1, 1, 2, 3, 5, 8, 13, 21, 34",
+      "mistakes": [
+        "Updating `$a` before using it to compute the new `$b`.",
+        "Using plain recursion for large n.",
+        "Off-by-one confusion about whether the series starts at 0 or 1."
+      ],
+      "tips": [
+        "Ask whether they want the first n numbers or the nth number.",
+        "Bring up the cost of naive recursion yourself; it is the expected follow-up."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function fibonacci(int $n): array\n{\n    $series = [];\n    $a = 0;\n    $b = 1;\n\n    for ($i = 0; $i < $n; $i++) {\n        $series[] = $a;\n        [$a, $b] = [$b, $a + $b];\n    }\n    return $series;\n}\n\necho implode(', ', fibonacci(10));   // 0, 1, 1, 2, 3, 5, 8, 13, 21, 34\n\n// Recursive nth Fibonacci with memoisation\nfunction fib(int $n, array &$memo = []): int\n{\n    if ($n < 2) {\n        return $n;\n    }\n    return $memo[$n] ??= fib($n - 1, $memo) + fib($n - 2, $memo);\n}\n\necho fib(50);   // 12586269025"
+      },
+      "related": [
+        "logic-019"
+      ]
+    },
+    {
+      "id": "logic-018",
+      "order": 18,
+      "question": "Check whether a number is prime",
+      "answer": "Divisors come in pairs: if `n = a × b`, one of them is at most `√n`. So checking up to the square root is enough, which turns an O(n) loop into O(√n).\n\n`$i * $i <= $n` avoids calling `sqrt()` and floating-point comparison.\n\nTo list many primes up to a limit, the **Sieve of Eratosthenes** is faster than testing each number separately: mark the multiples of each prime as composite.",
+      "topic": "Numbers",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "numbers",
+        "loops",
+        "math",
+        "prime"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "A prime number is greater than 1 and divisible only by 1 and itself. Write a function that returns `true` if the given integer is prime.",
+      "hint": "If a number has a divisor larger than its square root, it must also have one smaller than its square root. So how far do you need to check?",
+      "approach": "1. Numbers below 2 are not prime.\n2. 2 is prime; other even numbers are not.\n3. Test odd divisors from 3 while `divisor * divisor <= n`.\n4. If any divides `n` evenly, it is not prime. If none does, it is.",
+      "complexity": "Time O(√n), space O(1).",
+      "input": "29",
+      "output": "true",
+      "mistakes": [
+        "Treating 1 (or 0 and negative numbers) as prime.",
+        "Looping all the way to n - 1.",
+        "Forgetting that 2 is the only even prime."
+      ],
+      "tips": [
+        "Explain the square-root reasoning; that is the insight being tested.",
+        "Mention the sieve when the follow-up is \"print all primes up to N\"."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function isPrime(int $n): bool\n{\n    if ($n < 2) {\n        return false;\n    }\n    if ($n % 2 === 0) {\n        return $n === 2;\n    }\n    for ($i = 3; $i * $i <= $n; $i += 2) {\n        if ($n % $i === 0) {\n            return false;\n        }\n    }\n    return true;\n}\n\nvar_dump(isPrime(29));   // true\nvar_dump(isPrime(1));    // false\nvar_dump(isPrime(91));   // false (7 x 13)\n\n// All primes up to 50\necho implode(', ', array_filter(range(2, 50), 'isPrime'));"
+      },
+      "related": [
+        "logic-020"
+      ]
+    },
+    {
+      "id": "logic-019",
+      "order": 19,
+      "question": "Calculate the factorial of a number",
+      "answer": "The recursive call stack for `factorialRecursive(4)`: `4 * (3 * (2 * 1))`. Each call waits for the one below it, so recursion uses O(n) stack space, while the loop uses constant space.\n\nFactorials grow very quickly. On 64-bit PHP, `20!` fits in an integer but `21!` overflows and silently becomes a float. For exact large results use `gmp_fact()` or the BCMath functions.",
+      "topic": "Numbers",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "numbers",
+        "loops",
+        "recursion",
+        "factorial"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "The factorial of `n` (written `n!`) is the product of all positive integers up to `n`, and `0! = 1`. Write it both with a loop and with recursion.",
+      "hint": "`5!` is `5 × 4!`. What is the smallest case where you can answer directly?",
+      "approach": "**Loop**: start with `result = 1` and multiply by every integer from 2 to n.\n\n**Recursion**: the base case is `n <= 1`, which returns 1. Otherwise return `n * factorial(n - 1)`.",
+      "complexity": "Time O(n) for both. Space O(1) for the loop and O(n) for recursion.",
+      "input": "5",
+      "output": "120",
+      "mistakes": [
+        "Starting the result at 0, so everything multiplies to 0.",
+        "Missing the base case, or forgetting that 0! is 1.",
+        "Ignoring negative input and integer overflow."
+      ],
+      "tips": [
+        "Write both versions and compare them: loop for efficiency, recursion for clarity.",
+        "Mention the overflow limit at 20!."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function factorial(int $n): int\n{\n    if ($n < 0) {\n        throw new InvalidArgumentException('Factorial is not defined for negative numbers.');\n    }\n\n    $result = 1;\n    for ($i = 2; $i <= $n; $i++) {\n        $result *= $i;\n    }\n    return $result;\n}\n\nfunction factorialRecursive(int $n): int\n{\n    return $n <= 1 ? 1 : $n * factorialRecursive($n - 1);\n}\n\necho factorial(5);            // 120\necho factorialRecursive(5);   // 120\necho factorial(0);            // 1"
+      },
+      "related": [
+        "logic-017",
+        "logic-016"
+      ]
+    },
+    {
+      "id": "logic-020",
+      "order": 20,
+      "question": "FizzBuzz",
+      "answer": "Building the word by concatenation avoids the ordering trap of the `if / elseif` version, where the \"divisible by both\" case must come first. It also extends cleanly: adding \"Jazz\" for multiples of 7 is one more `if`.\n\nThe classic version checks `$i % 15 === 0` first, then 3, then 5.\n\nThe question tests the modulo operator, condition ordering and whether you can write a small loop without errors.",
+      "topic": "Numbers",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "numbers",
+        "loops",
+        "conditionals",
+        "modulo"
+      ],
+      "priority": "medium",
+      "statement": "Print the numbers from 1 to `n`. For multiples of 3 print \"Fizz\" instead of the number, for multiples of 5 print \"Buzz\", and for multiples of both print \"FizzBuzz\".",
+      "hint": "Which condition has to be checked first so that 15 does not print just \"Fizz\"?",
+      "approach": "1. Loop from 1 to n.\n2. Build the output for each number: start with an empty string, append \"Fizz\" if divisible by 3, append \"Buzz\" if divisible by 5.\n3. If the string is still empty, use the number itself.",
+      "complexity": "Time O(n), space O(1) per number.",
+      "input": "n = 15",
+      "output": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz",
+      "mistakes": [
+        "Checking divisibility by 3 before checking divisibility by both, so 15 prints \"Fizz\".",
+        "Starting the loop at 0, which prints \"FizzBuzz\" for 0.",
+        "Using `=` instead of `===` in the condition."
+      ],
+      "tips": [
+        "Write it carefully and test 3, 5, 15 and 1 aloud.",
+        "Show the extensible version to stand out."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function fizzBuzz(int $n): array\n{\n    $out = [];\n    for ($i = 1; $i <= $n; $i++) {\n        $word = '';\n        if ($i % 3 === 0) {\n            $word .= 'Fizz';\n        }\n        if ($i % 5 === 0) {\n            $word .= 'Buzz';\n        }\n        $out[] = $word !== '' ? $word : (string) $i;\n    }\n    return $out;\n}\n\necho implode(' ', fizzBuzz(15));\n// 1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz"
+      },
+      "related": [
+        "logic-018"
+      ]
+    },
+    {
+      "id": "logic-021",
+      "order": 21,
+      "question": "Swap two variables without a temporary variable",
+      "answer": "The destructuring form is the idiomatic PHP answer and works for strings, arrays and objects.\n\nThe arithmetic trick can overflow for very large integers and loses precision with floats. The XOR trick works because `x ^ x = 0` and `x ^ 0 = x`, but it sets both to 0 if `$a` and `$b` are references to the same variable.\n\nIn real code, readability wins: use destructuring or a temporary variable.",
+      "topic": "Numbers",
+      "difficulty": "Beginner",
+      "type": "Coding",
+      "tags": [
+        "numbers",
+        "variables",
+        "swap",
+        "destructuring"
+      ],
+      "statement": "Swap the values of two variables without using a third variable.",
+      "hint": "In PHP, an array on the left side of an assignment can receive several values at once.",
+      "approach": "**Destructuring**: `[$a, $b] = [$b, $a];` builds a temporary array of the two values and assigns them back in the opposite order.\n\n**Arithmetic** (numbers only): `a = a + b`, then `b = a - b`, then `a = a - b`.\n\n**XOR** (integers only): `a ^= b; b ^= a; a ^= b;`",
+      "complexity": "Time O(1), space O(1).",
+      "input": "a = 5, b = 9",
+      "output": "a = 9, b = 5",
+      "mistakes": [
+        "Using the arithmetic method on strings.",
+        "Writing `$a = $b; $b = $a;`, which leaves both with the same value.",
+        "Presenting the XOR trick as good practice."
+      ],
+      "tips": [
+        "Lead with destructuring, then show you know the classic tricks and their limits."
+      ],
+      "code": {
+        "language": "php",
+        "content": "$a = 5;\n$b = 9;\n\n// 1. Destructuring: works for any type\n[$a, $b] = [$b, $a];\necho \"a = {$a}, b = {$b}\\n\";   // a = 9, b = 5\n\n// 2. Arithmetic: numbers only\n$a = $a + $b;   // 14\n$b = $a - $b;   // 9\n$a = $a - $b;   // 5\n\n// 3. XOR: integers only\n$a ^= $b;\n$b ^= $a;\n$a ^= $b;"
+      },
+      "related": [
+        "logic-009"
+      ]
+    },
+    {
+      "id": "logic-022",
+      "order": 22,
+      "question": "Sort an array without using built-in sort functions",
+      "answer": "Bubble sort is asked because it is easy to reason about, not because it is used in production. The `$swapped` flag makes the best case (already sorted input) a single pass.\n\nFor descending order, flip the comparison to `<`.\n\nKnow the names and costs of the alternatives: selection sort and insertion sort are also O(n²); merge sort and quicksort are O(n log n). PHP's `sort()` uses a hybrid of quicksort and insertion sort.",
+      "topic": "Sorting",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "sorting",
+        "bubble-sort",
+        "nested-loops"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Sort an array of numbers in ascending order without using `sort()` or any other built-in sorting function. Implement bubble sort.",
+      "hint": "Compare neighbours and swap them if they are in the wrong order. After one full pass, where is the largest element?",
+      "approach": "1. Repeat for each pass `i` from 0 to n - 2:\n2. Walk `j` from 0 to `n - 2 - i`, comparing `items[j]` with `items[j + 1]`.\n3. If the left one is larger, swap them.\n4. After each pass, the largest remaining value has \"bubbled\" to the end, so the next pass can stop one position earlier.\n5. If a pass makes no swaps, the array is sorted: stop early.",
+      "complexity": "Time O(n²) average and worst case, O(n) best case with the early exit. Space O(1).",
+      "input": "[5, 2, 9, 1, 5, 6]",
+      "output": "[1, 2, 5, 5, 6, 9]",
+      "mistakes": [
+        "Letting the inner loop run to `n - 1` and reading `$items[$j + 1]` past the end.",
+        "Leaving out the `- $i` optimisation or the early exit.",
+        "Swapping with a single assignment and losing a value."
+      ],
+      "tips": [
+        "State the complexity and say you would use `sort()` or `usort()` in real code.",
+        "Be ready to explain one O(n log n) algorithm in words."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function bubbleSort(array $items): array\n{\n    $n = count($items);\n\n    for ($i = 0; $i < $n - 1; $i++) {\n        $swapped = false;\n\n        for ($j = 0; $j < $n - 1 - $i; $j++) {\n            if ($items[$j] > $items[$j + 1]) {\n                [$items[$j], $items[$j + 1]] = [$items[$j + 1], $items[$j]];\n                $swapped = true;\n            }\n        }\n\n        if (! $swapped) {\n            break;   // already sorted\n        }\n    }\n    return $items;\n}\n\nprint_r(bubbleSort([5, 2, 9, 1, 5, 6]));   // [1, 2, 5, 5, 6, 9]"
+      },
+      "related": [
+        "logic-023",
+        "php-008"
+      ]
+    },
+    {
+      "id": "logic-023",
+      "order": 23,
+      "question": "Implement binary search",
+      "answer": "Each step halves the search range, so a million elements need at most about 20 comparisons.\n\nTrace for target 9: `low=0, high=6, mid=3` (value 7, too small) → `low=4, high=6, mid=5` (value 11, too big) → `low=4, high=4, mid=4` (value 9, found).\n\nIt only works on sorted data. If the array is not sorted, sorting costs O(n log n), so for a single lookup a linear search is cheaper.\n\nThe same idea is behind database B-tree indexes: sorted data lets the engine discard most rows with a few comparisons.",
+      "topic": "Searching",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "searching",
+        "binary-search",
+        "divide-and-conquer"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Given a **sorted** array of numbers and a target value, return the index of the target or -1 if it is not present. Do it in O(log n) time.",
+      "hint": "Look at the middle element. Because the array is sorted, one comparison tells you which half cannot contain the target.",
+      "approach": "1. Set `low = 0` and `high = count - 1`.\n2. While `low <= high`: compute `mid = low + (high - low) / 2` (integer division).\n3. If the middle value equals the target, return `mid`.\n4. If it is less than the target, the target must be to the right: `low = mid + 1`.\n5. Otherwise it must be to the left: `high = mid - 1`.\n6. If the loop ends, return -1.",
+      "complexity": "Time O(log n), space O(1). Linear search is O(n).",
+      "input": "numbers = [1, 3, 5, 7, 9, 11, 13], target = 9",
+      "output": "4",
+      "mistakes": [
+        "Using `low < high` and missing the case where one element is left.",
+        "Setting `low = mid` or `high = mid`, which can loop forever.",
+        "Applying it to unsorted data."
+      ],
+      "tips": [
+        "Say \"the array must be sorted\" before anything else.",
+        "Connect it to indexes in MySQL to show you see the practical relevance."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function binarySearch(array $numbers, int $target): int\n{\n    $low = 0;\n    $high = count($numbers) - 1;\n\n    while ($low <= $high) {\n        $mid = $low + intdiv($high - $low, 2);\n\n        if ($numbers[$mid] === $target) {\n            return $mid;\n        }\n        if ($numbers[$mid] < $target) {\n            $low = $mid + 1;\n        } else {\n            $high = $mid - 1;\n        }\n    }\n    return -1;\n}\n\necho binarySearch([1, 3, 5, 7, 9, 11, 13], 9);   // 4\necho binarySearch([1, 3, 5, 7, 9, 11, 13], 4);   // -1"
+      },
+      "related": [
+        "logic-022",
+        "mysql-008"
+      ]
+    },
+    {
+      "id": "logic-024",
+      "order": 24,
+      "question": "Group an array of records by a key",
+      "answer": "This is the PHP equivalent of SQL's `GROUP BY customer` with `COUNT(*)` and `SUM(total)`, and it is one of the most common real-world array tasks.\n\n`??=` initialises the entry only the first time a customer is seen.\n\n`uasort` sorts by a callback and preserves the string keys; `usort` would replace them with 0, 1, 2.\n\nWith Laravel collections: `collect($orders)->groupBy('customer')->map(fn ($g) => ['orders' => $g->count(), 'total' => $g->sum('total')])->sortByDesc('total')`.\n\nIf the data lives in the database, do the grouping in SQL instead of loading every row into PHP.",
+      "topic": "PHP-specific coding problems",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "arrays",
+        "grouping",
+        "associative-arrays",
+        "php",
+        "aggregation"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Given a list of orders, each with a `customer` and a `total`, return the total amount and the number of orders per customer, sorted by total amount descending.",
+      "hint": "Use the customer name as an array key and accumulate into it as you loop.",
+      "approach": "1. Create an empty associative array keyed by customer.\n2. For each order: if the customer is not in the array yet, initialise `['orders' => 0, 'total' => 0]`.\n3. Add 1 to `orders` and add the order's total to `total`.\n4. Sort the result by `total` descending with `uasort`, which keeps the keys.",
+      "complexity": "Time O(n) to group plus O(k log k) to sort k groups. Space O(k).",
+      "input": "[['customer' => 'Asha', 'total' => 500], ['customer' => 'Ravi', 'total' => 300], ['customer' => 'Asha', 'total' => 250]]",
+      "output": "Asha: 2 orders, 750\nRavi: 1 order, 300",
+      "mistakes": [
+        "Incrementing a key that has not been initialised.",
+        "Using `usort` and losing the customer names.",
+        "Grouping in PHP when a `GROUP BY` query would do it on far less data."
+      ],
+      "tips": [
+        "Draw the parallel with `GROUP BY`; it shows you think across the stack.",
+        "Mention the collection version if the role is Laravel-focused."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function summariseByCustomer(array $orders): array\n{\n    $summary = [];\n\n    foreach ($orders as $order) {\n        $name = $order['customer'];\n        $summary[$name] ??= ['orders' => 0, 'total' => 0];\n        $summary[$name]['orders']++;\n        $summary[$name]['total'] += $order['total'];\n    }\n\n    uasort($summary, fn ($a, $b) => $b['total'] <=> $a['total']);\n\n    return $summary;\n}\n\n$orders = [\n    ['customer' => 'Asha', 'total' => 500],\n    ['customer' => 'Ravi', 'total' => 300],\n    ['customer' => 'Asha', 'total' => 250],\n];\n\nforeach (summariseByCustomer($orders) as $name => $row) {\n    echo \"{$name}: {$row['orders']} \" . ($row['orders'] === 1 ? 'order' : 'orders') . \", {$row['total']}\\n\";\n}\n// Asha: 2 orders, 750\n// Ravi: 1 order, 300"
+      },
+      "related": [
+        "logic-002",
+        "mysql-005",
+        "php-008"
+      ]
+    },
+    {
+      "id": "logic-025",
+      "order": 25,
+      "question": "Check for balanced brackets",
+      "answer": "`$pairs` maps each closing bracket to its opener. `in_array($char, $pairs, true)` checks whether the character is one of the openers (the values); `isset($pairs[$char])` checks whether it is a closer (the keys).\n\n`array_pop()` on an empty array returns `null`, which never equals an opener, so a stray closing bracket returns `false` without a separate emptiness check.\n\nThe final `$stack === []` catches openers that were never closed.\n\nStacks are also how parsers validate HTML tags and how the \"undo\" feature of an editor works.",
+      "topic": "PHP-specific coding problems",
+      "difficulty": "Intermediate",
+      "type": "Coding",
+      "tags": [
+        "strings",
+        "stack",
+        "brackets",
+        "data-structures"
+      ],
+      "priority": "medium",
+      "statement": "Given a string containing the characters `( ) [ ] { }`, decide whether the brackets are balanced: every opening bracket has a matching closing bracket of the same type, in the correct order.",
+      "hint": "The most recently opened bracket must be the first one closed. Which data structure gives you \"last in, first out\"?",
+      "approach": "1. Use an array as a stack.\n2. For each character: if it is an opening bracket, push it.\n3. If it is a closing bracket: pop the top of the stack. If the stack was empty, or the popped bracket is not the matching opener, return `false`.\n4. At the end, the string is balanced only if the stack is empty.",
+      "complexity": "Time O(n), space O(n) in the worst case (all openers).",
+      "input": "{[()]}",
+      "output": "true",
+      "mistakes": [
+        "Only counting openers and closers, which accepts `([)]`.",
+        "Forgetting to check that the stack is empty at the end.",
+        "Not handling a closing bracket that arrives when the stack is empty."
+      ],
+      "tips": [
+        "Say \"stack\" early; recognising the data structure is most of the answer.",
+        "Test the three failure types: wrong order, extra opener, extra closer."
+      ],
+      "code": {
+        "language": "php",
+        "content": "function isBalanced(string $text): bool\n{\n    $pairs = [')' => '(', ']' => '[', '}' => '{'];\n    $stack = [];\n\n    foreach (str_split($text) as $char) {\n        if (in_array($char, $pairs, true)) {          // opening bracket\n            $stack[] = $char;\n        } elseif (isset($pairs[$char])) {             // closing bracket\n            if (array_pop($stack) !== $pairs[$char]) {\n                return false;\n            }\n        }\n    }\n    return $stack === [];\n}\n\nvar_dump(isBalanced('{[()]}'));   // true\nvar_dump(isBalanced('([)]'));     // false\nvar_dump(isBalanced('(('));       // false"
+      },
+      "related": [
+        "logic-004"
+      ]
+    },
+    {
+      "id": "logic-026",
+      "order": 26,
+      "question": "SQL: find the highest-paid employee in each department",
+      "answer": "This is the **greatest-n-per-group** problem.\n\nThe tempting but wrong query is `SELECT department_id, name, MAX(salary) FROM employees GROUP BY department_id`: `name` is neither grouped nor aggregated, so MySQL either rejects it (ONLY_FULL_GROUP_BY) or returns an arbitrary name that does not belong to the maximum salary.\n\nBoth correct versions return ties, which is usually what is wanted. Use `ROW_NUMBER()` instead of `RANK()` if you need exactly one row per department.\n\nAn index on `(department_id, salary)` supports both forms.",
+      "topic": "SQL coding problems",
+      "difficulty": "Intermediate",
+      "type": "SQL",
+      "tags": [
+        "sql",
+        "mysql",
+        "group-by",
+        "window-functions",
+        "subqueries"
+      ],
+      "priority": "high",
+      "commonInterviewQuestion": true,
+      "statement": "Tables: `employees(id, name, salary, department_id)` and `departments(id, name)`. Return each department's name with the employee or employees who earn the highest salary in it.",
+      "hint": "First work out the maximum salary per department. Then find the employees whose salary equals that maximum for their own department.",
+      "approach": "**Subquery approach**\n\n1. Write a grouped query that returns `department_id` and `MAX(salary)`.\n2. Join `employees` to that result on both the department and the salary.\n3. Join `departments` for the name.\n\n**Window function approach (MySQL 8)**\n\n1. Rank employees within each department by salary descending using `RANK()` or `DENSE_RANK()`.\n2. Keep the rows with rank 1.",
+      "complexity": "One grouped scan plus a join; with an index on (department_id, salary) both parts are index-assisted.",
+      "input": "employees: (Asha, 90000, 1), (Ravi, 70000, 1), (Meera, 85000, 2), (John, 85000, 2)",
+      "output": "Engineering | Asha  | 90000\nSales       | Meera | 85000\nSales       | John  | 85000",
+      "mistakes": [
+        "Selecting a non-aggregated `name` alongside `MAX(salary)` with `GROUP BY`.",
+        "Joining only on salary, which matches employees in other departments with the same pay.",
+        "Using `ROW_NUMBER()` and silently dropping tied employees."
+      ],
+      "tips": [
+        "Name the pattern (\"greatest n per group\") and offer both solutions.",
+        "Ask how ties should be handled."
+      ],
+      "code": {
+        "language": "sql",
+        "content": "-- 1. Join to a grouped subquery\nSELECT d.name AS department, e.name AS employee, e.salary\nFROM employees e\nJOIN (\n    SELECT department_id, MAX(salary) AS max_salary\n    FROM employees\n    GROUP BY department_id\n) top ON top.department_id = e.department_id\n     AND top.max_salary    = e.salary\nJOIN departments d ON d.id = e.department_id\nORDER BY d.name;\n\n-- 2. Window function (MySQL 8+)\nSELECT department, employee, salary\nFROM (\n    SELECT d.name AS department,\n           e.name AS employee,\n           e.salary,\n           RANK() OVER (PARTITION BY e.department_id ORDER BY e.salary DESC) AS rnk\n    FROM employees e\n    JOIN departments d ON d.id = e.department_id\n) ranked\nWHERE rnk = 1;"
+      },
+      "related": [
+        "mysql-023",
+        "mysql-005",
+        "mysql-007"
+      ]
+    },
+    {
+      "id": "logic-027",
+      "order": 27,
+      "question": "SQL: find employees who earn more than their manager",
+      "answer": "A **self join** treats one table as two. The aliases are required so that every column reference is unambiguous.\n\nRavi (95,000) reports to Asha (90,000) and John (70,000) reports to Meera (60,000), so both are returned.\n\nUse `LEFT JOIN` when you want to keep employees without a manager, for example to list everyone with their manager's name.\n\nTo walk the whole hierarchy (manager of manager, any depth), MySQL 8 supports recursive CTEs: `WITH RECURSIVE chain AS (...)`.",
+      "topic": "SQL coding problems",
+      "difficulty": "Intermediate",
+      "type": "SQL",
+      "tags": [
+        "sql",
+        "mysql",
+        "self-join",
+        "joins"
+      ],
+      "priority": "medium",
+      "statement": "Table: `employees(id, name, salary, manager_id)`, where `manager_id` refers to another row's `id` in the same table. Return the names of employees whose salary is higher than their manager's salary.",
+      "hint": "The manager's salary is in the same table. You can join a table to itself if you give it two different aliases.",
+      "approach": "1. Use the table twice: alias `e` for the employee and `m` for the manager.\n2. Join them on `m.id = e.manager_id`.\n3. Keep the rows where `e.salary > m.salary`.\n\nAn inner join drops employees with no manager (`manager_id IS NULL`), which is correct here because there is nobody to compare with.",
+      "complexity": "One join on the primary key; an index on `manager_id` helps when the join is driven from the manager side.",
+      "input": "(1, Asha, 90000, NULL), (2, Ravi, 95000, 1), (3, Meera, 60000, 1), (4, John, 70000, 3)",
+      "output": "Ravi\nJohn",
+      "mistakes": [
+        "Forgetting table aliases, which makes column names ambiguous.",
+        "Joining on `e.id = m.manager_id` and then comparing the wrong way round.",
+        "Using a correlated subquery per row when a join is simpler."
+      ],
+      "tips": [
+        "Say \"self join\" as soon as you see a column that references the same table.",
+        "Mention recursive CTEs for the \"all levels\" follow-up."
+      ],
+      "code": {
+        "language": "sql",
+        "content": "SELECT e.name AS employee,\n       e.salary,\n       m.name AS manager,\n       m.salary AS manager_salary\nFROM employees e\nJOIN employees m ON m.id = e.manager_id\nWHERE e.salary > m.salary;\n\n-- Related: every employee with the manager's name (NULL for the top of the tree)\nSELECT e.name AS employee, m.name AS manager\nFROM employees e\nLEFT JOIN employees m ON m.id = e.manager_id;"
+      },
+      "related": [
+        "mysql-003",
+        "logic-026"
+      ]
+    }
+  ]
+}
